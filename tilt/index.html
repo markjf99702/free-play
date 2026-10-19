@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="../shared/carry.js"></script>
+  <title>Tilt · Free Play</title>
+  <meta name="description" content="Three pinball machines you can play on your phone: Classic, with the drop targets and spinner of an early-80s table; Space, with the ramp, lock and two-ball multiball of an early-90s one; and Haunted House, the hard one, with ghosts and a trapdoor down to a basement playfield.">
+  <meta property="og:title" content="Tilt, at Free Play">
+  <meta property="og:description" content="Three pinball tables, in your pocket.">
+  <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
+  <meta property="og:url" content="https://free-play.junkdrawer.works/tilt/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0b1838">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icon-180.png">
+  <link rel="preload" href="../fonts/bungee.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../shared/arcade.css">
+  <link rel="stylesheet" href="css/tilt.css">
+</head>
+<body>
+  <header class="backbox">
+    <div class="ball" id="ballNo" aria-live="off">Ball 1</div>
+    <div class="display" id="display" aria-live="polite"><span id="score">0</span></div>
+    <button type="button" class="menu" id="menuBtn" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="table" aria-label="The pinball table"></canvas>
+    <button type="button" class="launch" id="launch" hidden aria-label="Launch: hold to pull the plunger back, let go to shoot">
+      <span class="meter" id="meter"></span><span class="lbl">Launch</span>
+    </button>
+  </main>
+
+  <section class="sheet" id="title" aria-labelledby="titleH">
+    <div class="card">
+      <a class="floor" href="../">← Free Play</a>
+      <h1 id="titleH">Tilt</h1>
+      <p class="lede">Three pinball tables, in your pocket.</p>
+      <fieldset class="tables" id="tables" hidden><legend>Table</legend></fieldset>
+      <button type="button" class="go" id="startBtn">Start game</button>
+      <p class="best" id="bestLine"></p>
+      <div class="row">
+        <button type="button" class="ghost tix" id="prizesBtn"><span id="tixT">0</span> tickets · Prize counter</button>
+      </div>
+      <details class="how">
+        <summary>How to play</summary>
+        <ul id="howTo">
+          <li><b>Flip:</b> tap and hold the left or right half of the screen. On a keyboard, Z and / (or the Shift keys, or ← →).</li>
+          <li><b>Launch:</b> hold the Launch button and let go. The longer you hold, the harder the shot. Keyboard: hold Space or ↓.</li>
+          <li><b>Nudge:</b> swipe up, or press ↑ or Space with the ball in play. Too many nudges and the machine tilts.</li>
+        </ul>
+      </details>
+      <footer class="jd-foot">
+        <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+      </footer>
+    </div>
+  </section>
+
+  <section class="sheet" id="pause" hidden aria-labelledby="pauseH">
+    <div class="card">
+      <h2 id="pauseH">Paused</h2>
+      <button type="button" class="go" id="resumeBtn">Resume</button>
+      <div class="row">
+        <button type="button" class="ghost" id="soundBtn">Sound: on</button>
+        <button type="button" class="ghost" id="quitBtn">End game</button>
+      </div>
+      <div class="row">
+        <button type="button" class="ghost" id="pausePrizes">Prize counter</button>
+        <a class="ghost" href="../">Back to the arcade</a>
+      </div>
+      <footer class="jd-foot">
+        <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+      </footer>
+    </div>
+  </section>
+
+  <section class="sheet" id="over" hidden aria-labelledby="overH">
+    <div class="card">
+      <h2 id="overH">Game over</h2>
+      <p class="final" id="final">0</p>
+      <p class="note" id="overNote"></p>
+      <div class="fp-payout" id="payout"></div>
+      <ol class="scores" id="scores"></ol>
+      <button type="button" class="go" id="againBtn">Play again</button>
+      <div class="row" id="tablesRow" hidden>
+        <button type="button" class="ghost" id="tablesBtn">Change table</button>
+      </div>
+      <div class="row">
+        <button type="button" class="ghost" id="overPrizes">Prize counter</button>
+        <a class="ghost" href="../">Back to the arcade</a>
+      </div>
+    </div>
+  </section>
+
+  <noscript><p class="noscript">Tilt needs JavaScript to run the pinball machine.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

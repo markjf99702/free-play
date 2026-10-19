@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="shared/carry.js"></script>
+  <title>Free Play</title>
+  <meta name="description" content="An arcade on your phone. Skee-ball and three pinball tables, every machine on free play, and one pocketful of tickets for the prize counter.">
+  <meta property="og:title" content="Free Play">
+  <meta property="og:description" content="An arcade on your phone: skee-ball, pinball and a prize counter.">
+  <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
+  <meta property="og:url" content="https://free-play.junkdrawer.works/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0d0b1f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="preload" href="fonts/bungee-outline.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/bungee.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="shared/arcade.css">
+  <link rel="stylesheet" href="css/floor.css">
+</head>
+<body>
+  <header class="door">
+    <h1 class="sign" aria-label="Free Play"><span class="free">Free</span> <span class="play">Play</span></h1>
+    <p class="lede">An arcade on your phone. Every machine is set to free play, and pays out tickets for the prize counter.</p>
+    <button type="button" class="purse" id="purse"><svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg><b id="tix">0</b> tickets</button>
+  </header>
+
+  <main class="floor">
+    <a class="cab roll-up" href="roll-up/">
+      <span class="marquee"><span>Roll Up</span></span>
+      <span class="screen"><img src="floor/roll-up.jpg" width="600" height="450" alt="Roll Up's skee-ball board: chrome rings on blue with lit 20, 30, 40 and 50 holes, 100 cups in the top corners, under a marquee of bulbs"></span>
+      <span class="panel">
+        <span class="what">Skee-ball. Flick the ball up the lane, over the hump and into the rings. Nine balls a game, one of them golden.</span>
+        <span class="stat" id="rollUpStat">Today's card is ready: nine called shots.</span>
+        <span class="coin" aria-hidden="true">Free play</span>
+        <span class="go">Play</span>
+      </span>
+    </a>
+    <a class="cab tilt" href="tilt/">
+      <span class="marquee"><span>Tilt</span></span>
+      <span class="screen"><img src="floor/tilt.jpg" width="600" height="450" alt="A Tilt pinball table: top lanes A, B and C over the pop bumpers on a starry blue playfield"></span>
+      <span class="panel">
+        <span class="what">Pinball, three tables: Classic, Space with its ramp and multiball, and Haunted House, the hard one.</span>
+        <span class="stat" id="tiltStat">Three balls a game. Nudge, but not too hard.</span>
+        <span class="coin" aria-hidden="true">Free play</span>
+        <span class="go">Play</span>
+      </span>
+    </a>
+  </main>
+
+  <section class="booth" aria-labelledby="boothH">
+    <div class="booth-in">
+      <h2 id="boothH">Prize counter</h2>
+      <p class="booth-what">Every machine pays into the same pocketful of tickets. Trade them for something on the shelf.</p>
+      <div class="shelf" id="shelf"></div>
+      <button type="button" class="trade" id="trade">Trade tickets</button>
+    </div>
+  </section>
+
+  <footer class="jd-foot">
+    <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+    <span aria-hidden="true">·</span>
+    <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+  </footer>
+
+  <noscript><p class="noscript">Free Play needs JavaScript to keep your tickets.</p></noscript>
+  <script type="module" src="js/floor.js"></script>
+</body>
+</html>

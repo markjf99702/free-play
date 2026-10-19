@@ -1,0 +1,84 @@
+/* Free Play's shared pieces: the prize counter, the ticket dispenser and the toast. Every page on the floor links this,
+   so the counter looks the same whichever machine it's opened from. Its own fp- names keep clear of each machine's styles. */
+
+@font-face { font-family: "Bungee"; src: url(../fonts/bungee.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Figtree"; src: url(../fonts/figtree.woff2) format("woff2"); font-weight: 300 900; font-display: swap; }
+
+:root {
+  --fp-ink: #fbeed2;
+  --fp-ink2: rgba(251, 238, 210, .74);
+  --fp-ink3: rgba(251, 238, 210, .5);
+  --fp-line: rgba(251, 238, 210, .16);
+  --fp-booth: #1a1233;
+  --fp-gold: #ffd36a;
+  --fp-red: #c23a2e;
+  --fp-disp: "Bungee", Impact, sans-serif;
+  --fp-body: "Figtree", system-ui, sans-serif;
+}
+
+.fp-tix { width: 1.3em; height: .9em; flex: none; vertical-align: -.08em; }
+
+/* ---------- the prize counter ---------- */
+.fp-sheet {
+  position: fixed; inset: 0; z-index: 50; background: rgba(6, 4, 14, .62);
+  display: flex; justify-content: center; align-items: flex-end; font: 16px/1.45 var(--fp-body); color: var(--fp-ink);
+}
+.fp-sheet[hidden] { display: none; }
+.fp-sheet-in {
+  width: min(560px, 100vw); max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px)); overflow: auto;
+  background: var(--fp-booth); border: 1px solid var(--fp-line); border-bottom: 0; border-radius: 22px 22px 0 0;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  user-select: text; -webkit-user-select: text; text-align: left;
+}
+.fp-head { display: flex; align-items: center; gap: 10px; position: sticky; top: -16px; margin: -16px -16px 4px; padding: 16px; background: var(--fp-booth); z-index: 1; }
+.fp-head h2 { margin: 0; font: 400 20px var(--fp-disp); flex: 1; color: var(--fp-ink); text-shadow: none; }
+.fp-bal { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--fp-ink2); }
+.fp-bal b { font: 400 18px var(--fp-disp); color: var(--fp-gold); }
+.fp-x {
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--fp-line); background: rgba(251, 238, 210, .07);
+  color: var(--fp-ink); font: 24px/1 var(--fp-body); cursor: pointer;
+}
+.fp-sheet h3 { margin: 12px 2px 8px; font: 600 12px var(--fp-body); letter-spacing: .14em; text-transform: uppercase; color: var(--fp-ink3); }
+.fp-shelf {
+  display: flex; flex-wrap: wrap; gap: 4px 6px; min-height: 56px; padding: 10px 12px; border-radius: 14px;
+  background: linear-gradient(transparent 70%, rgba(120, 70, 30, .5) 70% 78%, transparent 78%), rgba(251, 238, 210, .04);
+  border: 1px solid var(--fp-line); font-size: 30px; line-height: 1.2; align-items: flex-end;
+}
+.fp-shelf .fp-empty { font-size: 14px; color: var(--fp-ink3); align-self: center; }
+.fp-shelf span { position: relative; }
+.fp-shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--fp-body); color: var(--fp-ink); background: var(--fp-red); border-radius: 999px; padding: 1px 5px; }
+.fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.fp-prize {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px 10px; border-radius: 14px;
+  background: rgba(251, 238, 210, .06); border: 1px solid var(--fp-line); text-align: center; color: var(--fp-ink);
+  font: inherit; cursor: pointer;
+}
+.fp-prize .e { font-size: 34px; line-height: 1.15; }
+.fp-prize .n { font-weight: 600; font-size: 14px; line-height: 1.2; min-height: 2.4em; display: grid; place-items: center; }
+.fp-prize .c { display: inline-flex; align-items: center; gap: 4px; font: 400 14px var(--fp-disp); color: var(--fp-gold); }
+.fp-prize.short { opacity: .55; }
+.fp-prize.short .c { color: var(--fp-ink3); }
+.fp-prize:not(.short):active { background: rgba(251, 238, 210, .14); }
+.fp-sheet button:focus-visible { outline: 2px solid var(--fp-gold); outline-offset: 3px; }
+
+.fp-toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; margin: 0;
+  padding: 10px 16px; border-radius: 999px; background: #fbeed2; color: #2a1538; font: 700 15px/1.3 var(--fp-body);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .4); max-width: calc(100vw - 32px); width: max-content; text-align: center;
+}
+.fp-toast[hidden] { display: none; }
+
+/* ---------- the ticket dispenser on a game-over card ---------- */
+.fp-payout { display: flex; align-items: flex-start; justify-content: center; gap: 16px; min-height: 120px; margin: 4px 0 2px; }
+.fp-dispenser { width: 64px; display: flex; flex-direction: column; align-items: center; }
+.fp-mouth { width: 64px; height: 12px; border-radius: 6px; background: #05040a; box-shadow: inset 0 3px 4px #000, 0 0 0 2px #f2c14e; position: relative; z-index: 1; }
+.fp-strip {
+  width: 44px; height: 0; margin-top: -5px; border-radius: 0 0 3px 3px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='22'%3E%3Crect width='44' height='22' fill='%23f2944e'/%3E%3Cpath d='M4 21.5h36' stroke='%23fbeed2' stroke-dasharray='2 2'/%3E%3Ccircle cy='22' r='3' fill='%23170f2c'/%3E%3Ccircle cx='44' cy='22' r='3' fill='%23170f2c'/%3E%3Ccircle cx='22' cy='10.5' r='3.6' fill='%23fbeed2'/%3E%3C/svg%3E") 0 0 / 44px 22px repeat-y;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .35); transform-origin: top center; animation: fp-sway 1.6s ease-in-out infinite;
+}
+@keyframes fp-sway { 50% { transform: rotate(2.5deg); } }
+.fp-won { display: flex; flex-direction: column; align-items: flex-start; margin: 14px 0 0; font: 600 16px/1.3 var(--fp-body); color: var(--fp-ink2); }
+.fp-won b { font: 400 44px/1 var(--fp-disp); color: var(--fp-gold); text-shadow: 0 0 14px rgba(255, 170, 60, .5); }
+
+@media (prefers-reduced-motion: reduce) { .fp-strip { animation: none; } }

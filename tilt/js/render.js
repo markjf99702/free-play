@@ -1,0 +1,254 @@
+// Draws a table. Whatever never changes (the playfield, its art and rails) is painted once into an offscreen
+// canvas, again whenever the window, the table or the skin changes; each frame the table draws its lamps,
+// moving parts and balls on top. The helpers below are shared by every table's own drawing.
+// A table with a floor under the playfield has a canvas for each floor, and the screen shows the one the ball is on
+// (game.floor), sliding down to it or back up as that changes.
+
+import { BALL_R, flipperEnds } from './physics.js';
+
+const TAU = Math.PI * 2;
+
+export class Renderer {
+  constructor(canvas) {
+    this.cv = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.layers = new Map(); // floor -> its static layer (most tables have just the one, the playfield's)
+    this.table = null; // the table's module (from tables.js); game.table is the layout it built
+    this.skin = null;
+    this.debug = /[?&]debug\b/.test(location.search);
+  }
+
+  // Fits the layout t (its W and H) into the canvas's box, centred, as large as it goes.
+  resize(cssW, cssH, dpr, t) {
+    const { W, H } = t;
+    this.dpr = dpr;
+    this.cssW = cssW; this.cssH = cssH;
+    this.cv.width = Math.round(cssW * dpr);
+    this.cv.height = Math.round(cssH * dpr);
+    this.scale = Math.min(cssW / W, cssH / H);
+    this.ox = (cssW - W * this.scale) / 2;
+    this.oy = (cssH - H * this.scale) / 2;
+    this.dirty = true;
+  }
+
+  // Screen point (CSS pixels, relative to the canvas) to table millimetres.
+  toTable(px, py) { return { x: (px - this.ox) / this.scale, y: (py - this.oy) / this.scale }; }
+
+  setTable(table) { this.table = table; this.dirty = true; this.floor = undefined; this.slide = null; }
+  setSkin(skin) { this.skin = skin; this.dirty = true; }
+
+  paintStatic(t) {
+    const { W, H } = t;
+    const k = this.scale * this.dpr;
+    for (const floor of this.table.floors || [0]) {
+      const layer = this.layers.get(floor) || document.createElement('canvas');
+      layer.width = Math.ceil(W * k);
+      layer.height = Math.ceil(H * k);
+      const c = layer.getContext('2d');
+      c.setTransform(k, 0, 0, k, 0, 0);
+      this.table.paint(c, t, this.skin, floor);
+      this.layers.set(floor, layer);
+    }
+    this.dirty = false;
+  }
+
+  draw(game, now) {
+    // No room to draw in (a window shorter than the backbox, or a frame with no size yet): the table is painted once
+    // there is, as it's still marked dirty.
+    if (!(this.scale > 0) || !this.cv.width || !this.cv.height) return;
+    const { ctx } = this;
+    const t = game.table;
+    if (this.dirty) this.paintStatic(t);
+    // The ball has gone to another floor: slide there, down the table's floors or back up them (or, for someone who
+    // has asked for less motion, cut straight to it).
+    if (game.floor !== this.floor) {
+      const still = this.floor === undefined || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.slide = still ? null : { from: this.floor, at: now };
+      this.floor = game.floor;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#05070d';
+    ctx.fillRect(0, 0, this.cv.width, this.cv.height);
+    const p = this.slide ? (now - this.slide.at) / SLIDE : 1;
+    if (p < 1) {
+      const e = p * p * (3 - 2 * p), fs = this.table.floors, dir = Math.sign(fs.indexOf(this.floor) - fs.indexOf(this.slide.from));
+      this.drawFloor(game, now, this.slide.from, -dir * e * t.H);
+      this.drawFloor(game, now, this.floor, dir * (1 - e) * t.H);
+    } else {
+      this.slide = null;
+      this.drawFloor(game, now, this.floor, 0);
+    }
+  }
+
+  // One floor, dy millimetres down the screen. While it slides it's cut off at the table's edges.
+  drawFloor(game, now, floor, dy) {
+    const { ctx, skin } = this, t = game.table, layer = this.layers.get(floor);
+    const k = this.scale * this.dpr;
+    ctx.setTransform(k, 0, 0, k, this.ox * this.dpr, (this.oy + dy * this.scale) * this.dpr);
+    if (dy) { ctx.save(); ctx.beginPath(); ctx.rect(0, Math.max(0, -dy), t.W, t.H - Math.abs(dy)); ctx.clip(); }
+    ctx.drawImage(layer, 0, 0, layer.width, layer.height, 0, 0, layer.width / k, layer.height / k);
+
+    this.table.draw(ctx, game, skin, now, floor);
+    if (game.tilted) {
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(0, 0, t.W, t.H);
+    }
+    if (this.debug) drawDebug(ctx, t, floor, this.table.floors);
+    if (dy) ctx.restore();
+  }
+}
+
+const SLIDE = 450; // ms the screen takes to slide from one floor to the next
+
+// ---------- the static layer ----------
+// Rails, guides, rubbers, gate wires and posts: the parts of a layout that never move. They are told apart by
+// kind ('rail', 'guide', 'rubber', 'gate'; circles 'post' or 'rail'); walls and circles of any other kind are
+// left for the table to draw itself.
+export function drawWalls(c, t, s) {
+  // Rails, guides and rubbers.
+  c.lineCap = 'round';
+  for (const w of t.walls) {
+    if (w.kind === 'rail') {
+      c.strokeStyle = s.railShade; c.lineWidth = Math.max(5, w.r * 2 + 4);
+      line(c, w); c.strokeStyle = s.rail; c.lineWidth = Math.max(2.5, w.r * 2 + 1); line(c, w);
+    } else if (w.kind === 'guide') {
+      c.strokeStyle = s.railShade; c.lineWidth = w.r * 2 + 2; line(c, w);
+      c.strokeStyle = s.guide; c.lineWidth = w.r * 2 - 1; line(c, w);
+    } else if (w.kind === 'rubber') {
+      c.strokeStyle = s.rubber; c.lineWidth = w.r * 2; line(c, w);
+    }
+  }
+  // Gate wires.
+  for (const w of t.walls) if (w.kind === 'gate') { c.strokeStyle = s.rail; c.lineWidth = 2; line(c, w); }
+  // Posts.
+  for (const p of t.circles) {
+    if (p.kind !== 'post' && p.kind !== 'rail') continue;
+    c.fillStyle = s.rubber; c.beginPath(); c.arc(p.x, p.y, p.r, 0, TAU); c.fill();
+    c.fillStyle = s.post; c.beginPath(); c.arc(p.x, p.y, p.r * 0.45, 0, TAU); c.fill();
+  }
+}
+
+export function insert(c, x, y, r, color, square) {
+  c.save();
+  c.fillStyle = color; c.globalAlpha = 0.22;
+  c.beginPath();
+  if (square) roundRect(c, x - r, y - r * 0.7, r * 2, r * 1.4, 4); else c.arc(x, y, r, 0, TAU);
+  c.fill();
+  c.globalAlpha = 0.5; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 1.2; c.stroke();
+  c.restore();
+}
+
+export function arrow(c, x, y, ang, r, color, lit) {
+  c.save();
+  c.translate(x, y); c.rotate(ang);
+  c.beginPath(); c.moveTo(r, 0); c.lineTo(-r * 0.7, r * 0.75); c.lineTo(-r * 0.35, 0); c.lineTo(-r * 0.7, -r * 0.75); c.closePath();
+  c.fillStyle = color; c.globalAlpha = lit ? 1 : 0.22; c.fill();
+  if (!lit) { c.globalAlpha = 0.5; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 1.2; c.stroke(); }
+  c.restore();
+}
+
+function line(c, w) { c.beginPath(); c.moveTo(w.ax, w.ay); c.lineTo(w.bx, w.by); c.stroke(); }
+
+function roundRect(c, x, y, w, h, r) {
+  c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+
+// ---------- each frame ----------
+export function glow(c, x, y, r, color, a = 1) {
+  c.save();
+  c.globalCompositeOperation = 'lighter';
+  const g = c.createRadialGradient(x, y, 0, x, y, r * 2.6);
+  g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.globalAlpha = 0.55 * a; c.fillStyle = g;
+  c.beginPath(); c.arc(x, y, r * 2.6, 0, TAU); c.fill();
+  c.restore();
+}
+
+export function lit(c, x, y, r, color, label, s, square) {
+  glow(c, x, y, r, color);
+  c.save();
+  c.fillStyle = color;
+  c.beginPath();
+  if (square) roundRect(c, x - r, y - r * 0.7, r * 2, r * 1.4, 4); else c.arc(x, y, r, 0, TAU);
+  c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.55)';
+  c.beginPath(); c.arc(x - r * 0.3, y - r * 0.3, r * 0.35, 0, TAU); c.fill();
+  c.restore();
+  if (label) { c.save(); c.fillStyle = 'rgba(20,10,0,0.85)'; c.font = `${r >= 13 ? 11 : 9}px ${s.font}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, x, y + 1); c.restore(); }
+}
+
+function flipperPath(c, f, inset = 0) {
+  const { px, py, tx, ty } = flipperEnds(f);
+  const r0 = f.r0 - inset, r1 = f.r1 - inset;
+  const a = Math.atan2(ty - py, tx - px);
+  const off = Math.asin((r0 - r1) / f.len);
+  c.beginPath();
+  c.arc(px, py, r0, a + Math.PI / 2 + off, a - Math.PI / 2 - off);
+  c.arc(tx, ty, r1, a - Math.PI / 2 - off, a + Math.PI / 2 + off);
+  c.closePath();
+}
+
+export function drawFlipper(c, f, s) {
+  c.save();
+  c.translate(2, 4); flipperPath(c, f); c.fillStyle = 'rgba(0,0,0,0.35)'; c.fill(); c.translate(-2, -4);
+  flipperPath(c, f); c.fillStyle = s.flipperRubber; c.fill();
+  flipperPath(c, f, 3); c.fillStyle = s.flipperBody; c.fill();
+  c.fillStyle = '#9aa1ab'; c.beginPath(); c.arc(f.x, f.y, 3, 0, TAU); c.fill();
+  c.restore();
+}
+
+// A ball up on a ramp (b.z mm above the playfield) is nearer the glass: a little larger, its shadow further off.
+export function drawBall(c, b) {
+  const z = b.z || 0, k = 1 + z / 350, r = BALL_R * k;
+  c.save();
+  c.fillStyle = 'rgba(0,0,0,0.4)';
+  c.beginPath(); c.arc(b.x + 3 + z * 0.12, b.y + 5 + z * 0.18, r, 0, TAU); c.fill();
+  const g = c.createRadialGradient(b.x - 4.5 * k, b.y - 5 * k, k, b.x, b.y, r);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.25, '#e6e9ee'); g.addColorStop(0.7, '#8b929c'); g.addColorStop(1, '#3d434c');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(b.x, b.y, r, 0, TAU); c.fill();
+  // Reflections of the playfield lamps.
+  c.fillStyle = 'rgba(255,200,120,0.35)';
+  c.beginPath(); c.ellipse(b.x + 3 * k, b.y + 6 * k, 5 * k, 2.2 * k, 0, 0, TAU); c.fill();
+  c.restore();
+}
+
+export function drawPlunger(c, t, s) {
+  const p = t.plunger, x = (p.x0 + p.x1) / 2, top = p.y + p.pull * p.travel;
+  c.save();
+  c.fillStyle = '#c9ced6'; c.fillRect(x - 3, top, 6, t.H - top);
+  // Spring.
+  c.strokeStyle = '#8a929e'; c.lineWidth = 1.5;
+  c.beginPath();
+  const coils = 7, y0 = top + 8, y1 = t.H - 6;
+  for (let i = 0; i <= coils * 2; i++) c.lineTo(x + (i % 2 ? 9 : -9), y0 + (y1 - y0) * i / (coils * 2));
+  c.stroke();
+  c.fillStyle = s.flipperRubber; c.fillRect(x - 11, top, 22, 7);
+  c.restore();
+}
+
+// ?debug: the playfield's outlines in green and a ramp's (any other level) in orange; sensors in magenta, lifts in yellow.
+// Only the floor on the screen: a basement's outlines show there, not over the playfield.
+function drawDebug(c, t, floor, floors = [0]) {
+  const away = o => (o.level || 0) !== floor && floors.includes(o.level || 0);
+  c.save();
+  c.lineWidth = 1;
+  for (const w of t.walls) {
+    if (w.off || away(w)) continue;
+    c.strokeStyle = (w.level || 0) !== floor ? 'orange' : 'lime';
+    c.beginPath(); c.moveTo(w.ax, w.ay); c.lineTo(w.bx, w.by); c.stroke();
+  }
+  for (const p of t.circles) {
+    if (away(p)) continue;
+    c.strokeStyle = (p.level || 0) !== floor ? 'orange' : 'lime'; c.beginPath(); c.arc(p.x, p.y, p.r, 0, TAU); c.stroke();
+  }
+  for (const s of t.sensors) {
+    if (away(s)) continue;
+    c.strokeStyle = s.to !== undefined ? 'yellow' : 'magenta';
+    c.beginPath();
+    if (s.kind === 'line') { c.moveTo(s.ax, s.ay); c.lineTo(s.bx, s.by); } else c.arc(s.x, s.y, s.r, 0, TAU);
+    c.stroke();
+  }
+  c.restore();
+}
