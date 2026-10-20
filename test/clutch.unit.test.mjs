@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { createMachine, KINDS, BOX, HOME } from '../clutch/js/machine.js';
 import { PLUSH, PRIZES } from '../shared/prizes.js';
 
-new vm.Script(readFileSync(new URL('../clutch/js/matter.min.js', import.meta.url), 'utf8')).runInThisContext();
+new vm.Script(readFileSync(new URL('../shared/matter.min.js', import.meta.url), 'utf8')).runInThisContext();
 const { Matter } = globalThis;
 
 function seeded(a) {

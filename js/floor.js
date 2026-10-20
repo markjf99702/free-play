@@ -1,6 +1,6 @@
 // The Free Play floor: the tickets in your pocket, what each machine remembers about you, and the prize counter.
-// Each machine keeps its own save (free-play.roll-up, free-play.tilt, free-play.clutch); the tickets and prizes are
-// the arcade's (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
+// Each machine keeps its own save (free-play.roll-up, free-play.tilt, free-play.clutch, free-play.topple); the tickets
+// and prizes are the arcade's (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
 import { openCounter } from '../shared/counter.js';
@@ -39,6 +39,13 @@ function machines() {
   $('clutchStat').textContent = plush
     ? `${fmt(plush)} plush won${won.star ? ', a lucky star among them' : ''}.`
     : 'Pays in plush, straight onto your shelf.';
+
+  // Topple: the best cup, and any prizes pushed off.
+  const tp = readSave('free-play.topple');
+  const prizes = Number(tp.prizes) || 0;
+  $('toppleStat').textContent = tp.cups
+    ? `Best cup: ${fmt(tp.best || 0)} tickets.${prizes ? ` ${prizes} ${prizes === 1 ? 'prize' : 'prizes'} pushed off.` : ''}`
+    : 'Twenty coins a cup, and a prize on the deck.';
 }
 
 function pocket() {

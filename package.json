@@ -2,10 +2,10 @@
   "name": "free-play",
   "private": true,
   "type": "module",
-  "description": "An arcade on your phone: skee-ball, pinball, a claw machine and a prize counter.",
+  "description": "An arcade on your phone: skee-ball, pinball, a claw machine, a coin pusher and a prize counter.",
   "scripts": {
     "start": "npx --yes http-server -c-1 -p 8080 .",
-    "test": "node --test test/*.test.mjs && node test/e2e.mjs && node test/carry.e2e.mjs && node test/roll-up.e2e.mjs && node test/tilt.e2e.mjs && node test/clutch.e2e.mjs"
+    "test": "node --test test/*.test.mjs && node test/e2e.mjs && node test/carry.e2e.mjs && node test/roll-up.e2e.mjs && node test/tilt.e2e.mjs && node test/clutch.e2e.mjs && node test/topple.e2e.mjs"
   },
   "devDependencies": {
     "upng-js": "^2.1.0"

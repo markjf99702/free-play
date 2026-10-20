@@ -31,5 +31,15 @@ export const PLUSH = [
   { id: 'plush-star', kind: 'star', emoji: '🌟', name: 'Lucky star', say: 'the lucky star' },
 ];
 
+// The prizes on Topple's deck, pushed off over the edge with the coins. Won outright too, like the plush.
+// kind is the machine's name for each (topple/js/app.js); the gem turns up less often than the rest.
+export const TRINKETS = [
+  { id: 'trinket-watch', kind: 'watch', emoji: '⌚', name: 'Plastic watch', say: 'a plastic watch' },
+  { id: 'trinket-car', kind: 'car', emoji: '🚗', name: 'Toy car', say: 'a toy car' },
+  { id: 'trinket-keyring', kind: 'keyring', emoji: '🔑', name: 'Lucky keyring', say: 'a lucky keyring' },
+  { id: 'trinket-robot', kind: 'robot', emoji: '🤖', name: 'Wind-up robot', say: 'a wind-up robot' },
+  { id: 'trinket-gem', kind: 'gem', emoji: '💎', name: 'Giant plastic gem', say: 'a giant plastic gem', rare: true },
+];
+
 // Everything that can sit on the shelf, in the order it sits there.
-export const SHELF = [...PRIZES, ...PLUSH];
+export const SHELF = [...PRIZES, ...PLUSH, ...TRINKETS];

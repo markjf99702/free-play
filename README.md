@@ -2,7 +2,7 @@
 
 **Play it: [free-play.junkdrawer.works](https://free-play.junkdrawer.works/)**
 
-**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; or Clutch, a claw machine full of plush. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
+**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; or Topple, a coin pusher. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
 
 <p align="center">
   <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket, and the Roll Up cabinet with its red and gold marquee, its screen showing the ring board, and a Play button" width="250">
@@ -14,14 +14,16 @@
 <p align="center">
   <img src="docs/phone-clutch.png" alt="Clutch, a candy-pink claw machine: CLUTCH in neon on a bulb-lit sign, the claw coming up out of a heap of plush frogs, ghosts, aliens, penguins and a chick with a penguin in its grip, the prize chute behind a clear wall on the left, and a big pink HOLD button under the cabinet" width="250">
   &nbsp;
-  <img src="docs/phone-counter.png" alt="The prize counter with 214 tickets: a shelf holding two lollipops, a spider ring, a rubber duck, a toy dinosaur, two plush frogs and a plush ghost, above a grid of prizes from a 5-ticket lollipop up" width="250">
+  <img src="docs/phone-topple.png" alt="Topple, a teal coin pusher: TOPPLE in gold on its sign, a row of bonus pockets on the back wall, a chrome shelf scraping silver coins onto a packed deck with a toy car on a red card, +12 rising off the front edge, and a cup of 12 coins beside a gold DROP button" width="250">
+  &nbsp;
+  <img src="docs/phone-counter.png" alt="The prize counter with 214 tickets: a shelf holding two lollipops, a spider ring, a rubber duck, a toy dinosaur, two plush frogs, a plush ghost and a toy car, above a grid of prizes from a 5-ticket lollipop up" width="250">
 </p>
 
 ## How it plays
 
 - **The floor** has a cabinet for each machine, showing what you've done on it: your best, whether you've played today's card, the plush you've won. Tap one to play. Every machine has a way back to the floor.
-- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end.
-- **Plush.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf.
+- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup.
+- **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush.
 - No account and no server. Your tickets, prizes and scores stay in your browser. It works offline, and installs to a phone's home screen as one app.
 
@@ -85,6 +87,17 @@ A claw machine, seen through the glass, heaped with plush: bears, chicks, frogs,
 - **Real heaps.** The plush are soft bodies piled up in a 2D physics world ([matter-js](https://brm.io/matter-js/)): the claw shoves them about on the way down, and a slipped one falls back wherever it lands. When the heap runs low, the machine is topped up between goes.
 - **The keyboard works too.** Hold Space (or →) to move the claw, and let go to drop it.
 
+## Topple
+
+A coin pusher, looking down through the glass: a chrome shelf sliding in and out under the back wall, a deck heaped with silver coins, and the front edge they go over.
+
+- **Touch the glass to aim** the chute along the top, and let go to drop a coin. (Or aim with the finger still and tap **Drop** for more in the same place.) A cup holds 20 coins, and the chute takes a moment to reload between them.
+- **How it pushes.** Coins land on the shelf and ride in and out with it. As it slides back, the back wall holds them, and the ones at the front get scraped off its lip onto the deck. As it slides forward, its face shoves the deck's coins along, and the ones at the front go over. Every coin over the front edge is a ticket, paid as it falls. The side walls stop short of the front, so coins pushed off the sides there go to the house.
+- **The bonus.** Every so often the lights along the back wall chase along the row of pockets and stop on one. Drop a coin through the lit pocket while it's lit for a shower of eight coins across the shelf, sometimes with a gold one.
+- **Gold coins** are worth ten tickets. **A prize** always sits on the deck somewhere, on a little card: push it over the edge and it goes on your shelf (a plastic watch, a toy car, a lucky keyring, a wind-up robot, or now and then a giant plastic gem). When one's gone, the attendant puts another on the shelf.
+- **The deck stays as you left it.** The coins are kept between visits, so a pile left hanging over the edge is still hanging there next time, and a cup you didn't finish is waiting.
+- **The keyboard works too.** ← and → move the chute; Space drops a coin.
+
 ## Where the machines came from
 
 Roll Up and Tilt each had their own address, roll-up.junkdrawer.works and tilt.junkdrawer.works. Those now send you here, keeping anything after the address (`?table=space`, say). A browser keeps each address's saves apart, so the first time Free Play opens, `shared/carry.js` asks each old address for its saves in a hidden frame (each one serves a `carry.html` that answers only Free Play), puts them where Free Play keeps them, and loads the page once more. Roll Up's tickets and prizes go into the arcade's wallet. If an old address doesn't answer, it tries again on the next two visits.
@@ -94,7 +107,7 @@ Roll Up and Tilt each had their own address, roll-up.junkdrawer.works and tilt.j
 A machine is a folder with its own `index.html`. To put one on the floor:
 
 1. Load `../shared/carry.js` first in its `<head>` and `../shared/arcade.css` before its own styles, and point its icon, manifest and fonts at the arcade's (`../icon.svg`, `../manifest.webmanifest`, `../fonts/`).
-2. Pay tickets at the end of a game with `pay(n)` from `shared/wallet.js`, and show them coming out of the slot with `feed()` and `PAYOUT` from `shared/counter.js`; or, for a machine that pays in prizes the way Clutch does, put them on the shelf with `give(prize)` (and list them in `shared/prizes.js`). Open the prize counter with `openCounter()`.
+2. Pay tickets with `pay(n)` from `shared/wallet.js`, and show them coming out of the slot with `feed()` and `PAYOUT` from `shared/counter.js`; or, for a machine that pays in prizes the way Clutch does, put them on the shelf with `give(prize)` (and list them in `shared/prizes.js`). Open the prize counter with `openCounter()`. A machine with physics can use matter-js from `shared/matter.min.js`, as Clutch and Topple do.
 3. Keep its own saves under a key starting `free-play.` and its name, link back to the floor (`../`), and register `../sw.js` for offline.
 4. Give it a cabinet in `index.html` (a picture of it in `floor/`, which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list, and give it a test.
 
@@ -104,7 +117,7 @@ It's a static site: plain HTML, CSS and JavaScript, with no build step.
 
 ```sh
 npx serve .                   # or any static file server, then open the printed address
-npm test                      # unit tests in node, then the floor, the move, Roll Up, Tilt and Clutch in Chromium (needs Playwright)
+npm test                      # unit tests in node, then the floor, the move and each machine in Chromium (needs Playwright)
 node tools/screenshots.mjs    # redraws floor/*.jpg, docs/*.png and og.png
 node tools/make-icons.mjs     # redraws the PNG icons from icon.svg
 node tools/tune.mjs 60 space  # plays Tilt's tables with the autopilot and reports how balls drain and what they score
@@ -117,12 +130,14 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `index.html`, `css/floor.css`, `js/floor.js`: the floor, with a cabinet for each machine and the prize counter at the back.
 - `shared/wallet.js`: the one pocket of tickets and shelf of prizes every machine pays into and the counter spends from.
 - `shared/counter.js`, `shared/arcade.css`: the prize counter, the ticket dispenser at the end of a game, and the toast, for every page.
-- `shared/prizes.js`: what's at the prize counter and what it costs, and the plush Clutch gives out.
+- `shared/prizes.js`: what's at the prize counter and what it costs, the plush Clutch gives out and the prizes on Topple's deck.
+- `shared/matter.min.js`: matter-js, the 2D physics Clutch and Topple run on (MIT licence, kept here so it works offline).
 - `shared/carry.js`: brings saves over from the machines' old addresses on the first visit.
 - `roll-up/`: Roll Up. `js/physics.js` is the machine in centimetres and the ball on it, `js/scene.js` draws it in perspective, `js/daily.js` is today's card, `js/app.js` runs the game and `js/sound.js` makes every sound with Web Audio.
 - `tilt/`: Tilt. `js/physics.js` and `js/game.js` are the machine every table shares, `js/tables/` holds the three tables (layout, rules, drawing and skins each), and `js/main.js` wires it all to the page.
-- `clutch/`: Clutch. `js/machine.js` is the box, the heap and the claw in millimetres, run by matter-js (`js/matter.min.js`, MIT licence, kept here so it works offline), `js/draw.js` draws the cabinet and gives each plush its face, `js/app.js` runs the button, the goes and the win card, and `js/sound.js` makes the noises with Web Audio.
+- `clutch/`: Clutch. `js/machine.js` is the box, the heap and the claw in millimetres, run by matter-js, `js/draw.js` draws the cabinet and gives each plush its face, `js/app.js` runs the button, the goes and the win card, and `js/sound.js` makes the noises with Web Audio.
+- `topple/`: Topple. `js/machine.js` is the shelf, the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
 - `floor/`: the pictures on the cabinets' screens.
-- `test/`: unit tests for the arcade, Roll Up, Tilt and Clutch (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the move (`carry.e2e.mjs`), Roll Up, Tilt and Clutch.
+- `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
 - `fonts/`: Bungee, Bungee Outline and Figtree (SIL Open Font License), served from here so nothing loads from elsewhere.
 - `sw.js`: keeps a copy of the floor and every machine for playing offline.

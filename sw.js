@@ -2,14 +2,15 @@
 // Anything the person saves lives in localStorage, not here.
 // Network first, so a new version shows up as soon as you're online.
 
-const CACHE = 'free-play-v2'; // bump the number when the file list changes
+const CACHE = 'free-play-v3'; // bump the number when the file list changes
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
-  'roll-up/', 'tilt/', 'clutch/', // the machines by their addresses as well as by index.html, so either opens offline
+  'roll-up/', 'tilt/', 'clutch/', 'topple/', // the machines by their addresses as well as by index.html, so either opens offline
   // floor
-  'css/floor.css', 'js/floor.js', 'floor/clutch.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg',
+  'css/floor.css', 'js/floor.js', 'floor/clutch.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
   // shared
-  'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/prizes.js', 'shared/wallet.js',
+  'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/matter.min.js', 'shared/prizes.js',
+  'shared/wallet.js',
   'fonts/bungee-outline.woff2', 'fonts/bungee.woff2', 'fonts/figtree.woff2',
   // Roll Up
   'roll-up/css/app.css', 'roll-up/index.html', 'roll-up/js/app.js', 'roll-up/js/daily.js', 'roll-up/js/physics.js',
@@ -24,7 +25,10 @@ const SHELL = [
   'tilt/js/tables/space/layout.js', 'tilt/js/tables/space/rules.js', 'tilt/js/tables/space/skins.js',
   // Clutch
   'clutch/css/clutch.css', 'clutch/index.html', 'clutch/js/app.js', 'clutch/js/draw.js', 'clutch/js/machine.js',
-  'clutch/js/matter.min.js', 'clutch/js/sound.js',
+  'clutch/js/sound.js',
+  // Topple
+  'topple/css/topple.css', 'topple/index.html', 'topple/js/app.js', 'topple/js/draw.js', 'topple/js/machine.js',
+  'topple/js/sound.js',
 ];
 
 self.addEventListener('install', e => {
