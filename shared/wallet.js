@@ -36,6 +36,13 @@ export function buy(prize) {
   return write(w);
 }
 
+// A prize won outright, on a machine that pays in prizes rather than tickets (Clutch's plush).
+export function give(prize) {
+  const w = read();
+  w.prizes[prize.id] = (w.prizes[prize.id] || 0) + 1;
+  return write(w);
+}
+
 // Saves brought over from an old address (shared/carry.js): tickets added, prizes counted in.
 export function merge(tickets, prizes = {}) {
   const w = read();

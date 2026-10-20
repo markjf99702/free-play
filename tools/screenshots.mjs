@@ -28,9 +28,10 @@ const browser = await pw.chromium.launch();
 await mkdir(join(root, 'docs'), { recursive: true });
 await mkdir(join(root, 'floor'), { recursive: true });
 
-// A regular: some tickets, a few prizes, a best on each machine and today's card played.
+// A regular: some tickets, a few prizes, a best on each machine and today's card played, and three plush from the claw.
 const SAVES = {
-  'free-play.wallet': { tickets: 214, prizes: { lollipop: 2, 'spider-ring': 1, duck: 1, dinosaur: 1 } },
+  'free-play.wallet': { tickets: 214, prizes: { lollipop: 2, 'spider-ring': 1, duck: 1, dinosaur: 1, 'plush-frog': 2, 'plush-ghost': 1 } },
+  'free-play.clutch': { goes: 11, won: { frog: 2, ghost: 1 }, sound: true },
   'free-play.roll-up': { best: 340, games: 7, sound: true },
   'free-play.tilt': { table: 'classic', scores: [{ score: 412650, date: '2026-10-17' }], spaceScores: [{ score: 288400, date: '2026-10-18' }] },
 };
@@ -83,6 +84,27 @@ async function rollUpBoard(page) {
   await page.context().close();
 }
 
+// Clutch: the claw coming up out of the heap with a plush. (The plush and the grabs are dealt from the fixed
+// Math.random, so it's the same go every time; a go that comes up empty is skipped.)
+{
+  const page = await open('clutch/', { width: 390, height: 844 }, 2);
+  await page.click('#play');
+  for (let tries = 0; tries < 8; tries++) {
+    await page.waitForFunction(() => clutch.state === 'ready' && document.getElementById('win').hidden || !document.getElementById('win').hidden, null, { timeout: 30000 });
+    await page.evaluate(() => {
+      document.getElementById('more').click();
+      const top = clutch.machine.toys.filter(t => t.position.x > 220).sort((a, b) => a.position.y - b.position.y)[0];
+      clutch.go(top.position.x);
+    });
+    await page.waitForFunction(() => clutch.state === 'carry' || (clutch.state === 'lift' && clutch.machine.claw.y < 350), null, { timeout: 20000 });
+    if (await page.evaluate(() => clutch.state === 'lift' && !!clutch.machine.held)) break;
+  }
+  const [a, b] = await page.evaluate(() => [clutch.draw.at(0, 250), clutch.draw.at(600, 700)]);
+  await page.screenshot({ path: join(root, 'floor/clutch.jpg'), type: 'jpeg', quality: 82, clip: { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y } });
+  await page.screenshot({ path: join(root, 'docs/phone-clutch.png') });
+  await page.context().close();
+}
+
 // The floor, a game of Tilt paying out, and the prize counter.
 {
   const page = await open('', { width: 390, height: 844 }, 2);
@@ -105,7 +127,7 @@ async function rollUpBoard(page) {
   await page.context().close();
 }
 
-// Link preview, 1200 x 630: the sign and one line on the left, the two machines' screens on the right.
+// Link preview, 1200 x 630: the sign and one line on the left, the machines' screens on the right.
 {
   const page = await open('', { width: 1200, height: 630 }, 1);
   const data = async (f, type) => `data:${type};base64,${(await readFile(join(root, f))).toString('base64')}`;
@@ -115,19 +137,20 @@ async function rollUpBoard(page) {
     @font-face { font-family: Figtree; src: url(${await data('fonts/figtree.woff2', 'font/woff2')}); font-weight: 300 900; }
     html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
     body { background: radial-gradient(ellipse at 30% 0%, rgba(255,95,162,.2), transparent 60%), #0d0b1f; color: #fbeed2; font-family: Figtree; position: relative; }
-    .left { position: absolute; left: 70px; top: 0; bottom: 0; width: 560px; display: flex; flex-direction: column; justify-content: center; }
+    .left { position: absolute; left: 70px; top: 0; bottom: 0; width: 470px; display: flex; flex-direction: column; justify-content: center; }
     h1 { margin: 0; font: 400 128px/.92 Outline; }
     .free { color: #ffd0e3; text-shadow: 0 0 4px #ff5fa2, 0 0 16px #ff5fa2, 0 0 40px rgba(255,95,162,.7); display: block; }
     .play { color: #d6fffb; text-shadow: 0 0 4px #4ff0e0, 0 0 16px #4ff0e0, 0 0 40px rgba(79,240,224,.7); display: block; }
-    p { margin: 34px 0 0; font-size: 36px; line-height: 1.25; font-weight: 600; }
+    p { margin: 34px 0 0; font-size: 34px; line-height: 1.25; font-weight: 600; }
     small { display: block; margin-top: 20px; font-size: 24px; color: rgba(251,238,210,.6); }
-    .shot { position: absolute; width: 420px; height: 315px; border-radius: 16px; border: 10px solid #050407; box-shadow: 0 24px 60px rgba(0,0,0,.6); background: center / cover; }
-    .a { right: 150px; top: 40px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #f2c14e, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/roll-up.jpg', 'image/jpeg')}); }
-    .b { right: 56px; top: 280px; transform: rotate(4deg); box-shadow: 0 0 0 3px #ffa53a, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
+    .shot { position: absolute; width: 360px; height: 270px; border-radius: 14px; border: 9px solid #050407; box-shadow: 0 24px 60px rgba(0,0,0,.6); background: center / cover; }
+    .a { right: 210px; top: 26px; transform: rotate(-4deg); box-shadow: 0 0 0 3px #f2c14e, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/roll-up.jpg', 'image/jpeg')}); }
+    .b { right: 40px; top: 150px; transform: rotate(4deg); box-shadow: 0 0 0 3px #ffa53a, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
+    .c { right: 250px; top: 330px; transform: rotate(-1deg); box-shadow: 0 0 0 3px #ff5fa2, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/clutch.jpg', 'image/jpeg')}); }
   </style></head><body>
     <div class="left"><h1><span class="free">Free</span><span class="play">Play</span></h1>
-      <p>An arcade on your phone: <span style="white-space:nowrap">skee-ball</span>, pinball and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
-    <div class="shot a"></div><div class="shot b"></div>
+      <p>An arcade on your phone: <span style="white-space:nowrap">skee-ball</span>, pinball, a claw machine and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
+    <div class="shot a"></div><div class="shot c"></div><div class="shot b"></div>
   </body></html>`);
   await page.evaluate(() => document.fonts.ready);
   const png = await page.screenshot();

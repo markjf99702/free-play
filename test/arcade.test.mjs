@@ -7,7 +7,7 @@ const kept = new Map();
 globalThis.localStorage = { getItem: k => (kept.has(k) ? kept.get(k) : null), setItem: (k, v) => kept.set(k, String(v)), removeItem: k => kept.delete(k) };
 globalThis.dispatchEvent = () => true;
 const wallet = await import('../shared/wallet.js');
-const { PRIZES } = await import('../shared/prizes.js');
+const { PRIZES, PLUSH, SHELF } = await import('../shared/prizes.js');
 const { TABLES } = await import('../tilt/js/tables.js');
 
 test('every machine pays into one wallet, and the counter spends from it', () => {
@@ -22,6 +22,15 @@ test('every machine pays into one wallet, and the counter spends from it', () =>
   assert.deepEqual(wallet.read(), { tickets: 31, prizes: { lollipop: 2 } });
   wallet.merge(57, { duck: 1, lollipop: 1 });
   assert.deepEqual(wallet.read(), { tickets: 88, prizes: { lollipop: 3, duck: 1 } }, 'carried saves add to what is there');
+});
+
+test('a plush from the claw goes straight on the shelf, and costs nothing', () => {
+  kept.clear();
+  wallet.pay(12);
+  const frog = PLUSH.find(p => p.kind === 'frog');
+  wallet.give(frog); wallet.give(frog);
+  assert.deepEqual(wallet.read(), { tickets: 12, prizes: { 'plush-frog': 2 } });
+  assert.ok(SHELF.includes(frog) && !PRIZES.includes(frog), "it's on the shelf, but not for sale at the counter");
 });
 
 test('a wallet someone has meddled with reads as something sensible', () => {

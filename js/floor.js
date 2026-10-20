@@ -1,10 +1,10 @@
 // The Free Play floor: the tickets in your pocket, what each machine remembers about you, and the prize counter.
-// Each machine keeps its own save (free-play.roll-up, free-play.tilt); the tickets and prizes are the arcade's
-// (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
+// Each machine keeps its own save (free-play.roll-up, free-play.tilt, free-play.clutch); the tickets and prizes are
+// the arcade's (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
 import { openCounter } from '../shared/counter.js';
-import { PRIZES } from '../shared/prizes.js';
+import { SHELF } from '../shared/prizes.js';
 import { dayKey } from '../roll-up/js/daily.js';
 
 const $ = id => document.getElementById(id);
@@ -31,6 +31,14 @@ function machines() {
     if (top && (!best || +top.score > best.score)) best = { score: +top.score, name };
   }
   $('tiltStat').textContent = best ? `Best ${fmt(best.score)}, on ${best.name}.` : 'Three balls a game. Nudge, but not too hard.';
+
+  // Clutch: how many plush it's given you, and whether one was the lucky star.
+  const c = readSave('free-play.clutch');
+  const won = c.won && typeof c.won === 'object' ? c.won : {};
+  const plush = Object.values(won).reduce((n, k) => n + (Number(k) || 0), 0);
+  $('clutchStat').textContent = plush
+    ? `${fmt(plush)} plush won${won.star ? ', a lucky star among them' : ''}.`
+    : 'Pays in plush, straight onto your shelf.';
 }
 
 function pocket() {
@@ -38,7 +46,7 @@ function pocket() {
   $('tix').textContent = fmt(w.tickets);
   const shelf = $('shelf');
   shelf.replaceChildren();
-  const owned = PRIZES.filter(p => w.prizes[p.id]);
+  const owned = SHELF.filter(p => w.prizes[p.id]);
   if (!owned.length) {
     const e = document.createElement('span');
     e.className = 'empty';

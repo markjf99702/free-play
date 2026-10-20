@@ -18,3 +18,18 @@ export const PRIZES = [
   { id: 'bear', emoji: '🧸', name: 'Giant teddy bear', cost: 1500, say: 'a giant teddy bear' },
   { id: 'unicorn', emoji: '🦄', name: 'Enormous unicorn', cost: 2500, say: 'an enormous unicorn' },
 ];
+
+// The plush in Clutch, the claw machine. They're won outright, not traded for, so they sit on the shelf but not on the
+// counter. kind is the machine's name for each (clutch/js/machine.js).
+export const PLUSH = [
+  { id: 'plush-bear', kind: 'bear', emoji: '🐻', name: 'Plush bear', say: 'a plush bear' },
+  { id: 'plush-chick', kind: 'chick', emoji: '🐥', name: 'Plush chick', say: 'a plush chick' },
+  { id: 'plush-frog', kind: 'frog', emoji: '🐸', name: 'Plush frog', say: 'a plush frog' },
+  { id: 'plush-ghost', kind: 'ghost', emoji: '👻', name: 'Plush ghost', say: 'a plush ghost' },
+  { id: 'plush-penguin', kind: 'penguin', emoji: '🐧', name: 'Plush penguin', say: 'a plush penguin' },
+  { id: 'plush-alien', kind: 'alien', emoji: '👽', name: 'Plush alien', say: 'a plush alien' },
+  { id: 'plush-star', kind: 'star', emoji: '🌟', name: 'Lucky star', say: 'the lucky star' },
+];
+
+// Everything that can sit on the shelf, in the order it sits there.
+export const SHELF = [...PRIZES, ...PLUSH];

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="../shared/carry.js"></script>
+  <title>Clutch · Free Play</title>
+  <meta name="description" content="A claw machine on your phone, full of plush and set to free play. Hold the button to move the claw, let go to drop it, and whatever it carries to the chute goes on your prize shelf.">
+  <meta property="og:title" content="Clutch, at Free Play">
+  <meta property="og:description" content="A claw machine on your phone, full of plush, on free play.">
+  <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
+  <meta property="og:url" content="https://free-play.junkdrawer.works/clutch/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#140b26">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icon-180.png">
+  <link rel="preload" href="../fonts/bungee.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../shared/arcade.css">
+  <link rel="stylesheet" href="css/clutch.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ticket" viewBox="0 0 24 16">
+      <path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/>
+      <path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/>
+      <circle cx="15" cy="8" r="2.6" fill="#fbeed2"/>
+    </symbol>
+  </svg>
+
+  <canvas id="stage" aria-label="A claw machine: a glass box heaped with plush toys, and the claw up in the corner over the prize chute"></canvas>
+
+  <header class="hud">
+    <div class="score"><small>Plush won</small><b id="won">0</b></div>
+    <div class="right">
+      <button type="button" class="tix" id="tixBtn" aria-label="Prize counter"><svg><use href="#ticket"/></svg><span id="tix">0</span></button>
+      <button type="button" class="menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="deck" id="deck">
+    <span class="say">Hold to move <br>the claw</span>
+    <button type="button" class="hold" id="hold" aria-label="Hold to move the claw, let go to drop it"><span>Hold</span></button>
+    <span class="say">Let go <br>to drop it</span>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+
+  <section class="card" id="title">
+    <a class="floor to-floor" href="../">← Free Play</a>
+    <div class="marquee"><h1>Clutch</h1></div>
+    <p class="lede">A claw machine full of plush, on free play. Whatever you win goes on your shelf.</p>
+    <p class="how">Hold the button and the claw slides across. Let go and it drops, grabs, and carries what it caught back to the chute. Catch one square in the middle; one caught by the edge tends to slip. Now and then there's a lucky star in there.</p>
+    <div class="row">
+      <button type="button" class="big" id="play">Play</button>
+      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="best" id="titleBest"></p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <section class="card" id="win" hidden>
+    <canvas class="art" id="winArt" aria-hidden="true"></canvas>
+    <h2 id="winT">You got a plush frog.</h2>
+    <p class="how" id="winHow">It's on your shelf now, with your prizes.</p>
+    <div class="row">
+      <button type="button" class="big" id="more">Keep going</button>
+      <button type="button" class="plain" id="winShelf">See your shelf</button>
+    </div>
+  </section>
+
+  <section class="card" id="menu" hidden>
+    <h2>Paused</h2>
+    <div class="col">
+      <button type="button" class="big" id="resume">Keep playing</button>
+      <button type="button" class="plain" id="menuPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      <button type="button" class="plain" id="sound" aria-pressed="true">Sound: on</button>
+      <a class="plain to-floor" href="../">Back to the arcade</a>
+    </div>
+    <p class="how">On a keyboard: hold Space (or →) to move the claw, and let go to drop it.</p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <noscript><p class="noscript">Clutch needs JavaScript to work the claw.</p></noscript>
+  <script src="js/matter.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

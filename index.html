@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script src="shared/carry.js"></script>
   <title>Free Play</title>
-  <meta name="description" content="An arcade on your phone. Skee-ball and three pinball tables, every machine on free play, and one pocketful of tickets for the prize counter.">
+  <meta name="description" content="An arcade on your phone. Skee-ball, three pinball tables and a claw machine full of plush, every one on free play, and one pocketful of tickets for the prize counter.">
   <meta property="og:title" content="Free Play">
-  <meta property="og:description" content="An arcade on your phone: skee-ball, pinball and a prize counter.">
+  <meta property="og:description" content="An arcade on your phone: skee-ball, pinball, a claw machine and a prize counter.">
   <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
   <meta property="og:url" content="https://free-play.junkdrawer.works/">
   <meta name="twitter:card" content="summary_large_image">
@@ -24,7 +24,7 @@
 <body>
   <header class="door">
     <h1 class="sign" aria-label="Free Play"><span class="free">Free</span> <span class="play">Play</span></h1>
-    <p class="lede">An arcade on your phone. Every machine is set to free play, and pays out tickets for the prize counter.</p>
+    <p class="lede">An arcade on your phone. Every machine is set to free play. The games pay out tickets for the prize counter, and the claw pays out plush.</p>
     <button type="button" class="purse" id="purse"><svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg><b id="tix">0</b> tickets</button>
   </header>
 
@@ -49,12 +49,22 @@
         <span class="go">Play</span>
       </span>
     </a>
+    <a class="cab clutch" href="clutch/">
+      <span class="marquee"><span>Clutch</span></span>
+      <span class="screen"><img src="floor/clutch.jpg" width="600" height="450" alt="Clutch's glass box: the claw lifting a plush off a heap of bears, frogs, chicks, ghosts, penguins and aliens"></span>
+      <span class="panel">
+        <span class="what">A claw machine full of plush. Hold the button to move the claw, let go to drop it, and keep whatever it carries to the chute.</span>
+        <span class="stat" id="clutchStat">Pays in plush, straight onto your shelf.</span>
+        <span class="coin" aria-hidden="true">Free play</span>
+        <span class="go">Play</span>
+      </span>
+    </a>
   </main>
 
   <section class="booth" aria-labelledby="boothH">
     <div class="booth-in">
       <h2 id="boothH">Prize counter</h2>
-      <p class="booth-what">Every machine pays into the same pocketful of tickets. Trade them for something on the shelf.</p>
+      <p class="booth-what">Every game pays into the same pocketful of tickets. Trade them for something to put on your shelf, next to anything the claw has given you.</p>
       <div class="shelf" id="shelf"></div>
       <button type="button" class="trade" id="trade">Trade tickets</button>
     </div>

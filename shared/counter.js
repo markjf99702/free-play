@@ -1,7 +1,7 @@
 // The prize counter, the ticket dispenser and a small toast, for every page on the floor.
 // The counter builds itself the first time it opens, so a page only needs shared/arcade.css and a button.
 
-import { PRIZES } from './prizes.js';
+import { PRIZES, SHELF } from './prizes.js';
 import { read, buy } from './wallet.js';
 
 export const TICKET = '<svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg>';
@@ -37,7 +37,7 @@ function render() {
   sheet.querySelector('.fp-bal b').textContent = w.tickets;
   const shelf = sheet.querySelector('.fp-shelf');
   shelf.replaceChildren();
-  const owned = PRIZES.filter(p => w.prizes[p.id]);
+  const owned = SHELF.filter(p => w.prizes[p.id]);
   if (!owned.length) {
     const e = document.createElement('span');
     e.className = 'fp-empty';

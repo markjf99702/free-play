@@ -1,7 +1,8 @@
 // Walks round the Free Play floor in Chromium through the real pages:  node test/e2e.mjs  (needs Playwright)
 // In from the floor to each machine and back, with the tickets each one pays adding up in the one wallet, the prize
 // counter from the floor, every file the pages load kept for offline, Chrome offering to install it, and all of it
-// opening again offline. (test/roll-up.e2e.mjs and test/tilt.e2e.mjs play the machines themselves in depth.)
+// opening again offline. (test/roll-up.e2e.mjs, test/tilt.e2e.mjs and test/clutch.e2e.mjs play the machines
+// themselves in depth.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -40,7 +41,7 @@ await page.evaluate(() => document.fonts.ready);
 
 // The floor: the sign, a cabinet for each machine, an empty pocket and an empty shelf.
 assert.equal(await page.textContent('#tix'), '0');
-assert.equal(await page.locator('.cab').count(), 2);
+assert.equal(await page.locator('.cab').count(), 3);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
 assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
@@ -80,6 +81,20 @@ await page.click('#over a.ghost');
 await page.waitForURL(base);
 assert.match(await page.textContent('#tiltStat'), /154,320, on Classic/);
 
+// Clutch: in from the floor, a go, and back by its menu.
+await page.click('.cab.clutch');
+await page.waitForURL(base + 'clutch/');
+assert.equal(await page.textContent('#tix'), String(await tickets()), "Clutch's scoreboard shows the arcade's tickets");
+await page.click('#play');
+await page.evaluate(() => { clutch.speed = 4; clutch.go(400); });
+await page.waitForFunction(() => clutch.state === 'move');
+await page.waitForFunction(() => clutch.state === 'ready', null, { timeout: 20000 });
+await page.evaluate(() => { if (!document.getElementById('win').hidden) document.getElementById('more').click(); });
+await page.click('#menuBtn');
+await page.click('#menu a.to-floor');
+await page.waitForURL(base);
+assert.match(await page.textContent('#clutchStat'), /plush won|Pays in plush/);
+
 // The prize counter, from the floor.
 const have = await tickets();
 await page.click('#trade');
@@ -104,19 +119,19 @@ assert.deepEqual(errors, []);
 
 // The floor on a wide screen: the cabinets side by side, nothing sideways.
 await page.setViewportSize({ width: 1280, height: 860 });
-const [a, b] = await page.locator('.cab').evaluateAll(els => els.map(e => e.getBoundingClientRect().top));
-assert.ok(Math.abs(a - b) < 8, 'the cabinets stand side by side on a wide screen'); // (a hovered one lifts a little)
+const tops = await page.locator('.cab').evaluateAll(els => els.map(e => e.getBoundingClientRect().top));
+assert.ok(Math.max(...tops) - Math.min(...tops) < 8, 'the cabinets stand side by side on a wide screen'); // (a hovered one lifts a little)
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 await page.setViewportSize({ width: 390, height: 844 });
 
-// Offline: the floor and both machines open again.
+// Offline: the floor and every machine open again.
 await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 }).catch(() => {});
 await ctx.setOffline(true);
-for (const path of ['', 'roll-up/', 'tilt/']) {
+for (const path of ['', 'roll-up/', 'tilt/', 'clutch/']) {
   await page.goto(base + path);
-  assert.ok(await page.evaluate(() => !!(window.freePlay || window.rollUp || window.tilt)), `${path || 'the floor'} did not open offline`);
+  assert.ok(await page.evaluate(() => !!(window.freePlay || window.rollUp || window.tilt || window.clutch)), `${path || 'the floor'} did not open offline`);
 }
-assert.ok(await page.evaluate(() => !!window.tilt), 'offline, tilt/ opened the floor instead of Tilt');
+assert.ok(await page.evaluate(() => !!window.clutch), 'offline, clutch/ opened the floor instead of Clutch');
 await ctx.setOffline(false);
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
