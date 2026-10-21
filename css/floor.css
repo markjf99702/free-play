@@ -1,6 +1,6 @@
 /* Free Play's floor: arcade carpet underfoot, a neon sign over the door, a cabinet for each machine, and the prize
    counter at the back. Each cabinet wears its own game's colours: Roll Up's red and gold marquee, Tilt's amber backbox,
-   Clutch's candy pink, Topple's teal and gold. */
+   Clutch's candy pink, Topple's teal and gold, Highrise's blue neon on midnight. */
 
 @font-face { font-family: "Bungee Outline"; src: url(../fonts/bungee-outline.woff2) format("woff2"); font-weight: 400; font-display: swap; }
 
@@ -69,6 +69,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cab:focus-visible { outline-offset: 6px; }
 .cab.tilt { --trim: #ffa53a; --trim2: #6a3a0c; --go: linear-gradient(#ffb04d, #f07a1a); --go-edge: #a2420c; --go-ink: #2a1200; }
 .cab.clutch { --trim: #ff5fa2; --trim2: #8a1446; --go: linear-gradient(#ff6aa8, #e0347a); --go-edge: #7d0c3c; --go-ink: #fff; }
+.cab.highrise { --trim: #5cc8ff; --trim2: #1a2068; --go: linear-gradient(#8bdcff, #3b9ee0); --go-edge: #154e86; --go-ink: #06213d; }
 .cab.topple { --trim: #16a39b; --trim2: #085451; --go: linear-gradient(#ffd56e, #e5a830); --go-edge: #7a5410; --go-ink: #3a2405; }
 
 .marquee {
@@ -90,6 +91,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .clutch .marquee {
   color: #ffd0e3; background: #170a26; border: 2px solid #ffd36a; letter-spacing: .06em;
   text-shadow: 0 0 6px #ff5fa2, 0 0 16px #ff5fa2, 0 0 30px rgba(255, 95, 162, .6);
+}
+.highrise .marquee {
+  color: #dff4ff; background: #060a1e; border: 2px solid #f2c14e; letter-spacing: .05em;
+  text-shadow: 0 0 6px #5cc8ff, 0 0 16px #5cc8ff, 0 0 30px rgba(92, 200, 255, .55);
 }
 .topple .marquee { color: #f2c14e; background: #0b1d29; border: 2px solid #f2c14e; letter-spacing: .05em; text-shadow: 3px 3px 0 #ff6b57; }
 .tilt .marquee {

@@ -1,8 +1,7 @@
 // Walks round the Free Play floor in Chromium through the real pages:  node test/e2e.mjs  (needs Playwright)
 // In from the floor to each machine and back, with the tickets each one pays adding up in the one wallet, the prize
 // counter from the floor, every file the pages load kept for offline, Chrome offering to install it, and all of it
-// opening again offline. (test/roll-up.e2e.mjs, test/tilt.e2e.mjs, test/clutch.e2e.mjs and test/topple.e2e.mjs play
-// the machines themselves in depth.)
+// opening again offline. (Each machine's own browser test, test/<machine>.e2e.mjs, plays it in depth.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -41,7 +40,7 @@ await page.evaluate(() => document.fonts.ready);
 
 // The floor: the sign, a cabinet for each machine, an empty pocket and an empty shelf.
 assert.equal(await page.textContent('#tix'), '0');
-assert.equal(await page.locator('.cab').count(), 4);
+assert.equal(await page.locator('.cab').count(), 5);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
 assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
@@ -103,10 +102,26 @@ await page.click('#play');
 await page.evaluate(() => { topple.speed = 4; });
 for (let i = 0; i < 6; i++) { await page.waitForFunction(() => topple.machine.ready); await page.evaluate(() => topple.drop(150)); }
 await page.waitForFunction(() => topple.cup.won > 0, null, { timeout: 20000 });
-assert.equal(await tickets(), beforeTopple + await page.evaluate(() => topple.cup.won), 'Topple pays a ticket for every coin over the edge');
+// (read together: the coins keep going over while the test looks)
+const [paid, won] = await page.evaluate(() => [JSON.parse(localStorage.getItem('free-play.wallet')).tickets, topple.cup.won]);
+assert.equal(paid, beforeTopple + won, 'Topple pays a ticket for every coin over the edge');
 await page.click('#menuBtn');
 await page.click('#menu a.to-floor');
 await page.waitForURL(base);
+
+// Highrise: in from the floor, a few floors and their tickets, and back.
+const beforeHighrise = await tickets();
+await page.click('.cab.highrise');
+await page.waitForURL(base + 'highrise/');
+await page.click('#play');
+for (let i = 0; i < 4; i++) { await page.waitForFunction(() => highrise.ready); await page.evaluate(() => highrise.stopAt(3)); }
+await page.waitForFunction(() => highrise.ready);
+await page.evaluate(() => highrise.stopAt(0));
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+assert.equal(await tickets(), beforeHighrise + 4, 'Highrise pays a ticket a floor');
+await page.click('#over .back a');
+await page.waitForURL(base);
+assert.equal(await page.textContent('#highriseStat'), 'Highest: floor 4.');
 
 // The prize counter, from the floor.
 const have = await tickets();
@@ -140,11 +155,11 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Offline: the floor and every machine open again.
 await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 }).catch(() => {});
 await ctx.setOffline(true);
-for (const path of ['', 'roll-up/', 'tilt/', 'clutch/', 'topple/']) {
+for (const path of ['', 'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/']) {
   await page.goto(base + path);
-  assert.ok(await page.evaluate(() => !!(window.freePlay || window.rollUp || window.tilt || window.clutch || window.topple)), `${path || 'the floor'} did not open offline`);
+  assert.ok(await page.evaluate(() => !!(window.freePlay || window.rollUp || window.tilt || window.clutch || window.topple || window.highrise)), `${path || 'the floor'} did not open offline`);
 }
-assert.ok(await page.evaluate(() => !!window.topple), 'offline, topple/ opened the floor instead of Topple');
+assert.ok(await page.evaluate(() => !!window.highrise), 'offline, highrise/ opened the floor instead of Highrise');
 await ctx.setOffline(false);
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');

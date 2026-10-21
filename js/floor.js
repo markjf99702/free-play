@@ -1,6 +1,7 @@
 // The Free Play floor: the tickets in your pocket, what each machine remembers about you, and the prize counter.
-// Each machine keeps its own save (free-play.roll-up, free-play.tilt, free-play.clutch, free-play.topple); the tickets
-// and prizes are the arcade's (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
+// Each machine keeps its own save (free-play.roll-up, free-play.tilt, free-play.clutch, free-play.topple,
+// free-play.highrise); the tickets and prizes are the arcade's (../shared/wallet.js). Nothing here changes a machine's
+// save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
 import { openCounter } from '../shared/counter.js';
@@ -46,6 +47,13 @@ function machines() {
   $('toppleStat').textContent = tp.cups
     ? `Best cup: ${fmt(tp.best || 0)} tickets.${prizes ? ` ${prizes} ${prizes === 1 ? 'prize' : 'prizes'} pushed off.` : ''}`
     : 'Twenty coins a cup, and a prize on the deck.';
+
+  // Highrise: the highest floor built, and how often it's been topped out.
+  const hr = readSave('free-play.highrise');
+  const tops = Number(hr.tops) || 0;
+  $('highriseStat').textContent = hr.games
+    ? `Highest: floor ${hr.best || 0}.${tops ? ` Topped out ${tops === 1 ? 'once' : tops === 2 ? 'twice' : `${tops} times`}.` : ''}`
+    : 'Fifteen floors. Every one is a ticket.';
 }
 
 function pocket() {

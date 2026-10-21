@@ -2,12 +2,14 @@
 // Anything the person saves lives in localStorage, not here.
 // Network first, so a new version shows up as soon as you're online.
 
-const CACHE = 'free-play-v3'; // bump the number when the file list changes
+const CACHE = 'free-play-v4'; // bump the number when the file list changes
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
-  'roll-up/', 'tilt/', 'clutch/', 'topple/', // the machines by their addresses as well as by index.html, so either opens offline
+  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', // the machines by their addresses as well as by index.html,
+  // so either opens offline
   // floor
-  'css/floor.css', 'js/floor.js', 'floor/clutch.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
+  'css/floor.css', 'js/floor.js', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg',
+  'floor/topple.jpg',
   // shared
   'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/matter.min.js', 'shared/prizes.js',
   'shared/wallet.js',
@@ -29,6 +31,9 @@ const SHELL = [
   // Topple
   'topple/css/topple.css', 'topple/index.html', 'topple/js/app.js', 'topple/js/draw.js', 'topple/js/machine.js',
   'topple/js/sound.js',
+  // Highrise
+  'highrise/css/highrise.css', 'highrise/index.html', 'highrise/js/app.js', 'highrise/js/draw.js', 'highrise/js/sound.js',
+  'highrise/js/tower.js',
 ];
 
 self.addEventListener('install', e => {

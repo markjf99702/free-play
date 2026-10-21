@@ -41,5 +41,10 @@ export const TRINKETS = [
   { id: 'trinket-gem', kind: 'gem', emoji: '💎', name: 'Giant plastic gem', say: 'a giant plastic gem', rare: true },
 ];
 
+// Trophies, for the machines' hardest feats: Highrise's, for building all fifteen floors.
+export const TROPHIES = [
+  { id: 'trophy-highrise', emoji: '🏆', name: 'Highrise trophy', say: 'the Highrise trophy' },
+];
+
 // Everything that can sit on the shelf, in the order it sits there.
-export const SHELF = [...PRIZES, ...PLUSH, ...TRINKETS];
+export const SHELF = [...PRIZES, ...PLUSH, ...TRINKETS, ...TROPHIES];

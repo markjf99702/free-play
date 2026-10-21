@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="../shared/carry.js"></script>
+  <title>Highrise · Free Play</title>
+  <meta name="description" content="A stacker on your phone. Build a tower a floor at a time: stop the sliding row on the one below, and whatever hangs over falls off. Floor 11 pays a bonus, and the top floor pays the trophy.">
+  <meta property="og:title" content="Highrise, at Free Play">
+  <meta property="og:description" content="A stacker on your phone: build the tower to the top floor for the trophy.">
+  <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
+  <meta property="og:url" content="https://free-play.junkdrawer.works/highrise/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0f2c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icon-180.png">
+  <link rel="preload" href="../fonts/bungee.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../shared/arcade.css">
+  <link rel="stylesheet" href="css/highrise.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ticket" viewBox="0 0 24 16">
+      <path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/>
+      <path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/>
+      <circle cx="15" cy="8" r="2.6" fill="#fbeed2"/>
+    </symbol>
+  </svg>
+
+  <canvas id="stage" aria-label="A stacker: a tower against a night skyline, its windows a grid seven across and fifteen floors high, with a row of lit windows sliding along the floor being built"></canvas>
+
+  <header class="hud">
+    <div class="score"><small>Floor</small><b id="floorNo">1</b></div>
+    <div class="right">
+      <button type="button" class="tix" id="tixBtn" aria-label="Prize counter"><svg><use href="#ticket"/></svg><span id="tix">0</span></button>
+      <button type="button" class="menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="deck" id="deck">
+    <span class="say">Stop it on the floor below</span>
+    <button type="button" class="stop" id="stop" aria-label="Stop the row"><span>Stop</span></button>
+    <span class="say">Prizes at floors 11 and 15</span>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+
+  <section class="card" id="title">
+    <a class="floor to-floor" href="../">← Free Play</a>
+    <div class="marquee"><h1>Highrise</h1></div>
+    <p class="lede">A stacker. Build the tower a floor at a time, all the way to the top.</p>
+    <p class="how">A row of lit windows slides along each floor: press Stop to set it down on the floor below. Windows hanging over the edge fall off, and the next row is only as wide as what stayed up. It speeds up as it climbs, with two windows at most from floor 6 and one from floor 11. Every floor is a ticket. At floor 11 you can take 25 more and stop, or keep going: the top floor pays the trophy and 200.</p>
+    <div class="row">
+      <button type="button" class="big" id="play">Play</button>
+      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="best" id="titleBest"></p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <section class="card" id="choose" hidden>
+    <h2>Floor 11!</h2>
+    <p class="lede">Take the minor prize and stop here, or keep building for the top?</p>
+    <p class="how">Stop now and you get 25 tickets on top of your 11. Keep going and the top floor pays the trophy and 200, but if the tower stops short, the 25 is gone.</p>
+    <div class="row">
+      <button type="button" class="big" id="takeMinor">Take the 25</button>
+      <button type="button" class="big alt" id="keepGoing">Keep going</button>
+    </div>
+  </section>
+
+  <section class="card" id="over" hidden>
+    <h2 id="overT">Eight floors</h2>
+    <p class="how" id="overHow"></p>
+    <div class="fp-payout" id="payout"></div>
+    <p class="best" id="overBest"></p>
+    <div class="row">
+      <button type="button" class="big" id="again">Build again</button>
+      <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+  </section>
+
+  <section class="card" id="menu" hidden>
+    <h2>Paused</h2>
+    <div class="col">
+      <button type="button" class="big" id="resume">Keep playing</button>
+      <button type="button" class="plain" id="menuPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      <button type="button" class="plain" id="sound" aria-pressed="true">Sound: on</button>
+      <a class="plain to-floor" href="../">Back to the arcade</a>
+    </div>
+    <p class="how">On a keyboard: Space (or ↓) stops the row.</p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <noscript><p class="noscript">Highrise needs JavaScript to light the windows.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

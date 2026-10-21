@@ -28,12 +28,13 @@ const browser = await pw.chromium.launch();
 await mkdir(join(root, 'docs'), { recursive: true });
 await mkdir(join(root, 'floor'), { recursive: true });
 
-// A regular: some tickets, a few prizes, a best on each machine and today's card played, three plush from the claw and
-// a toy car pushed off Topple's deck.
+// A regular: some tickets, a few prizes, a best on each machine and today's card played, three plush from the claw,
+// a toy car pushed off Topple's deck, and Highrise built to floor 12.
 const SAVES = {
   'free-play.wallet': { tickets: 214, prizes: { lollipop: 2, 'spider-ring': 1, duck: 1, dinosaur: 1, 'plush-frog': 2, 'plush-ghost': 1, 'trinket-car': 1 } },
   'free-play.clutch': { goes: 11, won: { frog: 2, ghost: 1 }, sound: true },
   'free-play.topple': { best: 34, cups: 6, prizes: 1, sound: true },
+  'free-play.highrise': { best: 12, games: 9, tops: 0, sound: true },
   'free-play.roll-up': { best: 340, games: 7, sound: true },
   'free-play.tilt': { table: 'classic', scores: [{ score: 412650, date: '2026-10-17' }], spaceScores: [{ score: 288400, date: '2026-10-18' }] },
 };
@@ -123,6 +124,19 @@ async function rollUpBoard(page) {
   await page.context().close();
 }
 
+// Highrise: eight floors up, a window falling off the side and the next row sliding along.
+{
+  const page = await open('highrise/', { width: 390, height: 844 }, 2);
+  await page.click('#play');
+  for (const at of [2, 2, 3, 3, 3, 3, 3, 4]) { await page.waitForFunction(() => highrise.ready); await page.evaluate(at => highrise.stopAt(at), at); }
+  await page.waitForTimeout(330);
+  const [g, mid] = await page.evaluate(() => [highrise.draw.grid, highrise.draw.at(3, 7)]);
+  const h = g.w * 0.75;
+  await page.screenshot({ path: join(root, 'floor/highrise.jpg'), type: 'jpeg', quality: 82, clip: { x: g.x, y: mid.y - h / 2, width: g.w, height: h } });
+  await page.screenshot({ path: join(root, 'docs/phone-highrise.png') });
+  await page.context().close();
+}
+
 // The floor, a game of Tilt paying out, and the prize counter.
 {
   const page = await open('', { width: 390, height: 844 }, 2);
@@ -161,15 +175,16 @@ async function rollUpBoard(page) {
     .play { color: #d6fffb; text-shadow: 0 0 4px #4ff0e0, 0 0 16px #4ff0e0, 0 0 40px rgba(79,240,224,.7); display: block; }
     p { margin: 34px 0 0; font-size: 34px; line-height: 1.25; font-weight: 600; }
     small { display: block; margin-top: 20px; font-size: 24px; color: rgba(251,238,210,.6); }
-    .shot { position: absolute; width: 300px; height: 225px; border-radius: 12px; border: 8px solid #050407; box-shadow: 0 24px 60px rgba(0,0,0,.6); background: center / cover; }
-    .a { right: 330px; top: 46px; transform: rotate(-4deg); box-shadow: 0 0 0 3px #f2c14e, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/roll-up.jpg', 'image/jpeg')}); }
-    .b { right: 40px; top: 70px; transform: rotate(3deg); box-shadow: 0 0 0 3px #ffa53a, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
-    .c { right: 350px; top: 330px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ff5fa2, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/clutch.jpg', 'image/jpeg')}); }
-    .d { right: 56px; top: 350px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #16a39b, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/topple.jpg', 'image/jpeg')}); }
+    .shot { position: absolute; width: 232px; height: 174px; border-radius: 10px; border: 7px solid #050407; box-shadow: 0 24px 60px rgba(0,0,0,.6); background: center / cover; }
+    .a { right: 430px; top: 60px; transform: rotate(-4deg); box-shadow: 0 0 0 3px #f2c14e, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/roll-up.jpg', 'image/jpeg')}); }
+    .b { right: 228px; top: 36px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffa53a, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
+    .c { right: 30px; top: 70px; transform: rotate(-2deg); box-shadow: 0 0 0 3px #ff5fa2, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/clutch.jpg', 'image/jpeg')}); }
+    .d { right: 330px; top: 330px; transform: rotate(3deg); box-shadow: 0 0 0 3px #16a39b, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/topple.jpg', 'image/jpeg')}); }
+    .e { right: 110px; top: 350px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #5cc8ff, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/highrise.jpg', 'image/jpeg')}); }
   </style></head><body>
     <div class="left"><h1><span class="free">Free</span><span class="play">Play</span></h1>
-      <p>An arcade on your phone: <span style="white-space:nowrap">skee-ball</span>, pinball, a claw machine, a coin pusher and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
-    <div class="shot a"></div><div class="shot b"></div><div class="shot c"></div><div class="shot d"></div>
+      <p>An arcade on your phone: <span style="white-space:nowrap">skee-ball</span>, pinball, a claw machine, a coin pusher, a stacker and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
+    <div class="shot a"></div><div class="shot b"></div><div class="shot c"></div><div class="shot d"></div><div class="shot e"></div>
   </body></html>`);
   await page.evaluate(() => document.fonts.ready);
   const png = await page.screenshot();
