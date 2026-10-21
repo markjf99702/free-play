@@ -224,12 +224,12 @@ function tick(now) {
   if (mode === 'over' || mode === 'ending' && !cheer) dim = Math.min(1, dim + s);
   if (mode === 'ending' && clock >= ended.at) endGame();
 
-  // the moving row: on the floor being built while playing, and on the ground floor behind the title card
+  // the moving row: on the floor being built while playing (it appears as it sets off, not before, so it never sits
+  // still anywhere), and on the ground floor behind the title card
   let mover = null;
-  if (mode === 'play' || mode === 'title') {
-    const t = mode === 'title' ? clock : clock - rowFrom;
-    const at = tower.moverAt(t);
-    if (mode === 'play' && clock >= rowFrom && at !== shown) sound.tick(tower.floor);
+  if (mode === 'title' || (mode === 'play' && clock >= rowFrom)) {
+    const at = tower.moverAt(mode === 'title' ? clock : clock - rowFrom);
+    if (mode === 'play' && at !== shown) sound.tick(tower.floor);
     shown = at;
     mover = { floor: tower.floor, start: at, width: tower.width };
   }
