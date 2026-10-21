@@ -40,7 +40,7 @@ await page.evaluate(() => document.fonts.ready);
 
 // The floor: the sign, a cabinet for each machine, an empty pocket and an empty shelf.
 assert.equal(await page.textContent('#tix'), '0');
-assert.equal(await page.locator('.cab').count(), 5);
+assert.equal(await page.locator('.cab').count(), 6);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
 assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
@@ -123,6 +123,22 @@ await page.click('#over .back a');
 await page.waitForURL(base);
 assert.equal(await page.textContent('#highriseStat'), 'Highest: floor 4.');
 
+// Popgun: in from the floor, a round, its tickets, and back.
+const beforePopgun = await tickets();
+await page.click('.cab.popgun');
+await page.waitForURL(base + 'popgun/');
+await page.click('#play');
+await page.evaluate(() => { popgun.speed = 4; });
+while (!(await page.evaluate(() => popgun.gallery.over))) {
+  await page.waitForFunction(() => popgun.gallery.ready || popgun.gallery.over);
+  await page.evaluate(() => popgun.fire(280, 420));
+}
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+const shot = await page.evaluate(() => popgun.gallery.score);
+assert.equal(await tickets(), beforePopgun + Math.floor(shot / 20), 'Popgun pays a ticket for every 20 points');
+await page.click('#over .back a');
+await page.waitForURL(base);
+
 // The prize counter, from the floor.
 const have = await tickets();
 await page.click('#trade');
@@ -155,11 +171,11 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Offline: the floor and every machine open again.
 await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 }).catch(() => {});
 await ctx.setOffline(true);
-for (const path of ['', 'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/']) {
+const OFFLINE = { '': 'freePlay', 'roll-up/': 'rollUp', 'tilt/': 'tilt', 'clutch/': 'clutch', 'topple/': 'topple', 'highrise/': 'highrise', 'popgun/': 'popgun' };
+for (const [path, name] of Object.entries(OFFLINE)) {
   await page.goto(base + path);
-  assert.ok(await page.evaluate(() => !!(window.freePlay || window.rollUp || window.tilt || window.clutch || window.topple || window.highrise)), `${path || 'the floor'} did not open offline`);
+  assert.ok(await page.evaluate(name => !!window[name], name), `${path || 'the floor'} did not open offline`);
 }
-assert.ok(await page.evaluate(() => !!window.highrise), 'offline, highrise/ opened the floor instead of Highrise');
 await ctx.setOffline(false);
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');

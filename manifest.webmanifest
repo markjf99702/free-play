@@ -1,7 +1,7 @@
 {
   "name": "Free Play",
   "short_name": "Free Play",
-  "description": "An arcade on your phone: skee-ball, pinball, a claw machine, a coin pusher, a stacker and a prize counter.",
+  "description": "An arcade on your phone: six machines on free play, and a prize counter.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

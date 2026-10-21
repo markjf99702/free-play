@@ -2,7 +2,7 @@
 
 **Play it: [free-play.junkdrawer.works](https://free-play.junkdrawer.works/)**
 
-**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; or Highrise, a stacker. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
+**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; or Popgun, a shooting gallery. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
 
 <p align="center">
   <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket, and the Roll Up cabinet with its red and gold marquee, its screen showing the ring board, and a Play button" width="250">
@@ -18,13 +18,15 @@
   &nbsp;
   <img src="docs/phone-highrise.png" alt="Highrise, a stacker: HIGHRISE in blue neon over a tower against a night skyline, its windows lit eight floors up in warm amber, one window tumbling off the side and the next row sliding along floor 9, with a trophy marked at floor 15 and +25 at floor 11, over a big blue STOP button" width="250">
   &nbsp;
+  <img src="docs/phone-popgun.png" alt="Popgun, a carnival shooting gallery: POPGUN on a bulb-lit sign over a red and cream awning, tin stars, rabbits and ducks running along brass rails in front of a painted night fair with a moon, a rabbit going down with +20 rising off it, and a popgun on the red counter over a tray of 16 corks" width="250">
+  &nbsp;
   <img src="docs/phone-counter.png" alt="The prize counter with 214 tickets: a shelf holding two lollipops, a spider ring, a rubber duck, a toy dinosaur, two plush frogs, a plush ghost and a toy car, above a grid of prizes from a 5-ticket lollipop up" width="250">
 </p>
 
 ## How it plays
 
 - **The floor** has a cabinet for each machine, showing what you've done on it: your best, whether you've played today's card, the plush you've won. Tap one to play. Every machine has a way back to the floor.
-- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, and Highrise one for every floor built.
+- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, and Popgun one for every 20 points.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush.
 - No account and no server. Your tickets, prizes and scores stay in your browser. It works offline, and installs to a phone's home screen as one app.
@@ -108,6 +110,15 @@ A stacker: a tower against a night skyline, its windows the grid, seven across a
 - **It gets harder as it climbs.** Each floor moves a little faster than the one below, from about six windows a second at the bottom to thirteen at the top. Rows are three windows wide to start, two at most from floor 6, and one from floor 11.
 - **Prizes.** Every floor built is a ticket. Floor 11 is the minor prize: take 25 more tickets and stop there, or keep going for the top. Build all fifteen and it pays 200 tickets and the Highrise trophy for your shelf. Keep going and stop short, and the 25 is gone (the floors still pay).
 
+## Popgun
+
+A carnival shooting gallery: a booth with a striped awning, a painted night fair behind, and three rows of tin targets running along brass rails, each row the other way from the one below.
+
+- **Tap a target to fire** a cork at it from the popgun on the counter. (With a mouse, the pointer becomes the sights; on a keyboard, the arrows move them and Space fires.) A round is 20 corks, and the gun takes a moment to reload between them.
+- **Lead the fast ones.** A cork takes about a quarter of a second to reach the back of the booth, and the targets keep moving, so aim a little ahead of them: hardly at all for the ducks, about a star's width for the stars.
+- **What they're worth.** Ducks along the pond at the bottom are 10, rabbits in the middle 20, and the small fast stars up top 50. Now and then a golden duck comes along, worth 100, and a bell, which wins three more corks. Five hits in a row are worth 50 more. A target knocked flat stands up again once it's been round the back of the conveyor.
+- A ticket for every 20 points, paid at the end of the round. (Try the moon.)
+
 ## Where the machines came from
 
 Roll Up and Tilt each had their own address, roll-up.junkdrawer.works and tilt.junkdrawer.works. Those now send you here, keeping anything after the address (`?table=space`, say). A browser keeps each address's saves apart, so the first time Free Play opens, `shared/carry.js` asks each old address for its saves in a hidden frame (each one serves a `carry.html` that answers only Free Play), puts them where Free Play keeps them, and loads the page once more. Roll Up's tickets and prizes go into the arcade's wallet. If an old address doesn't answer, it tries again on the next two visits.
@@ -146,6 +157,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `roll-up/`: Roll Up. `js/physics.js` is the machine in centimetres and the ball on it, `js/scene.js` draws it in perspective, `js/daily.js` is today's card, `js/app.js` runs the game and `js/sound.js` makes every sound with Web Audio.
 - `tilt/`: Tilt. `js/physics.js` and `js/game.js` are the machine every table shares, `js/tables/` holds the three tables (layout, rules, drawing and skins each), and `js/main.js` wires it all to the page.
 - `clutch/`: Clutch. `js/machine.js` is the box, the heap and the claw in millimetres, run by matter-js, `js/draw.js` draws the cabinet and gives each plush its face, `js/app.js` runs the button, the goes and the win card, and `js/sound.js` makes the noises with Web Audio.
+- `popgun/`: Popgun. `js/gallery.js` is the rows, the corks and the score, with a clock that only moves when it's told to, `js/draw.js` draws the booth and the tin targets, `js/app.js` runs the aiming, the round and the tickets, and `js/sound.js` makes the noises.
 - `highrise/`: Highrise. `js/tower.js` is the rules, with no clock of its own, `js/draw.js` draws the tower and the city, `js/app.js` keeps time and runs the stop button and the prizes, and `js/sound.js` makes the noises.
 - `topple/`: Topple. `js/machine.js` is the shelf, the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
 - `floor/`: the pictures on the cabinets' screens.

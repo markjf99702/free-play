@@ -1,6 +1,6 @@
 /* Free Play's floor: arcade carpet underfoot, a neon sign over the door, a cabinet for each machine, and the prize
    counter at the back. Each cabinet wears its own game's colours: Roll Up's red and gold marquee, Tilt's amber backbox,
-   Clutch's candy pink, Topple's teal and gold, Highrise's blue neon on midnight. */
+   Clutch's candy pink, Topple's teal and gold, Highrise's blue neon on midnight, Popgun's carnival red. */
 
 @font-face { font-family: "Bungee Outline"; src: url(../fonts/bungee-outline.woff2) format("woff2"); font-weight: 400; font-display: swap; }
 
@@ -69,6 +69,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cab:focus-visible { outline-offset: 6px; }
 .cab.tilt { --trim: #ffa53a; --trim2: #6a3a0c; --go: linear-gradient(#ffb04d, #f07a1a); --go-edge: #a2420c; --go-ink: #2a1200; }
 .cab.clutch { --trim: #ff5fa2; --trim2: #8a1446; --go: linear-gradient(#ff6aa8, #e0347a); --go-edge: #7d0c3c; --go-ink: #fff; }
+.cab.popgun { --trim: #d63a2f; --trim2: #6b4220; --go: linear-gradient(#e8574b, #c2302a); --go-edge: #6e1712; --go-ink: #fff6e6; }
 .cab.highrise { --trim: #5cc8ff; --trim2: #1a2068; --go: linear-gradient(#8bdcff, #3b9ee0); --go-edge: #154e86; --go-ink: #06213d; }
 .cab.topple { --trim: #16a39b; --trim2: #085451; --go: linear-gradient(#ffd56e, #e5a830); --go-edge: #7a5410; --go-ink: #3a2405; }
 
@@ -80,18 +81,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
   color: var(--ink); background: linear-gradient(#8e1c22, #55101a); border: 2px solid #f2c14e; text-shadow: 0 3px 0 rgba(0, 0, 0, .35);
 }
 .roll-up .marquee::before, .roll-up .marquee::after, .clutch .marquee::before, .clutch .marquee::after,
-.topple .marquee::before, .topple .marquee::after {
+.topple .marquee::before, .topple .marquee::after, .popgun .marquee::before, .popgun .marquee::after {
   content: ""; position: absolute; left: 10px; right: 10px; height: 6px;
   background: radial-gradient(circle, #ffe3a1 0 2px, rgba(255, 210, 120, .35) 2.6px, transparent 3.4px) 0 0 / 14px 6px repeat-x;
   animation: chase .9s steps(2) infinite;
 }
-.roll-up .marquee::before, .clutch .marquee::before, .topple .marquee::before { top: 4px; }
-.roll-up .marquee::after, .clutch .marquee::after, .topple .marquee::after { bottom: 4px; animation-delay: .45s; }
+.roll-up .marquee::before, .clutch .marquee::before, .topple .marquee::before, .popgun .marquee::before { top: 4px; }
+.roll-up .marquee::after, .clutch .marquee::after, .topple .marquee::after, .popgun .marquee::after { bottom: 4px; animation-delay: .45s; }
 @keyframes chase { 50% { background-position: 7px 0; } }
 .clutch .marquee {
   color: #ffd0e3; background: #170a26; border: 2px solid #ffd36a; letter-spacing: .06em;
   text-shadow: 0 0 6px #ff5fa2, 0 0 16px #ff5fa2, 0 0 30px rgba(255, 95, 162, .6);
 }
+.popgun .marquee { color: #fbeed2; background: #2a1a0c; border: 2px solid #f2c14e; letter-spacing: .04em; text-shadow: 3px 3px 0 #8f1f19; }
 .highrise .marquee {
   color: #dff4ff; background: #060a1e; border: 2px solid #f2c14e; letter-spacing: .05em;
   text-shadow: 0 0 6px #5cc8ff, 0 0 16px #5cc8ff, 0 0 30px rgba(92, 200, 255, .55);

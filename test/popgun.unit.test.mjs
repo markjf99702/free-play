@@ -1,0 +1,109 @@
+// Popgun's gallery on its own, without a browser:  node --test test/popgun.unit.test.mjs
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createGallery, ticketsFor, KINDS, ROWS, CORKS, FLIGHT, RELOAD, STREAK, W } from '../popgun/js/gallery.js';
+
+function seeded(a) {
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const run = (g, s) => { for (let i = 0; i < Math.round(s * 60); i++) g.step(1 / 60); };
+// A standing target that will still be in the booth when a cork gets there, and where to aim to meet it.
+function lead(g, kind) {
+  for (const row of g.rows) for (const t of row.targets) {
+    if (t.hit || (kind && t.kind !== kind)) continue;
+    const x = t.x + row.dir * row.speed * FLIGHT;
+    if (x > 60 && x < W - 60) return { t, row, x, y: row.rail - KINDS[t.kind].h / 2 };
+  }
+  return null;
+}
+
+test('the rows run their own ways at their own speeds, and every target comes round again', () => {
+  const g = createGallery({ random: seeded(1) });
+  const before = g.rows.map(r => r.targets.map(t => t.x));
+  run(g, 1);
+  g.rows.forEach((row, i) => row.targets.forEach((t, j) => {
+    const moved = ((t.x - before[i][j]) % row.loop + row.loop) % row.loop;
+    const want = ((ROWS[i].dir * ROWS[i].speed) % row.loop + row.loop) % row.loop;
+    assert.ok(Math.abs(moved - want) < 1, `row ${i} moved ${moved.toFixed(1)}, wanted ${want}`);
+  }));
+  assert.deepEqual(g.rows.map(r => r.dir), [1, -1, 1], 'each row the other way from the one below');
+  run(g, 30);
+  for (const row of g.rows) for (const t of row.targets) assert.ok(t.x >= -row.loop && t.x <= W + row.loop, 'nothing wanders off the conveyor');
+});
+
+test('a cork has to lead a moving target: aimed at where it is, it misses the fast ones', () => {
+  const g = createGallery({ random: seeded(2) });
+  run(g, 0.5);
+  const star = lead(g, 'star');
+  // where it is now, not where it'll be
+  g.fire(star.t.x, star.y);
+  run(g, FLIGHT + 0.02);
+  const e = g.take().find(e => e.miss || e.hit);
+  assert.ok(e.miss, 'a star moves its own width while the cork is in the air');
+  run(g, RELOAD);
+  const s2 = lead(g, 'star');
+  g.fire(s2.x, s2.y);
+  run(g, FLIGHT + 0.02);
+  const e2 = g.take().find(e => e.miss || e.hit);
+  assert.equal(e2.hit, 'star', 'led properly, it hits');
+  assert.equal(g.score, KINDS.star.points);
+  assert.ok(s2.t.hit, 'and the star goes down');
+  run(g, 0.3);
+  assert.equal(s2.t.down, 1);
+});
+
+test('a round is twenty corks, one at a time, and ends when the last has landed', () => {
+  const g = createGallery({ random: seeded(3) });
+  assert.equal(g.corks, CORKS);
+  assert.equal(g.fire(100, 100), true);
+  assert.equal(g.fire(100, 100), false, 'the gun has to reload');
+  for (let i = 1; i < CORKS; i++) { run(g, RELOAD + 0.01); assert.equal(g.fire(100, 100), true); }
+  assert.equal(g.corks, 0);
+  assert.equal(g.over, false, 'the last cork is still in the air');
+  run(g, RELOAD + 0.01);
+  assert.equal(g.fire(100, 100), false, 'no corks left');
+  assert.equal(g.over, true);
+  assert.ok(g.take().includes('over'));
+});
+
+test('a cork in the bell wins three more; five hits in a row are worth fifty more', () => {
+  const g = createGallery({ random: seeded(4) });
+  const bell = g.rows[0].targets.find(t => t.kind !== 'bell');
+  bell.kind = 'bell';
+  let n = 0;
+  while (!lead(g, 'bell') && n++ < 600) g.step(1 / 60);
+  const b = lead(g, 'bell');
+  g.fire(b.x, b.y); run(g, FLIGHT + 0.02);
+  assert.equal(g.corks, CORKS - 1 + 3);
+  const before = g.score;
+  for (let i = 0; i < 4; i++) {
+    run(g, RELOAD);
+    const d = lead(g, 'duck') || lead(g, 'rabbit') || lead(g);
+    g.fire(d.x, d.y); run(g, FLIGHT + 0.02);
+  }
+  assert.equal(g.streak, 5);
+  const events = g.take().filter(e => e.hit);
+  assert.ok(events.at(-1).run, 'the fifth hit in a row says so');
+  assert.equal(g.score - before, events.slice(1).reduce((a, e) => a + e.points, 0) + STREAK.bonus);
+  run(g, RELOAD);
+  g.fire(5, 5); run(g, FLIGHT + 0.02);
+  assert.equal(g.streak, 0, 'a miss ends the run');
+});
+
+test('a knocked-down target can\'t be hit again until it comes round', () => {
+  const g = createGallery({ random: seeded(5) });
+  run(g, 0.3);
+  const d = lead(g, 'duck');
+  g.fire(d.x, d.y); run(g, FLIGHT + 0.02);
+  assert.ok(d.t.hit);
+  run(g, RELOAD);
+  const x = d.t.x + d.row.dir * d.row.speed * FLIGHT;
+  g.fire(x, d.y); run(g, FLIGHT + 0.02);
+  assert.ok(g.take().some(e => e.miss));
+  run(g, (d.row.loop + 200) / d.row.speed);
+  assert.equal(d.t.hit, false, 'round the back, it stands up again');
+});
+
+test('a ticket for every 20 points', () => {
+  assert.deepEqual([0, 19, 20, 345, 880].map(ticketsFor), [0, 0, 1, 17, 44]);
+});
