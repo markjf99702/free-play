@@ -41,7 +41,7 @@ const aimAt = kind => page.evaluate(kind => {
   const g = popgun.gallery;
   for (const row of g.rows) for (const t of row.targets) {
     if (t.hit || (kind && t.kind !== kind)) continue;
-    const x = t.x + row.dir * row.speed * 0.26;
+    const x = t.x + row.dir * row.now * 0.32;
     if (x > 90 && x < 470) return popgun.draw.at(x, row.rail - 26);
   }
   return null;
@@ -97,8 +97,8 @@ while (!(await page.evaluate(() => popgun.gallery.over))) {
     const g = popgun.gallery;
     for (const row of g.rows) for (const t of row.targets) {
       if (t.hit) continue;
-      const x = t.x + row.dir * row.speed * 0.26;
-      if (x > 60 && x < 500) return { x, y: row.rail - 26 };
+      const x = t.x + row.dir * row.now * 0.32;
+      if (x > 60 && x < 500) return { x, y: row.rail - 22 };
     }
     return { x: 280, y: 250 };
   });

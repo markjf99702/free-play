@@ -145,7 +145,7 @@ async function rollUpBoard(page) {
   const lead = kind => page.evaluate(kind => {
     for (const row of popgun.gallery.rows) for (const t of row.targets) {
       if (t.hit || t.kind !== kind) continue;
-      const x = t.x + row.dir * row.speed * 0.26;
+      const x = t.x + row.dir * row.now * 0.32;
       if (x > 120 && x < 440) return { x, y: row.rail - 26 };
     }
     return null;

@@ -11,22 +11,28 @@ const run = (g, s) => { for (let i = 0; i < Math.round(s * 60); i++) g.step(1 / 
 function lead(g, kind) {
   for (const row of g.rows) for (const t of row.targets) {
     if (t.hit || (kind && t.kind !== kind)) continue;
-    const x = t.x + row.dir * row.speed * FLIGHT;
+    const x = t.x + row.dir * row.now * FLIGHT;
     if (x > 60 && x < W - 60) return { t, row, x, y: row.rail - KINDS[t.kind].h / 2 };
   }
   return null;
 }
 
-test('the rows run their own ways at their own speeds, and every target comes round again', () => {
+test('the rows run their own ways at their own speeds, surging a little, and every target comes round again', () => {
   const g = createGallery({ random: seeded(1) });
   const before = g.rows.map(r => r.targets.map(t => t.x));
   run(g, 1);
   g.rows.forEach((row, i) => row.targets.forEach((t, j) => {
     const moved = ((t.x - before[i][j]) % row.loop + row.loop) % row.loop;
-    const want = ((ROWS[i].dir * ROWS[i].speed) % row.loop + row.loop) % row.loop;
-    assert.ok(Math.abs(moved - want) < 1, `row ${i} moved ${moved.toFixed(1)}, wanted ${want}`);
+    const want = ((ROWS[i].dir * row.travel) % row.loop + row.loop) % row.loop;
+    assert.ok(Math.abs(moved - want) < 1, `row ${i} moved ${moved.toFixed(1)}, its chain ${want.toFixed(1)}`);
   }));
   assert.deepEqual(g.rows.map(r => r.dir), [1, -1, 1], 'each row the other way from the one below');
+  const seen = g.rows.map(() => [Infinity, 0]);
+  for (let i = 0; i < 60 * 10; i++) { g.step(1 / 60); g.rows.forEach((r, n) => { seen[n][0] = Math.min(seen[n][0], r.now); seen[n][1] = Math.max(seen[n][1], r.now); }); }
+  g.rows.forEach((r, n) => {
+    assert.ok(seen[n][0] < r.speed * 0.85 && seen[n][1] > r.speed * 1.15, `row ${n} ran between ${seen[n][0].toFixed(0)} and ${seen[n][1].toFixed(0)}`);
+    assert.ok(seen[n][0] > r.speed * 0.7 && seen[n][1] < r.speed * 1.3, 'but never much more or less');
+  });
   run(g, 30);
   for (const row of g.rows) for (const t of row.targets) assert.ok(t.x >= -row.loop && t.x <= W + row.loop, 'nothing wanders off the conveyor');
 });
@@ -62,6 +68,7 @@ test('a round is twenty corks, one at a time, and ends when the last has landed'
   assert.equal(g.over, false, 'the last cork is still in the air');
   run(g, RELOAD + 0.01);
   assert.equal(g.fire(100, 100), false, 'no corks left');
+  run(g, FLIGHT);
   assert.equal(g.over, true);
   assert.ok(g.take().includes('over'));
 });
@@ -97,10 +104,10 @@ test('a knocked-down target can\'t be hit again until it comes round', () => {
   g.fire(d.x, d.y); run(g, FLIGHT + 0.02);
   assert.ok(d.t.hit);
   run(g, RELOAD);
-  const x = d.t.x + d.row.dir * d.row.speed * FLIGHT;
+  const x = d.t.x + d.row.dir * d.row.now * FLIGHT;
   g.fire(x, d.y); run(g, FLIGHT + 0.02);
   assert.ok(g.take().some(e => e.miss));
-  run(g, (d.row.loop + 200) / d.row.speed);
+  run(g, (d.row.loop + 200) / (d.row.speed * 0.7));
   assert.equal(d.t.hit, false, 'round the back, it stands up again');
 });
 

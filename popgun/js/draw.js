@@ -193,7 +193,7 @@ export function createDraw(canvas) {
     // the chains the targets ride, moving
     for (const row of g.rows) {
       ctx.fillStyle = 'rgba(0, 0, 0, .35)';
-      const off = ((g.clock * row.speed * row.dir) % 16 + 16) % 16;
+      const off = ((row.travel * row.dir) % 16 + 16) % 16;
       for (let x = -16 + off; x < W + 16; x += 16) ctx.fillRect(x, row.rail + 4, 6, 3);
     }
     for (const m of marks) {
