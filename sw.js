@@ -2,14 +2,14 @@
 // Anything the person saves lives in localStorage, not here.
 // Network first, so a new version shows up as soon as you're online.
 
-const CACHE = 'free-play-v5'; // bump the number when the file list changes
+const CACHE = 'free-play-v6'; // bump the number when the file list changes
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the machines by their addresses as well as by index.html, so either opens offline
-  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/',
+  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/',
   // floor
-  'css/floor.css', 'js/floor.js', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg',
-  'floor/popgun.jpg', 'floor/topple.jpg',
+  'css/floor.css', 'js/floor.js', 'floor/bonkers.jpg', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/popgun.jpg',
+  'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
   // shared
   'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/matter.min.js', 'shared/prizes.js',
   'shared/wallet.js',
@@ -37,6 +37,9 @@ const SHELL = [
   // Popgun
   'popgun/css/popgun.css', 'popgun/index.html', 'popgun/js/app.js', 'popgun/js/draw.js', 'popgun/js/gallery.js',
   'popgun/js/sound.js',
+  // Bonkers
+  'bonkers/css/bonkers.css', 'bonkers/index.html', 'bonkers/js/app.js', 'bonkers/js/burrow.js', 'bonkers/js/draw.js',
+  'bonkers/js/sound.js',
 ];
 
 self.addEventListener('install', e => {

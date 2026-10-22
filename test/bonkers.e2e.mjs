@@ -1,0 +1,124 @@
+// Plays Bonkers, on the Free Play floor, in Chromium through the real page:  node test/bonkers.e2e.mjs  (needs Playwright)
+import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { join, dirname, extname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+
+const require = createRequire(import.meta.url);
+let pw;
+try { pw = require('playwright'); } catch { pw = require(join(execSync('npm root -g').toString().trim(), 'playwright')); }
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const TYPES = { '.jpg': 'image/jpeg', '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
+const server = createServer(async (req, res) => {
+  let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (path.endsWith('/')) path += 'index.html';
+  let body;
+  try { body = await readFile(join(root, path)); } catch { res.writeHead(404); res.end(); return; }
+  res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'text/html' });
+  res.end(body);
+}).listen(0);
+const base = `http://localhost:${server.address().port}/`;
+
+const browser = await pw.chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+const page = await ctx.newPage();
+const problems = [];
+page.on('pageerror', e => problems.push(e.message));
+page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
+page.on('requestfailed', r => problems.push('failed: ' + r.url()));
+page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the site: ' + r.url()); });
+
+await page.goto(base + 'bonkers/');
+await page.evaluate(() => document.fonts.ready);
+const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+const HOLES = [50, 150, 250, 350, 450];
+// The hole a mole is up in right now (a bare-headed one, unless any will do), waiting for one if need be.
+const upHole = (any = false) => page.waitForFunction(any => {
+  const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6 && (any || !m.hat));
+  return m ? m.hole + 1 : 0;
+}, any, { timeout: 15000, polling: 16 }).then(h => h.jsonValue()).then(n => n - 1);
+
+// The title card, and the moles already about their business behind it.
+assert.ok(await page.isVisible('#title'), 'the title card shows first');
+await page.click('#play');
+assert.equal(await page.textContent('#left'), '45');
+
+// A tap on a mole that's up bonks it.
+let hole = await upHole();
+let p = await page.evaluate(h => bonkers.draw.at(h, -40), HOLES[hole]);
+await page.mouse.click(p.x, p.y);
+assert.equal(await page.evaluate(() => bonkers.burrow.bonks), 1);
+assert.ok(await page.evaluate(() => bonkers.burrow.score) >= 10);
+assert.match(await page.textContent('#score'), /^[1-9]/, 'the scoreboard shows it');
+
+// A tap on an empty hole is a miss, and a tap down in the ground isn't a swing at all.
+const before = await page.evaluate(() => bonkers.burrow.swings);
+const empty = await page.evaluate(() => [0, 1, 2, 3, 4].find(i => !bonkers.burrow.moles.some(m => m.hole === i)));
+p = await page.evaluate(h => bonkers.draw.at(h, -40), HOLES[empty]);
+await page.mouse.click(p.x, p.y);
+assert.equal(await page.evaluate(() => bonkers.burrow.swings), before + 1);
+assert.equal(await page.evaluate(() => bonkers.burrow.run), 0, 'a miss ends the run');
+p = await page.evaluate(() => bonkers.draw.at(250, 200));
+await page.mouse.click(p.x, p.y);
+assert.equal(await page.evaluate(() => bonkers.burrow.swings), before + 1, 'the ground under the lawn is not a hole');
+
+// The number keys swing at the holes.
+hole = await upHole();
+const bonks = await page.evaluate(() => bonkers.burrow.bonks);
+await page.keyboard.press(String(hole + 1));
+assert.equal(await page.evaluate(() => bonkers.burrow.bonks), bonks + 1);
+
+// The menu stops the clock.
+await page.keyboard.press('Escape');
+assert.ok(await page.isVisible('#menu'));
+const clock = await page.evaluate(() => bonkers.burrow.clock);
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => bonkers.burrow.clock), clock, 'the moles wait while the menu is open');
+await page.click('#sound');
+assert.equal(await page.evaluate(() => bonkers.saved.sound), false);
+await page.click('#resume');
+
+// The rest of the round, quickly, and its tickets: one for every 15 points.
+const t0 = await tickets();
+await page.evaluate(() => { bonkers.speed = 4; });
+let frenzy = false;
+while (!(await page.evaluate(() => bonkers.burrow.over))) {
+  frenzy ||= await page.evaluate(() => document.querySelector('.clock').classList.contains('frenzy'));
+  await page.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
+  await page.waitForTimeout(30);
+}
+assert.ok(frenzy, 'the clock says when it is a frenzy');
+const score = await page.evaluate(() => bonkers.burrow.score);
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+assert.ok(score > 200, `a quick hand scores (${score})`);
+assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
+assert.equal(await tickets(), t0 + Math.floor(score / 15));
+assert.equal(await page.evaluate(() => bonkers.saved.best), score);
+await page.click('#again');
+assert.equal(await page.textContent('#score'), '0');
+assert.equal(await page.textContent('#left'), '45', 'another round, another 45 seconds');
+
+// A wide screen: the cabinet in the middle, the clock beside it, nothing sideways.
+await page.setViewportSize({ width: 1280, height: 860 });
+await page.waitForTimeout(100);
+const wide = await page.evaluate(() => ({ cab: bonkers.draw.cabinet(), deck: document.getElementById('deck').getBoundingClientRect().toJSON(), sw: document.documentElement.scrollWidth }));
+assert.ok(wide.deck.left >= wide.cab.left + wide.cab.width, 'the clock stands beside the cabinet');
+assert.ok(wide.sw <= 1280 && wide.deck.right <= 1280);
+await page.setViewportSize({ width: 360, height: 640 });
+await page.waitForTimeout(100);
+const small = await page.evaluate(() => ({ cab: bonkers.draw.cabinet(), deck: document.getElementById('deck').getBoundingClientRect().toJSON(), sw: document.documentElement.scrollWidth }));
+assert.ok(small.deck.top >= small.cab.bottom - 4 && small.deck.bottom <= 640, 'on a small phone the clock sits under the cabinet, on screen');
+assert.ok(small.sw <= 360);
+await page.setViewportSize({ width: 390, height: 844 });
+
+// Back on the floor, Bonkers' cabinet has the best round.
+await page.goto(base);
+assert.equal(await page.textContent('#bonkersStat'), `Best: ${score.toLocaleString('en-US')}.`);
+
+assert.deepEqual(problems, [], 'problems while playing');
+await browser.close();
+server.close();
+console.log(`all good (a round scored ${score})`);

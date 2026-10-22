@@ -29,13 +29,14 @@ await mkdir(join(root, 'docs'), { recursive: true });
 await mkdir(join(root, 'floor'), { recursive: true });
 
 // A regular: some tickets, a few prizes, a best on each machine and today's card played, three plush from the claw,
-// a toy car pushed off Topple's deck, Highrise built to floor 12, and a round of Popgun.
+// a toy car pushed off Topple's deck, Highrise built to floor 12, and a round each of Popgun and Bonkers.
 const SAVES = {
   'free-play.wallet': { tickets: 214, prizes: { lollipop: 2, 'spider-ring': 1, duck: 1, dinosaur: 1, 'plush-frog': 2, 'plush-ghost': 1, 'trinket-car': 1 } },
   'free-play.clutch': { goes: 11, won: { frog: 2, ghost: 1 }, sound: true },
   'free-play.topple': { best: 34, cups: 6, prizes: 1, sound: true },
   'free-play.highrise': { best: 12, games: 9, tops: 0, sound: true },
   'free-play.popgun': { best: 640, rounds: 5, sound: true },
+  'free-play.bonkers': { best: 480, rounds: 4, sound: true },
   'free-play.roll-up': { best: 340, games: 7, sound: true },
   'free-play.tilt': { table: 'classic', scores: [{ score: 412650, date: '2026-10-17' }], spaceScores: [{ score: 288400, date: '2026-10-18' }] },
 };
@@ -163,6 +164,19 @@ async function rollUpBoard(page) {
   await page.context().close();
 }
 
+// Bonkers: a mole up out of its hole, the others in the tunnels, and one seeing stars in its burrow.
+{
+  const page = await open('bonkers/', { width: 390, height: 844 }, 2);
+  await page.click('#play');
+  const bonkUp = () => page.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6 && !m.hat); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
+  for (let i = 0; i < 40; i++) { await bonkUp(); await page.waitForTimeout(100); }
+  await page.waitForFunction(() => bonkers.burrow.moles.some(m => m.state === 'rising' && m.rise >= 1 && m.hole > 0 && m.hole < 4), null, { timeout: 10000, polling: 16 });
+  const [a, b] = await page.evaluate(() => [bonkers.draw.at(0, -110), bonkers.draw.at(500, 265)]);
+  await page.screenshot({ path: join(root, 'floor/bonkers.jpg'), type: 'jpeg', quality: 82, clip: { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y } });
+  await page.screenshot({ path: join(root, 'docs/phone-bonkers.png') });
+  await page.context().close();
+}
+
 // The floor, a game of Tilt paying out, and the prize counter.
 {
   const page = await open('', { width: 390, height: 844 }, 2);
@@ -201,17 +215,18 @@ async function rollUpBoard(page) {
     .play { color: #d6fffb; text-shadow: 0 0 4px #4ff0e0, 0 0 16px #4ff0e0, 0 0 40px rgba(79,240,224,.7); display: block; }
     p { margin: 34px 0 0; font-size: 34px; line-height: 1.25; font-weight: 600; }
     small { display: block; margin-top: 20px; font-size: 24px; color: rgba(251,238,210,.6); }
-    .shot { position: absolute; width: 204px; height: 153px; border-radius: 10px; border: 6px solid #050407; box-shadow: 0 24px 60px rgba(0,0,0,.6); background: center / cover; }
-    .a { right: 436px; top: 70px; transform: rotate(-4deg); box-shadow: 0 0 0 3px #f2c14e, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/roll-up.jpg', 'image/jpeg')}); }
-    .b { right: 236px; top: 44px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffa53a, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
-    .c { right: 36px; top: 78px; transform: rotate(-2deg); box-shadow: 0 0 0 3px #ff5fa2, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/clutch.jpg', 'image/jpeg')}); }
-    .d { right: 430px; top: 330px; transform: rotate(3deg); box-shadow: 0 0 0 3px #16a39b, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/topple.jpg', 'image/jpeg')}); }
-    .e { right: 232px; top: 356px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #5cc8ff, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/highrise.jpg', 'image/jpeg')}); }
-    .f { right: 40px; top: 322px; transform: rotate(2deg); box-shadow: 0 0 0 3px #d63a2f, 0 24px 60px rgba(0,0,0,.6); background-image: url(${await data('floor/popgun.jpg', 'image/jpeg')}); }
+    .shot { position: absolute; width: 176px; height: 132px; border-radius: 9px; border: 5px solid #050407; box-shadow: 0 20px 50px rgba(0,0,0,.6); background: center / cover; }
+    .a { right: 470px; top: 92px; transform: rotate(-4deg); box-shadow: 0 0 0 3px #f2c14e, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/roll-up.jpg', 'image/jpeg')}); }
+    .b { right: 318px; top: 66px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffa53a, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
+    .c { right: 166px; top: 96px; transform: rotate(-2deg); box-shadow: 0 0 0 3px #ff5fa2, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/clutch.jpg', 'image/jpeg')}); }
+    .d { right: 18px; top: 70px; transform: rotate(3deg); box-shadow: 0 0 0 3px #16a39b, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/topple.jpg', 'image/jpeg')}); }
+    .e { right: 400px; top: 346px; transform: rotate(3deg); box-shadow: 0 0 0 3px #5cc8ff, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/highrise.jpg', 'image/jpeg')}); }
+    .f { right: 230px; top: 372px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #d63a2f, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/popgun.jpg', 'image/jpeg')}); }
+    .g { right: 60px; top: 340px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffc93c, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/bonkers.jpg', 'image/jpeg')}); }
   </style></head><body>
     <div class="left"><h1><span class="free">Free</span><span class="play">Play</span></h1>
-      <p>An arcade on your phone: six machines on free play, and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
-    <div class="shot a"></div><div class="shot b"></div><div class="shot c"></div><div class="shot d"></div><div class="shot e"></div><div class="shot f"></div>
+      <p>An arcade on your phone: seven machines on free play, and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
+    <div class="shot a"></div><div class="shot b"></div><div class="shot c"></div><div class="shot d"></div><div class="shot e"></div><div class="shot f"></div><div class="shot g"></div>
   </body></html>`);
   await page.evaluate(() => document.fonts.ready);
   const png = await page.screenshot();

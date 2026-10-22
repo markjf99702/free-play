@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="../shared/carry.js"></script>
+  <title>Bonkers · Free Play</title>
+  <meta name="description" content="Whack-a-mole on your phone, with the side of the cabinet made of glass: watch the moles running through their tunnels, and bonk them as they pop up. Forty-five seconds a round, and tickets for your score.">
+  <meta property="og:title" content="Bonkers, at Free Play">
+  <meta property="og:description" content="Whack-a-mole on your phone, where you can see the moles coming.">
+  <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
+  <meta property="og:url" content="https://free-play.junkdrawer.works/bonkers/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#2a1a0a">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icon-180.png">
+  <link rel="preload" href="../fonts/bungee.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../shared/arcade.css">
+  <link rel="stylesheet" href="css/bonkers.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ticket" viewBox="0 0 24 16">
+      <path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/>
+      <path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/>
+      <circle cx="15" cy="8" r="2.6" fill="#fbeed2"/>
+    </symbol>
+  </svg>
+
+  <canvas id="stage" aria-label="A whack-a-mole cabinet with a glass side: a lawn with five holes, and under it the moles' tunnels and two burrows, the moles running through them"></canvas>
+
+  <header class="hud">
+    <div class="score"><small>Score</small><b id="score">0</b></div>
+    <div class="right">
+      <button type="button" class="tix" id="tixBtn" aria-label="Prize counter"><svg><use href="#ticket"/></svg><span id="tix">0</span></button>
+      <button type="button" class="menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="deck" id="deck">
+    <div class="clock"><b id="left">45</b><span id="clockWord">seconds</span></div>
+    <span class="say" id="say">Tap a mole as it pops up. Watch the tunnels</span>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+
+  <section class="card" id="title">
+    <a class="floor to-floor" href="../">← Free Play</a>
+    <div class="marquee"><h1>Bonkers</h1></div>
+    <p class="lede">Whack-a-mole, with the side of the cabinet made of glass.</p>
+    <p class="how">Tap a mole as it pops up out of its hole to bonk it. Underneath, you can watch them running through the tunnels to see where they'll come up next. Some only peek: a swing at a nose is a miss, and a miss costs 5. A hard hat takes two bonks, and a golden mole is worth 50. Ten in a row are worth 50 more, and the last ten seconds are a frenzy. A ticket for every 15 points.</p>
+    <div class="row">
+      <button type="button" class="big" id="play">Play</button>
+      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="best" id="titleBest"></p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <section class="card" id="over" hidden>
+    <h2 id="overT">340 points</h2>
+    <p class="how" id="overHow"></p>
+    <div class="fp-payout" id="payout"></div>
+    <p class="best" id="overBest"></p>
+    <div class="row">
+      <button type="button" class="big" id="again">Another round</button>
+      <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+  </section>
+
+  <section class="card" id="menu" hidden>
+    <h2>Paused</h2>
+    <div class="col">
+      <button type="button" class="big" id="resume">Keep playing</button>
+      <button type="button" class="plain" id="menuPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      <button type="button" class="plain" id="sound" aria-pressed="true">Sound: on</button>
+      <a class="plain to-floor" href="../">Back to the arcade</a>
+    </div>
+    <p class="how">On a keyboard: the number keys 1 to 5 bonk the holes from the left.</p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <noscript><p class="noscript">Bonkers needs JavaScript to dig the tunnels.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

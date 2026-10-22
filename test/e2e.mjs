@@ -40,7 +40,7 @@ await page.evaluate(() => document.fonts.ready);
 
 // The floor: the sign, a cabinet for each machine, an empty pocket and an empty shelf.
 assert.equal(await page.textContent('#tix'), '0');
-assert.equal(await page.locator('.cab').count(), 6);
+assert.equal(await page.locator('.cab').count(), 7);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
 assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
@@ -139,6 +139,22 @@ assert.equal(await tickets(), beforePopgun + Math.floor(shot / 20), 'Popgun pays
 await page.click('#over .back a');
 await page.waitForURL(base);
 
+// Bonkers: in from the floor, a round, its tickets, and back.
+const beforeBonkers = await tickets();
+await page.click('.cab.bonkers');
+await page.waitForURL(base + 'bonkers/');
+await page.click('#play');
+await page.evaluate(() => { bonkers.speed = 6; });
+while (!(await page.evaluate(() => bonkers.burrow.over))) {
+  await page.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
+  await page.waitForTimeout(30);
+}
+const bonked = await page.evaluate(() => bonkers.burrow.score);
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+assert.equal(await tickets(), beforeBonkers + Math.floor(bonked / 15), 'Bonkers pays a ticket for every 15 points');
+await page.click('#over .back a');
+await page.waitForURL(base);
+
 // The prize counter, from the floor.
 const have = await tickets();
 await page.click('#trade');
@@ -171,7 +187,7 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Offline: the floor and every machine open again.
 await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 }).catch(() => {});
 await ctx.setOffline(true);
-const OFFLINE = { '': 'freePlay', 'roll-up/': 'rollUp', 'tilt/': 'tilt', 'clutch/': 'clutch', 'topple/': 'topple', 'highrise/': 'highrise', 'popgun/': 'popgun' };
+const OFFLINE = { '': 'freePlay', 'roll-up/': 'rollUp', 'tilt/': 'tilt', 'clutch/': 'clutch', 'topple/': 'topple', 'highrise/': 'highrise', 'popgun/': 'popgun', 'bonkers/': 'bonkers' };
 for (const [path, name] of Object.entries(OFFLINE)) {
   await page.goto(base + path);
   assert.ok(await page.evaluate(name => !!window[name], name), `${path || 'the floor'} did not open offline`);
