@@ -381,11 +381,13 @@ export function createDraw(canvas) {
     for (const b of sorted) if (inside(b)) ball(b, where(b));
     drawNet(parts, false);
     drawRim(parts, false, court.fire, t, hoop.x);
-    for (const b of sorted) if (!inside(b) && b !== held) ball(b, where(b));
+    // the ball being lifted out of the pocket comes up over the front of the machine once it's clear of the lip
+    const lifted = held && hold >= 0.5 ? held : null;
+    for (const b of sorted) if (!inside(b) && b !== lifted) ball(b, where(b));
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(front, 0, 0);
     css(ctx);
-    if (held) ball(held, where(held));
+    if (lifted) ball(lifted, where(lifted));
     // the keyboard's aim, and how hard it'll throw
     if (aim !== null) {
       const a = P(V(LAUNCH.x, LAUNCH.y, LAUNCH.z)), b = P(V(LAUNCH.x + Math.tan(aim) * (HOOP.z - LAUNCH.z), HOOP.y, HOOP.z));
