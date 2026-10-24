@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="../shared/carry.js"></script>
+  <title>Hoops · Free Play</title>
+  <meta name="description" content="The basketball machine from the ticket floor, on your phone: flick the balls up at the hoop as fast as they roll back to you. Forty-five seconds a round, a hoop that starts to slide, and tickets for your score.">
+  <meta property="og:title" content="Hoops, at Free Play">
+  <meta property="og:description" content="A basketball machine on your phone: flick, swish, repeat.">
+  <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
+  <meta property="og:url" content="https://free-play.junkdrawer.works/hoops/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0f2266">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icon-180.png">
+  <link rel="preload" href="../fonts/bungee.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../shared/arcade.css">
+  <link rel="stylesheet" href="css/hoops.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ticket" viewBox="0 0 24 16">
+      <path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/>
+      <path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/>
+      <circle cx="15" cy="8" r="2.6" fill="#fbeed2"/>
+    </symbol>
+  </svg>
+
+  <canvas id="stage" aria-label="A basketball machine seen from behind the player: a wooden ramp painted like a court runs up inside a net cage to a backboard and hoop, with a red scoreboard and a HOOPS sign above, and the balls rolling back down to a pocket at the front"></canvas>
+
+  <header class="hud">
+    <div class="score"><small>Score</small><b id="score">0</b></div>
+    <div class="right">
+      <button type="button" class="tix" id="tixBtn" aria-label="Prize counter"><svg><use href="#ticket"/></svg><span id="tix">0</span></button>
+      <button type="button" class="menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="deck" id="deck">
+    <div class="worth" id="worthBox"><b id="worth">2</b><span id="worthWord">points a basket</span></div>
+    <span class="say" id="say">Flick a ball up at the hoop. Keep them coming</span>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+
+  <section class="card" id="title">
+    <a class="floor to-floor" href="../">← Free Play</a>
+    <div class="marquee"><h1>Hoops</h1></div>
+    <p class="lede">The basketball machine from the end of the row.</p>
+    <p class="how">Flick a ball up the screen at the hoop to shoot: how hard you flick is how far it goes. Four balls roll back down to you, so keep them coming. A basket is 2 points. Twenty seconds in, the hoop starts to slide from side to side, and in the last ten seconds a basket is worth 3. The gold ball is worth double, and three in a row set the rim alight: a point more a basket until you miss. A ticket for every 3 points.</p>
+    <div class="row">
+      <button type="button" class="big" id="play">Play</button>
+      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="best" id="titleBest"></p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <section class="card" id="over" hidden>
+    <h2 id="overT">40 points</h2>
+    <p class="how" id="overHow"></p>
+    <div class="fp-payout" id="payout"></div>
+    <p class="best" id="overBest"></p>
+    <div class="row">
+      <button type="button" class="big" id="again">Another round</button>
+      <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    </div>
+    <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+  </section>
+
+  <section class="card" id="menu" hidden>
+    <h2>Paused</h2>
+    <div class="col">
+      <button type="button" class="big" id="resume">Keep playing</button>
+      <button type="button" class="plain" id="menuPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      <button type="button" class="plain" id="sound" aria-pressed="true">Sound: on</button>
+      <a class="plain to-floor" href="../">Back to the arcade</a>
+    </div>
+    <p class="how">On a keyboard: the arrows aim, and holding Space winds up a throw. Let go in the light.</p>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+  <noscript><p class="noscript">Hoops needs JavaScript to roll the balls back.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

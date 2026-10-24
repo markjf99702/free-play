@@ -1,6 +1,6 @@
 // The Free Play floor: the tickets in your pocket, what each machine remembers about you, and the prize counter.
 // Each machine keeps its own save (free-play.roll-up, free-play.tilt, free-play.clutch, free-play.topple,
-// free-play.highrise, free-play.popgun, free-play.bonkers); the tickets and prizes are the arcade's
+// free-play.highrise, free-play.popgun, free-play.bonkers, free-play.hoops); the tickets and prizes are the arcade's
 // (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
@@ -62,6 +62,10 @@ function machines() {
   // Bonkers: the best round.
   const bk = readSave('free-play.bonkers');
   $('bonkersStat').textContent = bk.rounds ? `Best: ${fmt(bk.best || 0)}.` : 'Forty-five seconds. Watch them coming.';
+
+  // Hoops: the best round.
+  const hp = readSave('free-play.hoops');
+  $('hoopsStat').textContent = hp.rounds ? `Best: ${fmt(hp.best || 0)}.` : 'Forty-five seconds. Then the hoop starts moving.';
 }
 
 function pocket() {

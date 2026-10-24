@@ -1,7 +1,7 @@
 {
   "name": "Free Play",
   "short_name": "Free Play",
-  "description": "An arcade on your phone: seven machines on free play, and a prize counter.",
+  "description": "An arcade on your phone: eight machines on free play, and a prize counter.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

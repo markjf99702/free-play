@@ -70,6 +70,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cab:focus-visible { outline-offset: 6px; }
 .cab.tilt { --trim: #ffa53a; --trim2: #6a3a0c; --go: linear-gradient(#ffb04d, #f07a1a); --go-edge: #a2420c; --go-ink: #2a1200; }
 .cab.clutch { --trim: #ff5fa2; --trim2: #8a1446; --go: linear-gradient(#ff6aa8, #e0347a); --go-edge: #7d0c3c; --go-ink: #fff; }
+.cab.hoops { --trim: #ff8a1f; --trim2: #0f2266; --go: linear-gradient(#ff9c3a, #e36a12); --go-edge: #8a3e08; --go-ink: #fff6e6; }
 .cab.bonkers { --trim: #ffc93c; --trim2: #c97a12; --go: linear-gradient(#ffd56e, #f2a51f); --go-edge: #8a5a0c; --go-ink: #3a2405; }
 .cab.popgun { --trim: #d63a2f; --trim2: #6b4220; --go: linear-gradient(#e8574b, #c2302a); --go-edge: #6e1712; --go-ink: #fff6e6; }
 .cab.highrise { --trim: #5cc8ff; --trim2: #1a2068; --go: linear-gradient(#8bdcff, #3b9ee0); --go-edge: #154e86; --go-ink: #06213d; }
@@ -96,6 +97,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   text-shadow: 0 0 6px #ff5fa2, 0 0 16px #ff5fa2, 0 0 30px rgba(255, 95, 162, .6);
 }
 .bonkers .marquee { color: #ffc93c; background: #e2412f; border: 2px solid #ffc93c; letter-spacing: .04em; text-shadow: 3px 3px 0 #9a2216; }
+.hoops .marquee { color: #fff6e6; background: #1d3fa8; border: 2px solid #ff8a1f; letter-spacing: .04em; text-shadow: 3px 3px 0 #c75a10; }
 .popgun .marquee { color: #fbeed2; background: #2a1a0c; border: 2px solid #f2c14e; letter-spacing: .04em; text-shadow: 3px 3px 0 #8f1f19; }
 .highrise .marquee {
   color: #dff4ff; background: #060a1e; border: 2px solid #f2c14e; letter-spacing: .05em;

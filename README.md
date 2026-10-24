@@ -2,7 +2,7 @@
 
 **Play it: [free-play.junkdrawer.works](https://free-play.junkdrawer.works/)**
 
-**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; Popgun, a shooting gallery; or Bonkers, a whack-a-mole. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
+**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; Popgun, a shooting gallery; Bonkers, a whack-a-mole; or Hoops, a basketball machine. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
 
 <p align="center">
   <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket, and the Roll Up cabinet with its red and gold marquee, its screen showing the ring board, and a Play button" width="250">
@@ -22,13 +22,15 @@
   &nbsp;
   <img src="docs/phone-bonkers.png" alt="Bonkers, a sunny yellow whack-a-mole cabinet: BONKERS on a red sign, two moles up out of their holes on a lawn under a blue sky, and below the lawn the ground in cross-section through glass, with moles running through brown tunnels between two cosy burrows, over a 45-second clock" width="250">
   &nbsp;
+  <img src="docs/phone-hoops.png" alt="Hoops, a royal blue and orange basketball machine seen from behind the player: HOOPS on an orange sign over a red scoreboard showing 11 points with 41 seconds left and the HOT lamp lit, the rim on fire as a ball drops through the net, SWISH! and +3 rising off the backboard, and a ball rolling back down a wooden ramp painted like a court to two more in the pocket, one of them gold" width="250">
+  &nbsp;
   <img src="docs/phone-counter.png" alt="The prize counter with 214 tickets: a shelf holding two lollipops, a spider ring, a rubber duck, a toy dinosaur, two plush frogs, a plush ghost and a toy car, above a grid of prizes from a 5-ticket lollipop up" width="250">
 </p>
 
 ## How it plays
 
 - **The floor** has a cabinet for each machine, showing what you've done on it: your best, whether you've played today's card, the plush you've won. Tap one to play. Every machine has a way back to the floor.
-- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 20 points, and Bonkers one for every 15.
+- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 20 points, Bonkers one for every 15, and Hoops one for every 3.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush.
 - No account and no server. Your tickets, prizes and scores stay in your browser. It works offline, and installs to a phone's home screen as one app.
@@ -132,6 +134,16 @@ Whack-a-mole, with the side of the cabinet made of glass. Five holes along a sun
 - **It gets busier**: more moles, faster tunnels and quicker pops as the round goes on, and the last ten seconds are a frenzy. A bonked mole goes home to its burrow to see stars for a bit.
 - A ticket for every 15 points, paid at the end of the round.
 
+## Hoops
+
+The basketball machine from the end of the row: a wooden ramp inside a net cage, a backboard and hoop at the far end, and four balls that roll back down to a pocket at your end.
+
+- **Flick a ball up at the hoop** to shoot. How hard you flick is how far it goes, and which way you flick is where it goes: point the flick at the hoop as you see it. (On a keyboard, the arrows aim and holding Space winds up a throw; let go when the meter's in the light.) A round is 45 seconds.
+- **Keep them coming.** The balls come back down the ramp and line up in the pocket, and you can throw the next as soon as it's there. A little long still drops in off the board; short or wide clanks off the rim.
+- **A basket is 2 points.** Twenty seconds in, the hoop starts to slide from side to side on its rail, so throw where it's going to be, and in the last ten seconds a basket is worth 3. A ball in the air when the buzzer goes still counts.
+- **The gold ball** is worth double. **Three in a row** set the rim alight: a point more a basket until you miss.
+- A ticket for every 3 points, paid at the end of the round.
+
 ## Where the machines came from
 
 Roll Up and Tilt each had their own address, roll-up.junkdrawer.works and tilt.junkdrawer.works. Those now send you here, keeping anything after the address (`?table=space`, say). A browser keeps each address's saves apart, so the first time Free Play opens, `shared/carry.js` asks each old address for its saves in a hidden frame (each one serves a `carry.html` that answers only Free Play), puts them where Free Play keeps them, and loads the page once more. Roll Up's tickets and prizes go into the arcade's wallet. If an old address doesn't answer, it tries again on the next two visits.
@@ -170,6 +182,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `roll-up/`: Roll Up. `js/physics.js` is the machine in centimetres and the ball on it, `js/scene.js` draws it in perspective, `js/daily.js` is today's card, `js/app.js` runs the game and `js/sound.js` makes every sound with Web Audio.
 - `tilt/`: Tilt. `js/physics.js` and `js/game.js` are the machine every table shares, `js/tables/` holds the three tables (layout, rules, drawing and skins each), and `js/main.js` wires it all to the page.
 - `clutch/`: Clutch. `js/machine.js` is the box, the heap and the claw in millimetres, run by matter-js, `js/draw.js` draws the cabinet and gives each plush its face, `js/app.js` runs the button, the goes and the win card, and `js/sound.js` makes the noises with Web Audio.
+- `hoops/`: Hoops. `js/court.js` is the balls, the rim, the board and the ramp in centimetres, and the round, with a clock that only moves when it's told to, `js/draw.js` draws the machine in perspective, `js/app.js` turns flicks into throws and runs the round and the tickets, and `js/sound.js` makes the noises.
 - `bonkers/`: Bonkers. `js/burrow.js` is the tunnels, the moles and the mallet, with a clock that only moves when it's told to, `js/draw.js` draws the cabinet and the ground in cross-section, `js/app.js` runs the round and the tickets, and `js/sound.js` makes the noises.
 - `popgun/`: Popgun. `js/gallery.js` is the rows, the corks and the score, with a clock that only moves when it's told to, `js/draw.js` draws the booth and the tin targets, `js/app.js` runs the aiming, the round and the tickets, and `js/sound.js` makes the noises.
 - `highrise/`: Highrise. `js/tower.js` is the rules, with no clock of its own, `js/draw.js` draws the tower and the city, `js/app.js` keeps time and runs the stop button and the prizes, and `js/sound.js` makes the noises.

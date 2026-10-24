@@ -29,7 +29,7 @@ await mkdir(join(root, 'docs'), { recursive: true });
 await mkdir(join(root, 'floor'), { recursive: true });
 
 // A regular: some tickets, a few prizes, a best on each machine and today's card played, three plush from the claw,
-// a toy car pushed off Topple's deck, Highrise built to floor 12, and a round each of Popgun and Bonkers.
+// a toy car pushed off Topple's deck, Highrise built to floor 12, and a round each of Popgun, Bonkers and Hoops.
 const SAVES = {
   'free-play.wallet': { tickets: 214, prizes: { lollipop: 2, 'spider-ring': 1, duck: 1, dinosaur: 1, 'plush-frog': 2, 'plush-ghost': 1, 'trinket-car': 1 } },
   'free-play.clutch': { goes: 11, won: { frog: 2, ghost: 1 }, sound: true },
@@ -37,6 +37,7 @@ const SAVES = {
   'free-play.highrise': { best: 12, games: 9, tops: 0, sound: true },
   'free-play.popgun': { best: 640, rounds: 5, sound: true },
   'free-play.bonkers': { best: 480, rounds: 4, sound: true },
+  'free-play.hoops': { best: 74, rounds: 3, sound: true },
   'free-play.roll-up': { best: 340, games: 7, sound: true },
   'free-play.tilt': { table: 'classic', scores: [{ score: 412650, date: '2026-10-17' }], spaceScores: [{ score: 288400, date: '2026-10-18' }] },
 };
@@ -177,6 +178,24 @@ async function rollUpBoard(page) {
   await page.context().close();
 }
 
+// Hoops: three in a row to set the rim alight, then the fourth dropping through the net.
+{
+  const page = await open('hoops/', { width: 390, height: 844 }, 2);
+  await page.click('#play');
+  for (let i = 0; i < 3; i++) {
+    await page.waitForFunction(() => !!hoops.court.pocket() && !hoops.court.balls.some(b => b.shot), null, { timeout: 10000, polling: 16 });
+    await page.evaluate(() => hoops.shoot(hoops.sweet(), 0));
+  }
+  await page.waitForFunction(() => hoops.court.fire && !hoops.court.balls.some(b => b.shot) && !!hoops.court.pocket(), null, { timeout: 10000, polling: 16 });
+  await page.evaluate(() => hoops.shoot(hoops.SWEET, 0)); // nothing but net
+  await page.waitForFunction(() => hoops.court.balls.some(b => b.inNet && b.y < 114), null, { timeout: 5000, polling: 'raf' });
+  const [a, b, mid] = await page.evaluate(() => [hoops.draw.at(-70, 140, 262), hoops.draw.at(70, 140, 262), hoops.draw.at(0, 128, 250)]);
+  const w = b.x - a.x;
+  await page.screenshot({ path: join(root, 'floor/hoops.jpg'), type: 'jpeg', quality: 82, clip: { x: a.x, y: mid.y - w * 0.375, width: w, height: w * 0.75 } });
+  await page.screenshot({ path: join(root, 'docs/phone-hoops.png') });
+  await page.context().close();
+}
+
 // The floor, a game of Tilt paying out, and the prize counter.
 {
   const page = await open('', { width: 390, height: 844 }, 2);
@@ -220,13 +239,14 @@ async function rollUpBoard(page) {
     .b { right: 318px; top: 66px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffa53a, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/tilt.jpg', 'image/jpeg')}); }
     .c { right: 166px; top: 96px; transform: rotate(-2deg); box-shadow: 0 0 0 3px #ff5fa2, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/clutch.jpg', 'image/jpeg')}); }
     .d { right: 18px; top: 70px; transform: rotate(3deg); box-shadow: 0 0 0 3px #16a39b, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/topple.jpg', 'image/jpeg')}); }
-    .e { right: 400px; top: 346px; transform: rotate(3deg); box-shadow: 0 0 0 3px #5cc8ff, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/highrise.jpg', 'image/jpeg')}); }
-    .f { right: 230px; top: 372px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #d63a2f, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/popgun.jpg', 'image/jpeg')}); }
-    .g { right: 60px; top: 340px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffc93c, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/bonkers.jpg', 'image/jpeg')}); }
+    .e { right: 470px; top: 352px; transform: rotate(3deg); box-shadow: 0 0 0 3px #5cc8ff, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/highrise.jpg', 'image/jpeg')}); }
+    .f { right: 318px; top: 378px; transform: rotate(-3deg); box-shadow: 0 0 0 3px #d63a2f, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/popgun.jpg', 'image/jpeg')}); }
+    .g { right: 166px; top: 346px; transform: rotate(2deg); box-shadow: 0 0 0 3px #ffc93c, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/bonkers.jpg', 'image/jpeg')}); }
+    .h { right: 18px; top: 374px; transform: rotate(-2deg); box-shadow: 0 0 0 3px #ff8a1f, 0 20px 50px rgba(0,0,0,.6); background-image: url(${await data('floor/hoops.jpg', 'image/jpeg')}); }
   </style></head><body>
     <div class="left"><h1><span class="free">Free</span><span class="play">Play</span></h1>
-      <p>An arcade on your phone: seven machines on free play, and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
-    <div class="shot a"></div><div class="shot b"></div><div class="shot c"></div><div class="shot d"></div><div class="shot e"></div><div class="shot f"></div><div class="shot g"></div>
+      <p>An arcade on your phone: eight machines on free play, and a prize counter.</p><small>free-play.junkdrawer.works</small></div>
+    <div class="shot a"></div><div class="shot b"></div><div class="shot c"></div><div class="shot d"></div><div class="shot e"></div><div class="shot f"></div><div class="shot g"></div><div class="shot h"></div>
   </body></html>`);
   await page.evaluate(() => document.fonts.ready);
   const png = await page.screenshot();

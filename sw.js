@@ -2,14 +2,14 @@
 // Anything the person saves lives in localStorage, not here.
 // Network first, so a new version shows up as soon as you're online.
 
-const CACHE = 'free-play-v6'; // bump the number when the file list changes
+const CACHE = 'free-play-v7'; // bump the number when the file list changes
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the machines by their addresses as well as by index.html, so either opens offline
-  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/',
+  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/', 'hoops/',
   // floor
-  'css/floor.css', 'js/floor.js', 'floor/bonkers.jpg', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/popgun.jpg',
-  'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
+  'css/floor.css', 'js/floor.js', 'floor/bonkers.jpg', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/hoops.jpg',
+  'floor/popgun.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
   // shared
   'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/matter.min.js', 'shared/prizes.js',
   'shared/wallet.js',
@@ -40,6 +40,9 @@ const SHELL = [
   // Bonkers
   'bonkers/css/bonkers.css', 'bonkers/index.html', 'bonkers/js/app.js', 'bonkers/js/burrow.js', 'bonkers/js/draw.js',
   'bonkers/js/sound.js',
+  // Hoops
+  'hoops/css/hoops.css', 'hoops/index.html', 'hoops/js/app.js', 'hoops/js/court.js', 'hoops/js/draw.js',
+  'hoops/js/sound.js',
 ];
 
 self.addEventListener('install', e => {
