@@ -63,6 +63,14 @@ await page.mouse.down();
 for (let i = 1; i <= 4; i++) await page.mouse.move(195, 660 - 50 * i);
 await page.mouse.up();
 assert.equal(await court('shots'), 1, 'a flick up the screen throws');
+// one that starts down on the deck under the machine counts too
+await pocket();
+const deckAt = await page.evaluate(() => { const r = document.getElementById('deck').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+await page.mouse.move(deckAt.x, deckAt.y);
+await page.mouse.down();
+for (let i = 1; i <= 4; i++) await page.mouse.move(deckAt.x, deckAt.y - 50 * i);
+await page.mouse.up();
+assert.equal(await court('shots'), 2, 'a flick from the deck throws');
 
 // A sweet flick at the still hoop goes in, and the scoreboard says so.
 await page.waitForFunction(() => !hoops.court.balls.some(b => b.shot), null, { timeout: 6000 });
@@ -99,7 +107,7 @@ await page.click('#sound');
 assert.equal(await page.evaluate(() => hoops.saved.sound), false);
 await page.click('#resume');
 
-// The rest of the round, quickly, aiming where the hoop will be, and its tickets: one for every 3 points.
+// The rest of the round, quickly, aiming where the hoop will be, and its tickets: one for every 4 points.
 const t0 = await tickets();
 await page.evaluate(() => { hoops.speed = 4; });
 let bonus = false;
@@ -119,7 +127,7 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.ok(score > 40, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.match(await page.textContent('#overHow'), /^\d+ baskets? from \d+ shots?/);
-assert.equal(await tickets(), t0 + Math.floor(score / 3));
+assert.equal(await tickets(), t0 + Math.floor(score / 4));
 assert.equal(await page.evaluate(() => hoops.saved.best), score);
 await page.click('#again');
 assert.equal(await page.textContent('#score'), '0');

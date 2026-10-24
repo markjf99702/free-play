@@ -12,6 +12,7 @@ const $ = id => document.getElementById(id);
 const KEY = 'free-play.hoops';
 const STEP = 1 / 60;
 const WINDOW = 90;             // ms: how much of the end of a flick counts toward its speed
+const STROKE = 220;            // ms: and toward its direction, since a thumb tends to curl off to the side at the end
 
 // ---------- what's kept between visits ----------
 // Hoops' own: the best round, how many rounds, and the sound.
@@ -62,15 +63,19 @@ const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidde
 function newRound() {
   court = createCourt();
   mode = 'play';
-  pops.length = 0; flicks.clear(); keyAim = null; charge = null;
+  pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null;
   hud();
 }
 
-// Throw the ball in the pocket: speed in cm/s, aim in radians off straight ahead.
+// Throw the ball in the pocket: speed in cm/s, aim in radians off straight ahead. One let go a moment before the
+// next ball's there waits for it, briefly.
+const EARLY = 0.35;            // seconds
+let early = null;
 function throwIt(speed, aim) {
   sound.unlock();
   if (mode !== 'play' || paused || carded()) return null;
   const b = court.shoot(speed, aim);
+  early = b || court.buzzer ? null : { speed, aim, left: EARLY };
   happened();
   return b;
 }
@@ -114,7 +119,7 @@ function endRound() {
   const n = court.baskets, swish = court.swishes;
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}`
-    + (swish ? `, ${swish === n ? (n === 1 ? 'nothing but net' : 'all of them nothing but net') : `${swish} nothing but net`}` : '') + '. A ticket for every 3 points.';
+    + (swish ? `, ${swish === n ? (n === 1 ? 'nothing but net' : 'all of them nothing but net') : `${swish} nothing but net`}` : '') + '. A ticket for every 4 points.';
   $('overBest').textContent = isBest ? 'A new best.' : `Best: ${saved.best.toLocaleString('en-US')}`;
   $('over').hidden = false;
   feeding();
@@ -166,14 +171,14 @@ canvas.addEventListener('pointercancel', e => flicks.delete(e.pointerId));
 
 function flick(s) {
   const last = s[s.length - 1];
-  let i = s.length - 1;
-  while (i > 0 && last.t - s[i - 1].t <= WINDOW) i--;
-  const first = s[i], dt = (last.t - first.t) / 1000;
-  const dx = last.x - first.x, dy = last.y - first.y;
-  if (dt <= 0.004 || dy > -4) return null;
+  const from = ms => { let i = s.length - 1; while (i > 0 && last.t - s[i - 1].t <= ms) i--; return s[i]; };
+  const first = from(WINDOW), dt = (last.t - first.t) / 1000;
+  if (dt <= 0.004 || last.y - first.y > -4) return null;
   const cab = draw.cabinet();
-  const speed = Math.hypot(dx, dy) / dt / (cab.bottom - cab.top);
-  if (speed < FLICK.min || Math.abs(dx) > -dy * 1.7) return null;
+  const speed = Math.hypot(last.x - first.x, last.y - first.y) / dt / (cab.bottom - cab.top);
+  // which way: the whole stroke, or the last part of a long one
+  const start = from(STROKE), dx = last.x - start.x, dy = last.y - start.y;
+  if (speed < FLICK.min || dy > -4 || Math.abs(dx) > -dy * 1.7) return null;
   const across = draw.aimAt(dx, dy);
   if (across === null) return null;
   return throwIt(power(speed), Math.atan2(across - LAUNCH.x, HOOP.z - LAUNCH.z));
@@ -224,7 +229,7 @@ function toggleMenu(open = $('menu').hidden) {
   if (!$('title').hidden || !$('over').hidden) return;
   $('menu').hidden = !open;
   paused = open;
-  if (open) { flicks.clear(); charge = null; $('resume').focus({ preventScroll: true }); }
+  if (open) { flicks.clear(); charge = null; early = null; $('resume').focus({ preventScroll: true }); }
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
@@ -269,6 +274,10 @@ function tick(now) {
     owed = Math.min(owed + dt * timeScale, STEP * 6 * timeScale);
     while (owed >= STEP) {
       court.step(STEP); owed -= STEP;
+      if (early && mode === 'play') {
+        early.left -= STEP;
+        if (court.pocket()) { court.shoot(early.speed, early.aim); early = null; } else if (early.left <= 0) early = null;
+      }
       if (mode === 'title') demo(STEP);
       if (mode === 'play') happened(); else court.take();
     }

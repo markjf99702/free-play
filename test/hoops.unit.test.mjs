@@ -68,7 +68,8 @@ test('the speeds that go in sit around a sweet flick: a bit softer misses, a bit
   assert.ok(outcome(wide, wide.shoot(power(FLICK.sweet), 0.12)).miss !== undefined, 'well wide');
   const flick = s => power(FLICK.sweet * s) / SWEET;
   assert.ok(flick(1) > 1.02 && flick(1) < 1.1, 'a sweet flick throws a touch past the middle of the hoop');
-  assert.ok(flick(0.88) > 0.99 && flick(1.12) < 1.12, 'a flick a bit off either way still throws in range');
+  assert.ok(flick(0.6) > 0.98 && flick(1.6) < 1.11, 'anything from about half the sweet flick to two-thirds harder again throws in range');
+  assert.ok(flick(0.3) < 0.95 && flick(3) > 1.15, 'well off either way goes short or long');
 });
 
 test('only the ball in the pocket can be thrown: four in the air, and the fifth flick waits', () => {
@@ -175,9 +176,9 @@ test('wherever they go, the balls stay in the machine and always come back', () 
   }
 });
 
-test('a ticket for every 3 points', () => {
+test('a ticket for every 4 points', () => {
   assert.equal(ticketsFor(0), 0);
-  assert.equal(ticketsFor(2), 0);
-  assert.equal(ticketsFor(3), 1);
-  assert.equal(ticketsFor(88), 29);
+  assert.equal(ticketsFor(3), 0);
+  assert.equal(ticketsFor(4), 1);
+  assert.equal(ticketsFor(121), 30);
 });

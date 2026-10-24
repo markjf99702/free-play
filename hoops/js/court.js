@@ -16,12 +16,12 @@ export const SLIDE = 25;                              // the last 25 of them, th
 export const BONUS = 10;                              // the last 10, a basket is worth 3
 export const FIRE = 3;                                // baskets in a row to set the rim alight
 export const CAGE = { half: 80, roof: 228, front: -14, lip: 12, back: 262 };
-export const HOOP = { y: 120, z: 232, r: 22, tube: 1.2, net: 36, low: 13, slide: 26 }; // r: the ring to the middle of the tube
+export const HOOP = { y: 120, z: 232, r: 22, tube: 1.2, net: 36, low: 13, slide: 22 }; // r: the ring to the middle of the tube
 export const BOARD = { z: 259, half: 40, y0: 106, y1: 168 };
 export const RAMP = { z0: 10, pocket: 0.05, slope: 0.206, vee: 0.16, chute: 64 }; // the pocket, then the ramp up to the board, and a V across
 export const LAUNCH = { x: 0, y: 26, z: -4, angle: 58 * Math.PI / 180 };
 
-const E = { rim: 0.55, board: 0.6, back: 0.5, net: 0.25, floor: 0.38, ball: 0.6 };
+const E = { rim: 0.4, board: 0.6, back: 0.5, net: 0.25, floor: 0.38, ball: 0.6 };
 
 // The ramp's surface: a V across it, so the balls run down to the middle, steeper up by the board than in the pocket.
 // It's the highest of four planes, so a ball only has to stay above each of them.
@@ -40,11 +40,18 @@ export const SWEET = (() => {
 
 // How a flick becomes a throw. A flick's speed is measured in cabinet-heights a second up the screen, and a flick
 // of `sweet` throws a touch harder than SWEET, into the middle of the speeds that go in (a little long still drops,
-// off the board). It's eased, so there's a little room either side of it, and the hardest flick goes well long.
-export const FLICK = { sweet: 2.4, min: 0.45, ease: 1.43, long: 1.06 };
-const TOP = FLICK.long * SWEET / (1 - Math.exp(-FLICK.ease));
-export const power = s => TOP * (1 - Math.exp(-FLICK.ease * s / FLICK.sweet));
-export const flickFor = v => -FLICK.sweet / FLICK.ease * Math.log(1 - v / TOP);
+// off the board). Everyone flicks differently, so it's forgiving: the throw goes with how many times harder or
+// softer the flick is, not how much, gently, and softer still more gently. Anything from about half the sweet flick
+// to two-thirds as hard again throws in range; only well off either way goes short or long.
+export const FLICK = { sweet: 2.4, min: 0.45, long: 1.05, soft: 0.12, hard: 0.12, most: 1.4 };
+export const power = s => {
+  const x = Math.log(s / FLICK.sweet);
+  return SWEET * Math.min(FLICK.most, FLICK.long + x * (x < 0 ? FLICK.soft : FLICK.hard));
+};
+export const flickFor = v => {
+  const k = v / SWEET - FLICK.long;
+  return FLICK.sweet * Math.exp(k / (k < 0 ? FLICK.soft : FLICK.hard));
+};
 
 export function createCourt({ random = Math.random, timed = true } = {}) {
   let clock = 0, score = 0, streak = 0, fire = false, shots = 0, baskets = 0, swishes = 0;
@@ -69,10 +76,11 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
   };
 
   // The hoop's slide: in from nothing over a couple of seconds, quicker in the last ten.
+  const period = () => bonus ? 4.5 : 6;
   function moveHoop(h) {
     const want = sliding && !over ? HOOP.slide : 0;
     hoop.amp += (want - hoop.amp) * Math.min(1, h * (want ? 0.8 : 1.5));
-    hoop.phase += h * 2 * Math.PI / (bonus ? 4 : 5.5);
+    hoop.phase += h * 2 * Math.PI / period();
     const x = hoop.amp * Math.sin(hoop.phase);
     hoop.vx = (x - hoop.x) / h; hoop.x = x;
     hoop.kick = Math.max(0, hoop.kick - h * 2.2);
@@ -119,7 +127,7 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
     if (b.x + R > CAGE.half) bounce(b, { x: -1, y: 0, z: 0 }, b.x + R - CAGE.half, E.net, 0.2);
     if (b.y + R > CAGE.roof) bounce(b, { x: 0, y: -1, z: 0 }, b.y + R - CAGE.roof, E.net, 0.2);
     if (b.z + R > CAGE.back) noisy(b, 'board', bounce(b, { x: 0, y: 0, z: -1 }, b.z + R - CAGE.back, E.back, 0.1), 40);
-    if (b.z - R < CAGE.front && b.y < CAGE.lip) bounce(b, { x: 0, y: 0, z: 1 }, CAGE.front - b.z + R, 0.3, 0.1);
+    if (b.z - R < CAGE.front && b.y < CAGE.lip) bounce(b, { x: 0, y: 0, z: 1 }, CAGE.front - b.z + R, 0.05, 0.3); // padded: a ball comes to rest against it
     // the backboard, sliding with the hoop
     if (b.z + R > BOARD.z && Math.abs(b.x - hoop.x) < BOARD.half + R * 0.5 && b.y > BOARD.y0 - R * 0.5 && b.y < BOARD.y1 + R * 0.5) {
       const hit = bounce(b, { x: 0, y: 0, z: -1 }, b.z + R - BOARD.z, E.board, 0.12, hoop.vx);
@@ -203,14 +211,22 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
     events.push({ miss: b.id });
   }
 
-  // The ball in the pocket, if there's one there to throw.
+  // The ball in the pocket, if there's one there to throw: the front one of any down at your end of the groove,
+  // even if it's still settling (or the next one along, just about to roll in).
   function pocket() {
     let best = null;
     for (const b of balls) {
-      if (b.shot || b.z > RAMP.z0 - 2 || Math.abs(b.x) > 3 || b.y > floorY(b.x, b.z) + R + 6 || Math.hypot(b.vx, b.vy, b.vz) > 70) continue;
+      if (b.shot || b.z > RAMP.z0 + 6 || Math.abs(b.x) > 10 || b.y > floorY(b.x, b.z) + R + 10) continue;
       if (!best || b.z < best.z) best = b;
     }
     return best;
+  }
+
+  // The aim that would meet the hoop, thrown at this speed: where it'll have slid to by the time the ball gets there.
+  function aimFor(speed) {
+    const t = (HOOP.z - LAUNCH.z) / (speed * Math.cos(LAUNCH.angle));
+    const x = hoop.amp * Math.sin(hoop.phase + t * 2 * Math.PI / period());
+    return Math.atan2(x - LAUNCH.x, HOOP.z - LAUNCH.z);
   }
 
   // Throw the ball in the pocket: speed in cm/s, aim the angle off straight ahead (+ to the right).
@@ -259,6 +275,7 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
   return {
     step,
     shoot,
+    aimFor,
     pocket,
     balls,
     hoop,
@@ -280,4 +297,4 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
   };
 }
 
-export const ticketsFor = score => Math.floor(score / 3);
+export const ticketsFor = score => Math.floor(score / 4);

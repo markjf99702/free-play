@@ -30,7 +30,7 @@
 ## How it plays
 
 - **The floor** has a cabinet for each machine, showing what you've done on it: your best, whether you've played today's card, the plush you've won. Tap one to play. Every machine has a way back to the floor.
-- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 20 points, Bonkers one for every 15, and Hoops one for every 3.
+- **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 20 points, Bonkers one for every 15, and Hoops one for every 4.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush.
 - No account and no server. Your tickets, prizes and scores stay in your browser. It works offline, and installs to a phone's home screen as one app.
@@ -138,11 +138,11 @@ Whack-a-mole, with the side of the cabinet made of glass. Five holes along a sun
 
 The basketball machine from the end of the row: a wooden ramp inside a net cage, a backboard and hoop at the far end, and four balls that roll back down to a pocket at your end.
 
-- **Flick a ball up at the hoop** to shoot. How hard you flick is how far it goes, and which way you flick is where it goes: point the flick at the hoop as you see it. (On a keyboard, the arrows aim and holding Space winds up a throw; let go when the meter's in the light.) A round is 45 seconds.
-- **Keep them coming.** The balls come back down the ramp and line up in the pocket, and you can throw the next as soon as it's there. A little long still drops in off the board; short or wide clanks off the rim.
+- **Flick a ball up at the hoop** to shoot. How hard you flick is how far it goes, but it's forgiving: anything from a gentle flick to a brisk one goes about the right distance, and only well off either way falls short or flies long. Which way you flick is where it goes: point the flick at the hoop as you see it. (On a keyboard, the arrows aim and holding Space winds up a throw; let go when the meter's in the light.) A round is 45 seconds.
+- **Keep them coming.** The balls come back down the ramp and line up in the pocket, and you can throw the next as soon as it's there (a flick let go just before it arrives waits for it). A little long still drops in off the board; short or wide clanks off the rim.
 - **A basket is 2 points.** Twenty seconds in, the hoop starts to slide from side to side on its rail, so throw where it's going to be, and in the last ten seconds a basket is worth 3. A ball in the air when the buzzer goes still counts.
 - **The gold ball** is worth double. **Three in a row** set the rim alight: a point more a basket until you miss.
-- A ticket for every 3 points, paid at the end of the round.
+- A ticket for every 4 points (two baskets), paid at the end of the round.
 
 ## Where the machines came from
 

@@ -168,7 +168,7 @@ while (!(await page.evaluate(() => hoops.court.over))) {
 const hooped = await page.evaluate(() => hoops.court.score);
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.ok(hooped > 0, 'baskets went in');
-assert.equal(await tickets(), beforeHoops + Math.floor(hooped / 3), 'Hoops pays a ticket for every 3 points');
+assert.equal(await tickets(), beforeHoops + Math.floor(hooped / 4), 'Hoops pays a ticket for every 4 points');
 await page.click('#over .back a');
 await page.waitForURL(base);
 
