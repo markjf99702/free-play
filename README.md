@@ -14,7 +14,7 @@
 <p align="center">
   <img src="docs/phone-clutch.png" alt="Clutch, a candy-pink claw machine: CLUTCH in neon on a bulb-lit sign, the claw coming up out of a heap of plush frogs, ghosts, aliens, penguins and a chick with a penguin in its grip, the prize chute behind a clear wall on the left, and a big pink HOLD button under the cabinet" width="250">
   &nbsp;
-  <img src="docs/phone-topple.png" alt="Topple, a teal coin pusher: TOPPLE in gold on its sign, a row of bonus pockets on the back wall, a chrome shelf scraping silver coins onto a packed deck with a toy car on a red card, +12 rising off the front edge, and a cup of 12 coins beside a gold DROP button" width="250">
+  <img src="docs/phone-topple.png" alt="Topple, a teal coin pusher: TOPPLE in gold on its sign, a row of bonus pockets on the back wall, a chrome pusher scraping silver coins onto a packed deck with a toy car on a red card, +11 and +16 rising off the front edge, 29 won this cup, and a cup of 12 coins beside a gold DROP button" width="250">
   &nbsp;
   <img src="docs/phone-highrise.png" alt="Highrise, a stacker: HIGHRISE in blue neon over a tower against a night skyline, its windows lit eight floors up in warm amber, one window tumbling off the side and the next row sliding along floor 9, with a trophy marked at floor 15 and +25 at floor 11, over a big blue STOP button" width="250">
   &nbsp;
@@ -97,12 +97,12 @@ A claw machine, seen through the glass, heaped with plush: bears, chicks, frogs,
 
 ## Topple
 
-A coin pusher, looking down through the glass: a chrome shelf sliding in and out under the back wall, a deck heaped with silver coins, and the front edge they go over.
+A coin pusher, looking down through the glass: a chrome pusher sliding in and out under the back wall, a deck heaped with silver coins, and the front edge they go over.
 
-- **Touch the glass to aim** the chute along the top, and let go to drop a coin. (Or aim with the finger still and tap **Drop** for more in the same place.) A cup holds 20 coins, and the chute takes a moment to reload between them. The cup's done once its last coin is down and the pile goes quiet, and anything the shelf still pushes over while its card is up counts for it too.
-- **How it pushes.** Coins land on the shelf and ride in and out with it. As it slides back, the back wall holds them, and the ones at the front get scraped off its lip onto the deck. As it slides forward, its face shoves the deck's coins along, and the ones at the front go over. Every coin over the front edge is a ticket, paid as it falls. The side walls stop short of the front, so coins pushed off the sides there go to the house.
-- **The bonus.** Every so often the lights along the back wall chase along the row of pockets and stop on one. Drop a coin through the lit pocket while it's lit for a shower of eight coins across the shelf, sometimes with a gold one.
-- **Gold coins** are worth ten tickets. **A prize** always sits on the deck somewhere, on a little card: push it over the edge and it goes on your shelf (a plastic watch, a toy car, a lucky keyring, a wind-up robot, or now and then a giant plastic gem). When one's gone, the attendant puts another on the shelf.
+- **Touch the glass to aim** the chute along the top, and let go to drop a coin. (Or aim with the finger still and tap **Drop** for more in the same place.) A cup holds 20 coins, and the chute takes a moment to reload between them. The cup's done once its last coin is down and the pile goes quiet, and anything the pusher still pushes over while its card is up counts for it too.
+- **How it pushes.** Coins land on the pusher and ride in and out with it. As it slides back, the back wall holds them, and the ones at the front get scraped off its lip onto the deck. As it slides forward, its face shoves the deck's coins along, and the ones at the front go over. Every coin over the front edge is a ticket, paid as it falls. The side walls stop short of the front, so coins pushed off the sides there go to the house.
+- **The bonus.** Every so often the lights along the back wall chase along the row of pockets and stop on one. Drop a coin through the lit pocket while it's lit for a shower of eight coins across the pusher, sometimes with a gold one.
+- **Gold coins** are worth ten tickets. **A prize** always sits on the deck somewhere, on a little card: push it over the edge and it goes on your shelf (a plastic watch, a toy car, a lucky keyring, a wind-up robot, or now and then a giant plastic gem). When one's gone, the attendant puts another on the pusher.
 - **The deck stays as you left it.** The coins are kept between visits, so a pile left hanging over the edge is still hanging there next time, and a cup you didn't finish is waiting.
 - **The keyboard works too.** ← and → move the chute; Space drops a coin.
 
@@ -187,7 +187,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `bonkers/`: Bonkers. `js/burrow.js` is the tunnels, the moles and the mallet, with a clock that only moves when it's told to, `js/draw.js` draws the cabinet and the ground in cross-section, `js/app.js` runs the round and the tickets, and `js/sound.js` makes the noises.
 - `popgun/`: Popgun. `js/gallery.js` is the rows, the corks and the score, with a clock that only moves when it's told to, `js/draw.js` draws the booth and the tin targets, `js/app.js` runs the aiming, the round and the tickets, and `js/sound.js` makes the noises.
 - `highrise/`: Highrise. `js/tower.js` is the rules, with no clock of its own, `js/draw.js` draws the tower and the city, `js/app.js` keeps time and runs the stop button and the prizes, and `js/sound.js` makes the noises.
-- `topple/`: Topple. `js/machine.js` is the shelf, the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
+- `topple/`: Topple. `js/machine.js` is the pusher (the shelf, in the code), the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
 - `floor/`: the pictures on the cabinets' screens.
 - `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the prize counter on every page (`counter.e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
 - `fonts/`: Bungee, Bungee Outline and Figtree (SIL Open Font License), served from here so nothing loads from elsewhere.

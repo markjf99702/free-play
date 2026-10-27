@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script src="../shared/carry.js"></script>
   <title>Topple · Free Play</title>
-  <meta name="description" content="A coin pusher on your phone. Drop coins onto the moving shelf, push the pile over the edge, and every coin that goes over is a ticket for the prize counter.">
+  <meta name="description" content="A coin pusher on your phone. Drop coins onto the moving pusher, push the pile over the edge, and every coin that goes over is a ticket for the prize counter.">
   <meta property="og:title" content="Topple, at Free Play">
   <meta property="og:description" content="A coin pusher on your phone: push the pile over the edge for tickets.">
   <meta property="og:image" content="https://free-play.junkdrawer.works/og.png">
@@ -29,10 +29,10 @@
     </symbol>
   </svg>
 
-  <canvas id="stage" aria-label="A coin pusher seen through its glass: a moving shelf at the back, a deck heaped with coins, and the front edge they go over"></canvas>
+  <canvas id="stage" aria-label="A coin pusher seen through its glass: a moving pusher at the back, a deck heaped with coins, and the front edge they go over"></canvas>
 
   <header class="hud">
-    <div class="score"><small>This cup</small><b id="won">0</b></div>
+    <div class="score"><small>Won this cup</small><b id="won">0</b></div>
     <div class="right">
       <button type="button" class="tix" id="tixBtn" aria-label="Prize counter"><svg><use href="#ticket"/></svg><span id="tix"></span></button>
       <button type="button" class="menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -50,7 +50,7 @@
     <a class="floor to-floor" href="../">← Free Play</a>
     <div class="marquee"><h1>Topple</h1></div>
     <p class="lede">A coin pusher. Every coin you push over the edge is a ticket.</p>
-    <p class="how">Touch the glass to aim the chute, and let go to drop a coin onto the moving shelf. The shelf scrapes coins off onto the deck, and the deck's coins get pushed towards the edge. A cup holds 20 coins. When the lights along the back stop on a pocket, drop one through it for a shower of coins. Gold coins are worth ten, and there's always a prize on there somewhere.</p>
+    <p class="how">Touch the glass to aim the chute, and let go to drop a coin onto the moving pusher. As it slides back, coins get scraped off onto the deck, and as it slides forward, it pushes the deck's coins towards the edge. A cup holds 20 coins. When the lights along the back stop on a pocket, drop one through it for a shower of coins. Gold coins are worth ten, and there's always a prize on there somewhere.</p>
     <p class="how keys">On a keyboard: ← and → move the chute, and Space drops a coin.</p>
     <div class="row">
       <button type="button" class="big" id="play">Play</button>

@@ -70,6 +70,10 @@ const middle = sel => page.evaluate(sel => { const r = document.querySelector(se
 // the button was, and doesn't drop a coin.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
 assert.equal(await page.textContent('#play'), 'Play');
+// Under it, the deck shows the cup full, with Drop waiting for Play, and the scoreboard says what it counts.
+assert.equal(await page.textContent('#left'), '20', 'a full cup waits under the title card');
+assert.ok(await page.isDisabled('#drop'), 'Drop waits for Play');
+assert.equal(await page.textContent('.hud .score small'), 'Won this cup');
 await page.evaluate(() => { window.__downs = []; document.getElementById('stage').addEventListener('pointerdown', () => __downs.push(performance.now())); document.getElementById('play').addEventListener('click', () => { window.__play = performance.now(); }); });
 const play = await middle('#play');
 await tap(play);
@@ -122,7 +126,7 @@ assert.match(await page.textContent('.fp-toast'), /^You won a/);
 const shelf = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes);
 assert.equal(shelf['trinket-' + prize], 1, 'the prize is on the arcade\'s shelf');
 await page.waitForFunction(() => topple.machine.pieces.some(p => p.kind === 'prize'), null, { timeout: 5000 });
-await page.waitForFunction(() => document.getElementById('live').textContent === 'Another prize is on the shelf.', null, { timeout: 1000 });
+await page.waitForFunction(() => document.getElementById('live').textContent === 'Another prize is on the pusher.', null, { timeout: 1000 });
 assert.deepEqual(await page.evaluate(() => topple.cup.prizes), [prize], 'the cup keeps the prize it won, for its card');
 
 // The back wall's sign sits under the pockets, where the chute's carriage never covers it, wherever it's aimed.

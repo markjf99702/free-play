@@ -187,7 +187,7 @@ function restockSoon() {
   restockTimer = setTimeout(() => {
     const had = machine.pieces.some(p => p.kind === 'prize');
     machine.restock(nextPrize());
-    if (!had && machine.pieces.some(p => p.kind === 'prize')) { sound.restock(); say('Another prize is on the shelf.'); }
+    if (!had && machine.pieces.some(p => p.kind === 'prize')) { sound.restock(); say('Another prize is on the pusher.'); }
   }, 1500);
 }
 
@@ -263,11 +263,13 @@ function hud(bump = false) {
   const have = wallet.read().tickets;
   $('tix').textContent = fmt(have);
   pocketButton($('tixBtn'), have);
-  const left = cup ? cup.left : 0;
+  // Under the title card with no cup on the go, the next cup waits full (Drop wakes up with Play); after one, the end
+  // card shows it empty.
+  const left = cup ? cup.left : $('title').hidden ? 0 : CUP;
   $('left').textContent = left;
   $('coinsWord').textContent = left === 1 ? 'coin' : 'coins';
   document.querySelector('.cup').classList.toggle('empty', !left);
-  $('drop').disabled = !left;
+  $('drop').disabled = !(cup && cup.left);
   if (bump) { const b = $('won'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
   $('titleBest').textContent = saved.cups ? `Best cup: ${tickets(saved.best)}.` : '';
   $('play').textContent = cup && cup.left > 0 ? 'Carry on' : 'Play';
