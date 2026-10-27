@@ -73,6 +73,7 @@ function pocket() {
   const shelf = $('shelf');
   shelf.replaceChildren();
   const owned = SHELF.filter(p => w.prizes[p.id]);
+  shelf.classList.toggle('empty', !owned.length);
   if (!owned.length) {
     const e = document.createElement('span');
     e.className = 'empty';

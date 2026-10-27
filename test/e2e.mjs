@@ -9,6 +9,7 @@ import { readFile } from 'node:fs/promises';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { SHELF } from '../shared/prizes.js';
 
 const require = createRequire(import.meta.url);
 let pw;
@@ -238,6 +239,42 @@ assert.equal(await stored(), was, 'undone from the keyboard too');
 assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'lollipop', 'and the keyboard goes back to the prize');
 await page.click('.fp-x');
 assert.equal(await page.textContent('#tix'), '120');
+
+// The shelf, on the floor and in the counter: every row of prizes stands on a plank of its own, and an empty shelf has
+// none running through what it says. (Read off the pixels down the shelf's left edge, clear of the prizes.)
+async function planks(sel) {
+  const png = (await page.locator(sel).screenshot()).toString('base64');
+  return page.evaluate(async ([sel, png]) => {
+    const shelf = document.querySelector(sel), box = shelf.getBoundingClientRect();
+    const img = new Image();
+    img.src = 'data:image/png;base64,' + png;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0);
+    const k = img.width / box.width, px = g.getImageData(Math.round(5 * k), 0, 1, img.height).data;
+    const bands = [];
+    for (let y = 0; y < img.height; y++) {
+      if (!(px[y * 4] > px[y * 4 + 2] + 20 && px[y * 4] > 55)) continue; // brown
+      if (bands.length && bands.at(-1)[1] >= y - 1) bands.at(-1)[1] = y;
+      else bands.push([y, y]);
+    }
+    const feet = [...new Set([...shelf.children].filter(e => !e.matches('.empty, .fp-empty')).map(e => Math.round(e.getBoundingClientRect().bottom - box.top)))];
+    return { feet, bands: bands.map(([a, b]) => [a / k, (b + 1) / k]) };
+  }, [sel, png]);
+}
+for (const [kinds, rows] of [[0, 0], [3, 1], [10, 2], [SHELF.length, 4]]) {
+  await pocket({ tickets: 50, prizes: Object.fromEntries(SHELF.slice(0, kinds).map((p, i) => [p.id, (i % 3) + 1])) });
+  for (const [where, sel] of [['the floor', '#shelf'], ['the counter', '.fp-shelf']]) {
+    if (sel === '.fp-shelf') await page.click('#trade');
+    const { feet, bands } = await planks(sel);
+    assert.ok(kinds ? feet.length >= rows : !feet.length, `${where}: ${kinds} kinds of prize on a phone take ${feet.length} rows`);
+    assert.equal(bands.length, feet.length, `${where}, ${feet.length} rows: ${bands.length} planks`);
+    feet.forEach((foot, i) => assert.ok(bands[i][0] > foot - 12 && bands[i][1] < foot + 3, `${where}: row ${i + 1}, at ${foot} px, isn't on its plank (${bands[i]})`));
+    if (sel === '.fp-shelf') await page.click('.fp-x');
+  }
+}
 
 // Saves with an odd value in them still open: a best of null (what a NaN is saved as), and today's card saved
 // without its balls. (The saves there were are put back after.)

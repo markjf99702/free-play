@@ -46,12 +46,17 @@
   color: var(--fp-ink); font: 24px/1 var(--fp-body); cursor: pointer;
 }
 .fp-sheet h3 { margin: 12px 2px 8px; font: 600 12px var(--fp-body); letter-spacing: .14em; text-transform: uppercase; color: var(--fp-ink3); }
+/* Rows of prizes 38 px tall and 6 px apart, each standing on its own plank: a band repeating every 44 px from the top
+   of the first row, along the foot of each. An empty shelf has no plank, so nothing runs through what it says. */
 .fp-shelf {
-  display: flex; flex-wrap: wrap; gap: 4px 6px; min-height: 56px; padding: 10px 12px; border-radius: 14px;
-  background: linear-gradient(transparent 70%, rgba(120, 70, 30, .5) 70% 78%, transparent 78%), rgba(251, 238, 210, .04);
-  border: 1px solid var(--fp-line); font-size: 30px; line-height: 1.2; align-items: flex-end;
+  display: flex; flex-wrap: wrap; gap: 6px; min-height: 58px; padding: 10px 12px; border-radius: 14px;
+  background:
+    repeating-linear-gradient(transparent 0 31px, rgba(120, 70, 30, .5) 31px 37px, transparent 37px 44px) 0 10px / 100% calc(100% - 10px) no-repeat,
+    rgba(251, 238, 210, .04);
+  border: 1px solid var(--fp-line); font-size: 30px; line-height: 38px; align-items: flex-end;
 }
-.fp-shelf .fp-empty { font-size: 14px; color: var(--fp-ink3); align-self: center; }
+.fp-shelf.empty { background: rgba(251, 238, 210, .04); }
+.fp-shelf .fp-empty { font-size: 14px; line-height: 1.45; color: var(--fp-ink3); align-self: center; }
 .fp-shelf span { position: relative; }
 .fp-shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--fp-body); color: var(--fp-ink); background: var(--fp-red); border-radius: 999px; padding: 1px 5px; }
 .fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
