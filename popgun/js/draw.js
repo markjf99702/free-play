@@ -8,6 +8,10 @@ import { W, H, ROWS, FLIGHT } from './gallery.js';
 const CAB = { x0: -64, x1: W + 64, y0: -168, y1: H + 150 };
 const SIGN = { x0: 70, x1: W - 70, y0: -160, y1: -98 };
 const PIVOT = { x: W / 2, y: H + 138 }, BARREL = 74, GUN = 1.45; // the popgun turns about its grip; its size
+// Asked for less motion (the system's setting, read each frame, so a change shows at once): lights hold steady, and the gun
+// doesn't jog.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
+
 export const MOON = { x: W - 92, y: 70, r: 38 };  // painted on the backdrop: it winks when it's hit
 const C = {
   red: '#d63a2f', redDeep: '#8f1f19', cream: '#fbeed2', gold: '#f2c14e', wood: '#8a5a2b', woodDark: '#5a3816',
@@ -247,7 +251,7 @@ export function createDraw(canvas) {
   // and jogging from side to side for a tap that came while it reloaded (jog: seconds since, or -1).
   function gun(angle, recoil, ready, jog = -1) {
     const kick = Math.max(0, 1 - recoil / 0.12) * 10;
-    const shake = jog >= 0 && jog < 0.16 ? Math.sin(jog * 80) * 4 * (1 - jog / 0.16) : 0;
+    const shake = jog >= 0 && jog < 0.16 && !calm?.matches ? Math.sin(jog * 80) * 4 * (1 - jog / 0.16) : 0;
     ctx.save();
     ctx.translate(PIVOT.x + shake, PIVOT.y + 6);
     ctx.rotate(angle + Math.PI / 2);
@@ -278,15 +282,16 @@ export function createDraw(canvas) {
     if (winking) { ctx.fillStyle = 'rgba(255, 120, 140, .5)'; ctx.beginPath(); ctx.arc(x + 18, y + 8, 5, 0, Math.PI * 2); ctx.fill(); }
   }
 
-  // The bulbs round the sign, chasing; glow makes them all flash.
+  // The bulbs round the sign, chasing; glow makes them all flash. Asked for less motion, they're all lit and steady,
+  // and glow makes them all brighter, with no blinking.
   function bulbs(t, glow) {
-    const n = 18, x0 = SIGN.x0 + 10, x1 = SIGN.x1 - 10, phase = Math.floor(t * 3) % 2;
+    const n = 18, x0 = SIGN.x0 + 10, x1 = SIGN.x1 - 10, phase = Math.floor(t * 3) % 2, still = !!calm?.matches, blaze = still && glow > 0;
     for (let i = 0; i <= n; i++) {
       for (const y of [SIGN.y0 + 7, SIGN.y1 - 7]) {
-        const on = glow > 0 ? Math.floor(t * 10) % 2 === 0 || i % 2 : (i + phase) % 2 === 0;
+        const on = still || (glow > 0 ? Math.floor(t * 10) % 2 === 0 || i % 2 : (i + phase) % 2 === 0);
         const x = x0 + (x1 - x0) * i / n;
-        if (on) { ctx.fillStyle = 'rgba(255, 220, 140, .35)'; ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill(); }
-        ctx.fillStyle = on ? '#fff1c4' : '#6b4a2a'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+        if (on) { ctx.fillStyle = blaze ? 'rgba(255, 232, 170, .6)' : 'rgba(255, 220, 140, .35)'; ctx.beginPath(); ctx.arc(x, y, blaze ? 8 : 6, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = blaze ? '#fffbea' : on ? '#fff1c4' : '#6b4a2a'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
       }
     }
   }

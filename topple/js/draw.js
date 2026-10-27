@@ -9,6 +9,9 @@ const WALL_TOP = 168;                         // how high the back and side wall
 const POCKET = { y: 96, r: 13 };              // the bonus pockets along the back wall
 const RAIL = 148;                             // the chute's rail
 const SIGN = POCKET.y - 33;                   // the back wall's sign, under the pockets (the chute rides over them)
+// Asked for less motion (the system's setting, read each frame, so a change shows at once): lights hold steady.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
+
 // The camera: above and in front of the machine, looking down at the middle of the deck.
 const EYE = { x: DECK.W / 2, y: 470, z: 480 }, AT = { y: 0, z: 118 };
 const F = (() => { const dy = AT.y - EYE.y, dz = AT.z - EYE.z, n = Math.hypot(dy, dz); return { y: dy / n, z: dz / n }; })();
@@ -295,7 +298,8 @@ export function createDraw(canvas) {
       const lit = lights.state !== 'idle' && lights.at === i;
       const p = at(((i + 0.5) / POCKETS) * DECK.W, POCKET.y, 0), r = (POCKET.r + 3) * p.s;
       ctx.lineWidth = 3 * p.s;
-      ctx.strokeStyle = lit ? (lights.state === 'open' && Math.floor(t * 8) % 2 ? '#fff6d0' : C.gold) : 'rgba(242, 193, 78, .25)';
+      // the open pocket blinks; asked for less motion, it's lit bright and steady
+      ctx.strokeStyle = lit ? (lights.state === 'open' && (calm?.matches || Math.floor(t * 8) % 2) ? '#fff6d0' : C.gold) : 'rgba(242, 193, 78, .25)';
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
       if (lit) {
         ctx.fillStyle = 'rgba(242, 193, 78, .35)'; ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.8, 0, Math.PI * 2); ctx.fill();
@@ -307,16 +311,17 @@ export function createDraw(canvas) {
     }
   }
 
-  // The bulbs round the sign, chasing; glow makes them all flash.
+  // The bulbs round the sign, chasing; glow makes them all flash. Asked for less motion, they're all lit and steady,
+  // and glow makes them all brighter, with no blinking.
   function bulbs(t, glow) {
     const r = R(box.marq), inset = 6, n = Math.max(8, Math.round((r.w - inset * 2) / 15));
-    const step = (r.w - inset * 2) / n, phase = Math.floor(t * 3) % 2;
+    const step = (r.w - inset * 2) / n, phase = Math.floor(t * 3) % 2, still = !!calm?.matches, blaze = still && glow > 0;
     let i = 0;
     const bulb = (x, y) => {
-      const on = glow > 0 ? Math.floor(t * 10) % 2 === 0 || i % 2 : (i + phase) % 2 === 0;
+      const on = still || (glow > 0 ? Math.floor(t * 10) % 2 === 0 || i % 2 : (i + phase) % 2 === 0);
       i++;
-      if (on) { ctx.fillStyle = 'rgba(255, 220, 140, .35)'; ctx.beginPath(); ctx.arc(x, y, 4.2, 0, Math.PI * 2); ctx.fill(); }
-      ctx.fillStyle = on ? '#fff1c4' : '#5b4524'; ctx.beginPath(); ctx.arc(x, y, 2.1, 0, Math.PI * 2); ctx.fill();
+      if (on) { ctx.fillStyle = blaze ? 'rgba(255, 232, 170, .6)' : 'rgba(255, 220, 140, .35)'; ctx.beginPath(); ctx.arc(x, y, blaze ? 5.6 : 4.2, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = blaze ? '#fffbea' : on ? '#fff1c4' : '#5b4524'; ctx.beginPath(); ctx.arc(x, y, 2.1, 0, Math.PI * 2); ctx.fill();
     };
     for (let j = 0; j <= n; j++) { bulb(r.x + inset + j * step, r.y + inset - 1); bulb(r.x + inset + j * step, r.y + r.h - inset + 1); }
   }

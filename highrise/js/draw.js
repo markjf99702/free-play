@@ -15,6 +15,9 @@ const C = {
   pane: '#131a40', frame: '#262f66', warm: '#ffc861', warmDeep: '#ff9a3c', glow: '#fff3c8', gold: '#f2c14e', cream: '#fbeed2',
 };
 const rowY = floor => (FLOORS - floor) * CELL;     // the top of a floor's windows
+// Asked for less motion (the system's setting, read each frame): a landed row lights without flashing, the tower
+// lights up without twinkling, and there are no fireworks.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 const colX = col => col * CELL;
 
 export function createDraw(canvas) {
@@ -148,7 +151,7 @@ export function createDraw(canvas) {
   // ([{ col, floor, t }]), flash ({ floor, t }), pops ([{ floor, text, t }]), cheer (seconds since topping out, or -1),
   // dim (the tower going dark after a game, 0 to 1).
   function frame({ now = 0, rows = [], mover = null, falling = [], flash = null, pops = [], cheer = -1, dim = 0 } = {}) {
-    const t = now / 1000;
+    const t = now / 1000, still = !!calm?.matches;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(back, 0, 0);
@@ -162,15 +165,15 @@ export function createDraw(canvas) {
     ctx.fillStyle = on ? 'rgba(255, 70, 70, .35)' : 'rgba(255, 70, 70, .06)'; ctx.beginPath(); ctx.arc(b.x, b.y, 9 * k, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = on ? '#ff5a5a' : '#6a2030'; ctx.beginPath(); ctx.arc(b.x, b.y, 3.5 * k, 0, Math.PI * 2); ctx.fill();
     // fireworks over the city when it's topped out
-    if (cheer >= 0) fireworks(cheer);
+    if (cheer >= 0 && !still) fireworks(cheer);
     // the floors built, the newest flashing as it lands; the whole tower lighting up floor by floor when it's topped
     rows.forEach((cols, i) => {
-      const floor = i + 1, flashing = flash && flash.floor === floor && flash.t < 0.35 && Math.floor(flash.t * 14) % 2 === 0;
+      const floor = i + 1, flashing = flash && flash.floor === floor && flash.t < 0.35 && (still || Math.floor(flash.t * 14) % 2 === 0);
       const alpha = dim ? Math.max(0.35, 1 - dim * 0.65) : 1;
       for (const col of cols) lit(col, floor, { bright: flashing, alpha });
       if (cheer >= 0) {
         const wave = cheer * 18 - floor;
-        if (wave > 0) for (let col = 0; col < COLS; col++) if (!cols.includes(col)) lit(col, floor, { alpha: Math.min(0.85, wave / 4) * (0.6 + 0.4 * Math.sin(t * 6 + col + floor)) });
+        if (wave > 0) for (let col = 0; col < COLS; col++) if (!cols.includes(col)) lit(col, floor, { alpha: Math.min(0.85, wave / 4) * (still ? 0.8 : 0.6 + 0.4 * Math.sin(t * 6 + col + floor)) });
       }
     });
     if (mover) for (let i = 0; i < mover.width; i++) lit(mover.start + i, mover.floor, { bright: true });
@@ -183,7 +186,7 @@ export function createDraw(canvas) {
     for (const p of pops) {
       // a pop rises and fades over a second; one that's held (the top-out's) grows to 1.6 times the size, rises a
       // little way and stays, fading only in its last half second
-      const held = p.hold > 1, grow = held ? Math.min(1, p.t / 0.25) : 1, ease = 1 - (1 - grow) ** 3;
+      const held = p.hold > 1, grow = held && !still ? Math.min(1, p.t / 0.25) : 1, ease = 1 - (1 - grow) ** 3;
       const q = P((COLS * CELL) / 2, rowY(p.floor) - 10 - (held ? 26 * (1 - (1 - Math.min(1, p.t / 0.5)) ** 2) : p.t * 40));
       ctx.globalAlpha = held ? Math.max(0, Math.min(1, (p.hold - p.t) / 0.5)) : Math.max(0, 1 - p.t / 1);
       const size = 18 * (held ? 1.25 + 0.35 * ease : 1);

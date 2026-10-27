@@ -15,6 +15,8 @@ const KEY = 'free-play.roll-up';
 const BALLS = 9;
 const ticketsFor = score => Math.floor(score / 10); // a ticket for every 10 points
 const { LANE, R } = phys;
+// Asked for less motion (the system's setting, read each frame): the push-in onto the board cuts rather than glides.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 
 // How a flick becomes a roll. The finger's speed along the lane (cm/s, measured where the ball is) is eased,
 // so the firmer rolls that reach the 40 and the 50 get a wider range of flicks than the 20 does,
@@ -449,7 +451,8 @@ function tick(now) {
 function update(dt) {
   lights.t += dt;
   const close = (mode === 'roll' && ball.z > LANE.foul + 40) || (mode === 'result' && ball.why !== 'short');
-  zoom += ((close ? 1 : 0) - zoom) * Math.min(1, dt * (close ? 2.6 : 4));
+  if (calm?.matches) zoom = close ? 1 : 0; // (as Tilt's slide between floors does)
+  else zoom += ((close ? 1 : 0) - zoom) * Math.min(1, dt * (close ? 2.6 : 4));
   if (lights.mode !== 'idle' && lights.t > (lights.mode === 'win' ? 2.6 : 1.4)) lights.mode = 'idle';
   if (flash) { flash.t += dt; if (flash.t > 1.2) flash = null; }
   for (const p of pops) p.age += dt;
@@ -497,6 +500,7 @@ window.rollUp = {
   get saved() { return saved; },
   get game() { return game; },
   get fouled() { return foulAt; },
+  get zoom() { return zoom; },
   start,
   roll(vx, vz, x) {
     if (mode !== 'aim') return false;

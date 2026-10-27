@@ -11,6 +11,9 @@ const RAIL = 26;                                        // the middle of the rai
 const DOOR = { x0: 24, x1: 132, y0: 792, y1: 886 };     // the prize door, under the chute
 const COIN = { x0: 446, x1: 578, y0: 792, y1: 886 };    // the coin door, set to free play
 const CHROME = '#d5dbe4', STEEL = '#6b7487', DARK = '#2a1b2e';
+// Asked for less motion (the system's setting, read each frame, so a change shows at once): lights hold steady.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
+
 
 // Each plush comes in a colour or two: [fill, edge, and the light patches some have].
 const LOOKS = {
@@ -375,18 +378,19 @@ export function createDraw(canvas) {
     }
   }
 
-  // The bulbs round the sign, chasing; glow (0 to 1) makes them all blaze, for a win.
+  // The bulbs round the sign, chasing; glow (0 to 1) makes them all blaze, for a win. Asked for less motion, they're
+  // all lit and steady, and a win's blaze is all of them brighter, with no blinking.
   function bulbs(t, glow) {
-    const inset = 9, phase = Math.floor(t * 3) % 2;
+    const inset = 9, phase = Math.floor(t * 3) % 2, still = !!calm?.matches, blaze = still && glow > 0;
     const x0 = MARQ.x0 + inset, x1 = MARQ.x1 - inset, y0 = MARQ.y0 + inset, y1 = MARQ.y1 - inset;
     const across = (x1 - x0) / Math.round((x1 - x0) / 26), down = (y1 - y0) / Math.round((y1 - y0) / 26);
     let i = 0;
     const bulb = (x, y) => {
-      const on = glow > 0 ? Math.floor(t * 10) % 2 === 0 || i % 2 : (i + phase) % 2 === 0;
+      const on = still || (glow > 0 ? Math.floor(t * 10) % 2 === 0 || i % 2 : (i + phase) % 2 === 0);
       i++;
-      ctx.fillStyle = on ? 'rgba(255, 220, 140, .35)' : 'transparent';
-      if (on) circle(ctx, x, y, 6.5);
-      ctx.fillStyle = on ? '#fff1c4' : '#6b4a2a';
+      ctx.fillStyle = blaze ? 'rgba(255, 232, 170, .6)' : on ? 'rgba(255, 220, 140, .35)' : 'transparent';
+      if (on) circle(ctx, x, y, blaze ? 8.5 : 6.5);
+      ctx.fillStyle = blaze ? '#fffbea' : on ? '#fff1c4' : '#6b4a2a';
       circle(ctx, x, y, 3.4);
     };
     for (let x = x0; x < x1 + 1; x += across) { bulb(x, y0); bulb(x, y1); }

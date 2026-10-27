@@ -264,6 +264,25 @@ assert.ok(await page.title(), 'the page did not load offline');
 assert.ok(await page.evaluate(() => typeof rollUp === 'object'), 'the game did not start offline');
 await ctx.setOffline(false);
 
+// Asked for less motion, the push-in onto the board cuts in and out rather than gliding: through a roll, it's only ever
+// all the way in or all the way out.
+{
+  const calm = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, reducedMotion: 'reduce' });
+  const still = await calm.newPage();
+  still.on('pageerror', e => problems.push('less motion: ' + e.message));
+  await still.goto(base + 'roll-up/');
+  await still.evaluate(() => rollUp.start());
+  await still.waitForFunction(() => rollUp.mode === 'aim');
+  const zooms = await still.evaluate(async () => {
+    const seen = new Set();
+    rollUp.roll(0, 305, 0);
+    while (rollUp.mode !== 'aim' && rollUp.mode !== 'over') { seen.add(Math.round(rollUp.zoom * 1000) / 1000); await new Promise(r => requestAnimationFrame(r)); }
+    return [...seen].sort();
+  });
+  assert.deepEqual(zooms, [0, 1], `with less motion asked for, the push-in passed through ${zooms.join(', ')}`);
+  await calm.close();
+}
+
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();
 server.close();

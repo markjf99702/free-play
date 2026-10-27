@@ -71,6 +71,9 @@ function fit(W, H, top, bottom) {
   return Object.assign(c, { F, ox: W / 2 - F * (x0 + x1) / 2, oy: top + spare * 0.62 - F * y0 });
 }
 
+// Asked for less motion (the system's setting, read each frame): the lights hold steady and the holes don't flicker.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
+
 export function createScene(canvas) {
   const ctx = canvas.getContext('2d');
   const bake = document.createElement('canvas');
@@ -462,7 +465,7 @@ export function createScene(canvas) {
 
   // The called hole (both corners, for a 100) breathes a teal ring.
   function called(value, now) {
-    const k = 0.5 + 0.5 * Math.sin(now / 260);
+    const k = calm?.matches ? 0.6 : 0.5 + 0.5 * Math.sin(now / 260);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (const o of HOLES) {
@@ -478,7 +481,7 @@ export function createScene(canvas) {
 
   // The red line flashing, wider and brighter than it's painted, with a glow.
   function foulFlash(t) {
-    const a = Math.max(0, 1 - t / 1.1) * (0.7 + 0.3 * Math.cos(t * 18));
+    const a = Math.max(0, 1 - t / 1.1) * (calm?.matches ? 1 : 0.7 + 0.3 * Math.cos(t * 18));
     if (a <= 0) return;
     const band = (z0, z1) => [V(-LANE.half, ground(z0), z0), V(LANE.half, ground(z0), z0), V(LANE.half, ground(z1), z1), V(-LANE.half, ground(z1), z1)];
     fillPts(ctx, band(LANE.foul - 0.8, LANE.foul + 2.2), `rgba(240,40,40,${a.toFixed(3)})`);
@@ -494,18 +497,19 @@ export function createScene(canvas) {
     const o = f.hole;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = a * (0.65 + 0.35 * Math.sin(f.t * 22));
+    ctx.globalAlpha = a * (calm?.matches ? 0.9 : 0.65 + 0.35 * Math.sin(f.t * 22));
     fillPts(ctx, circleOnBoard(o.u, o.s, o.r + 1.4, 0.3, 40), 'rgba(255,200,90,.55)');
     ctx.restore();
   }
 
   function lights(l, now) {
-    const t = now / 1000;
+    const t = now / 1000, still = !!calm?.matches;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (const b of bulbs) {
       let on;
-      if (l.mode === 'win') on = Math.floor(t * 8 + b.i) % 2 === 0;           // everything flashing
+      if (still) on = l.mode !== 'idle' || b.i % 3 === 0;                     // steady: all lit for a score or a win
+      else if (l.mode === 'win') on = Math.floor(t * 8 + b.i) % 2 === 0;      // everything flashing
       else if (l.mode === 'score') on = (l.t < 0.9) ? Math.floor(l.t * 10) % 2 === 0 : (Math.floor(t * 5) + b.i) % 3 === 0;
       else on = (Math.floor(t * 4) + b.i) % 3 === 0;                         // a slow chase
       const r = b.r * (on ? 5 : 2.2);

@@ -248,6 +248,23 @@ await page.waitForSelector('#win:not([hidden])', { timeout: 3000 });
 assert.equal(await page.textContent('#winT'), 'You got a plush frog, a plush bear and a plush ghost.');
 assert.equal(await page.textContent('#winHow'), "Three at once! They're on your shelf now, with your prizes.");
 
+// Asked for less motion, the bulbs round the sign stay lit and still: two looks at it a third of a second apart are the same.
+{
+  const calm = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, reducedMotion: 'reduce' });
+  const still = await calm.newPage();
+  still.on('pageerror', e => problems.push('less motion: ' + e.message));
+  await still.goto(base + 'clutch/');
+  await still.evaluate(() => document.fonts.ready);
+  await still.click('#play');
+  await still.waitForTimeout(500);
+  const sign = await still.evaluate(() => { const a = clutch.draw.at(-18, -98), b = clutch.draw.at(618, -24); return { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y }; });
+  const first = await still.screenshot({ clip: sign });
+  await still.waitForTimeout(340);
+  const second = await still.screenshot({ clip: sign });
+  assert.ok(first.equals(second), "with less motion asked for, the sign's bulbs still chase");
+  await calm.close();
+}
+
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
 server.close();
