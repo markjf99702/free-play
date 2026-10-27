@@ -504,7 +504,9 @@ for (const [opts, shown] of [[{ viewport: { width: 1280, height: 800 } }, true],
 }
 
 // On a shorter phone each machine's cabinet is narrower, and the control deck under it: everything on the deck stays
-// on it, a hint shows whole or not at all, and the points-a-basket label on Hoops' deck stays on one line.
+// on it, a hint shows whole or not at all (no line cut off below, no word cut off at the side), the points-a-basket
+// label on Hoops' deck stays on one line, and nothing on a deck is smaller than 11 px, the smallest size Apple's Human
+// Interface Guidelines give for text on iOS (Typography, "Ensuring legibility").
 const decks = await browser.newContext({ deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
 const dp = await decks.newPage();
 dp.on('pageerror', e => problems.push(e.message));
@@ -521,9 +523,16 @@ for (const [width, height] of [[390, 844], [390, 664], [360, 640], [375, 548], [
         const r = el.getBoundingClientRect();
         if (r.width && (r.left < d.left - 1 || r.right > d.right + 1 || r.top < d.top - 1 || r.bottom > d.bottom + 1)) off.push('off the deck: ' + name(el));
       }
-      for (const say of deck.querySelectorAll('.say')) if (say.offsetWidth && say.scrollHeight > say.clientHeight + 1) off.push('cut short: ' + name(say));
+      for (const say of deck.querySelectorAll('.say')) {
+        if (say.offsetWidth && say.scrollHeight > say.clientHeight + 1) off.push('cut short: ' + name(say));
+        if (say.offsetWidth && say.scrollWidth > say.clientWidth + 1) off.push('cut off at the side: ' + name(say));
+      }
       const label = deck.querySelector('.worth span');
       if (label && label.offsetHeight > 1.6 * parseFloat(getComputedStyle(label).fontSize)) off.push('on two lines: ' + name(label));
+      for (const el of deck.querySelectorAll('*')) {
+        const words = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()), size = parseFloat(getComputedStyle(el).fontSize);
+        if (words && el.getClientRects().length && size < 11) off.push(`${size} px: ` + name(el));
+      }
       return off;
     });
     assert.deepEqual(off, [], `${name}'s deck at ${width} x ${height}`);

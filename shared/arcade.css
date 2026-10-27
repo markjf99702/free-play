@@ -16,6 +16,10 @@
   --fp-body: "Figtree", system-ui, sans-serif;
 }
 
+/* Safari on an iPhone can enlarge a page's text when the phone turns on its side; this keeps every page's words the
+   size they were made at, as normalize.css (v8.0.1) does. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 .fp-tix { width: 1.3em; height: .9em; flex: none; vertical-align: -.08em; }
 /* A machine's keyboard line on its title card and in its menu: shown on a computer (a pointer that can hover), not on
    a phone. Its menu's touch line is the other way round. */

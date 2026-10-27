@@ -53,7 +53,7 @@ function layout() {
     Object.assign(deck.style, { left: `${cab.left + cab.width * 0.05}px`, width: `${cab.width * 0.9}px`, top: `${cab.bottom - 2}px` });
     // On a short phone the cabinet is narrower, and the deck with it: its hint gets smaller, then goes (see the CSS).
     deck.classList.toggle('narrow', deck.offsetWidth < 290);
-    deck.classList.toggle('narrower', deck.offsetWidth < 220);
+    deck.classList.toggle('narrower', deck.offsetWidth < 265);
   }
 }
 addEventListener('resize', layout);

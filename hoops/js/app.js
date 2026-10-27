@@ -52,10 +52,13 @@ function layout() {
   if (side) {
     Object.assign(deck.style, { left: `${cab.left + cab.width + 18}px`, top: `${(cab.top + cab.bottom) / 2 - deck.offsetHeight / 2}px` });
   } else {
-    Object.assign(deck.style, { left: `${cab.left + cab.width * 0.02}px`, width: `${cab.width * 0.96}px`, top: `${cab.bottom - 2}px` });
-    // On a short phone the cabinet is narrower, and the deck with it: its hint gets smaller, then goes (see the CSS).
+    // The deck stands on the machine's blue front, which is wider than the backboard's cabinet and spans a phone's
+    // screen: as wide as the window allows, to 340 px, and centred under the cabinet (and never wider than the front).
+    const width = Math.min(innerWidth - 32, 340, cab.width * 2);
+    Object.assign(deck.style, { left: `${cab.left + cab.width / 2 - width / 2}px`, width: `${width}px`, top: `${cab.bottom - 2}px` });
+    // On a narrow phone the deck is narrower: its hint goes to 11 px, then goes (see the CSS).
     deck.classList.toggle('narrow', deck.offsetWidth < 290);
-    deck.classList.toggle('narrower', deck.offsetWidth < 220);
+    deck.classList.toggle('narrower', deck.offsetWidth < 245);
   }
 }
 addEventListener('resize', layout);

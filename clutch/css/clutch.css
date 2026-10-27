@@ -74,9 +74,10 @@ svg { width: 1.3em; height: .9em; flex: none; }
 /* a press too short to be a go: "Hold to move the claw" lights up for a moment (js/app.js) */
 .say.nudge { animation: nudge 1.6s ease-out; }
 @keyframes nudge { 0%, 55% { color: #ffe28a; opacity: 1; transform: scale(1.12); } }
-/* On a short phone the cabinet is narrower, and the deck under it (js/app.js marks it): under 290 px the hint is
-   smaller, and no more lines than the deck has room for, and under 220 px it goes, as the title card says it too. */
-.deck.narrow .say { font-size: 10px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+/* On a short phone the cabinet is narrower, and the deck under it (js/app.js marks it): under 290 px the hint goes
+   down to 11 px, the smallest size Apple's guidelines give for iOS, in no more lines than the deck has room for, and
+   under 220 px, where it can't fit whole at that size, it goes, as the title card says it too. */
+.deck.narrow .say { font-size: 11px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
 .deck.narrower .say { display: none; }
 .hold {
   flex: none; width: 88px; height: 88px; border-radius: 50%; padding: 0; position: relative;
