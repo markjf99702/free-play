@@ -31,6 +31,7 @@
 
   <main class="stage" id="stage">
     <canvas id="table" aria-label="The pinball table"></canvas>
+    <p class="hint" id="hint" hidden>Tap and hold either side to flip</p>
     <button type="button" class="launch" id="launch" hidden aria-label="Launch: hold to pull the plunger back, let go to shoot">
       <span class="meter" id="meter"></span><span class="lbl">Launch</span>
     </button>
@@ -41,7 +42,9 @@
       <a class="floor to-floor" href="../">← Free Play</a>
       <h1 id="titleH">Tilt</h1>
       <p class="lede">Three pinball tables, in your pocket.</p>
+      <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
       <fieldset class="tables" id="tables" hidden><legend>Table</legend></fieldset>
+      <p class="rate" id="rate"></p>
       <button type="button" class="go" id="startBtn">Start game</button>
       <p class="best" id="bestLine"></p>
       <div class="row">
@@ -66,6 +69,7 @@
   <section class="sheet" id="pause" hidden aria-labelledby="pauseH">
     <div class="card">
       <h2 id="pauseH">Paused</h2>
+      <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
       <button type="button" class="go" id="resumeBtn">Resume</button>
       <div class="row">
         <button type="button" class="ghost" id="soundBtn">Sound: on</button>

@@ -43,6 +43,8 @@ function save() {
   try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* private mode: play on without saving */ }
 }
 const fmt = n => n.toLocaleString('en-US');
+// What the table in the machine pays, as its title card and its end card say it.
+const rate = t => `A ticket for every ${fmt(t.perTicket)} points.`;
 
 // Each table keeps its own top five: the scores that can be read, best first.
 function topFive() {
@@ -84,6 +86,10 @@ function resize() {
   const edge = renderer.ox + t.plunger.x0 * s;
   b.style.right = Math.max(4, r.width - edge + 4) + 'px';
   b.style.bottom = Math.max(6, r.height - (renderer.oy + t.H * s) + 6) + 'px';
+  // The hint sits on the apron, under the middle of the flippers, where the ball never goes.
+  const h = $('hint');
+  h.style.left = renderer.ox + (t.flippers[0].x + t.flippers[1].x) / 2 * s + 'px';
+  h.style.top = renderer.oy + (t.H - 34) * s + 'px';
 }
 window.addEventListener('resize', resize);
 
@@ -96,8 +102,8 @@ $('tables').hidden = $('tablesRow').hidden = Object.keys(TABLES).length < 2;
 $('tables').addEventListener('change', e => useTable(e.target.value));
 
 // Puts a table in the machine, with the demo playing on it: its drawing and rules, its How to play (under the
-// controls, which are the same on every table) and its best score. The next visit starts on it too, and the
-// address names it, so a link opens it.
+// controls, which are the same on every table), what it pays and its best score. The next visit starts on it too,
+// and the address names it, so a link opens it.
 function useTable(id) {
   table = TABLES[id];
   skin = Object.keys(table.skins).includes(store.skin) ? table.skins[store.skin] : Object.values(table.skins)[0];
@@ -109,6 +115,7 @@ function useTable(id) {
   for (const li of $('howTo').querySelectorAll('li[data-table]')) li.remove();
   for (const h of table.howTo) $('howTo').insertAdjacentHTML('beforeend', `<li data-table>${h}</li>`);
   $('tables').querySelector(`input[value="${id}"]`).checked = true;
+  $('rate').textContent = rate(table);
   if (store.table !== id) { store.table = id; save(); }
   // The first table needs no name in the address, and anything else there (?debug, say) stays as it was. The
   // single-file copy may be inside someone else's page, so it leaves the address alone.
@@ -131,6 +138,12 @@ useTable([asked, store.table].find(id => id && Object.keys(TABLES).includes(id))
 const stage = $('stage');
 const touches = new Map(); // pointerId -> { side, x0, y0, t0, nudged }
 function held(side) { for (const t of touches.values()) if (t.side === side) return true; return false; }
+// A flipper button, from a finger or a key. The visit's first game shows how to flip until the first one (see hud()).
+let games = 0, flipped = false;
+function flip(side, down) {
+  if (down && game.mode === 'play') flipped = true;
+  game.flip(side, down);
+}
 
 stage.addEventListener('pointerdown', e => {
   unlock();
@@ -140,7 +153,7 @@ stage.addEventListener('pointerdown', e => {
   const side = e.clientX < window.innerWidth / 2 ? 'left' : 'right';
   touches.set(e.pointerId, { side, x0: e.clientX, y0: e.clientY, t0: performance.now(), nudged: false });
   try { stage.setPointerCapture(e.pointerId); } catch { }
-  game.flip(side, true);
+  flip(side, true);
 });
 stage.addEventListener('pointermove', e => {
   const t = touches.get(e.pointerId);
@@ -162,7 +175,7 @@ stage.addEventListener('pointerup', lift);
 stage.addEventListener('pointercancel', lift);
 stage.addEventListener('contextmenu', e => e.preventDefault());
 
-const launch = $('launch');
+const launch = $('launch'), hint = $('hint');
 launch.addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation(); unlock();
   try { launch.setPointerCapture(e.pointerId); } catch { }
@@ -192,8 +205,8 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.repeat) { if ([...LEFT, ...RIGHT, ...PLUNGE, 'ArrowUp'].includes(e.code)) e.preventDefault(); return; }
-  if (LEFT.includes(e.code)) { e.preventDefault(); game.flip('left', true); }
-  else if (RIGHT.includes(e.code)) { e.preventDefault(); game.flip('right', true); }
+  if (LEFT.includes(e.code)) { e.preventDefault(); flip('left', true); }
+  else if (RIGHT.includes(e.code)) { e.preventDefault(); flip('right', true); }
   else if (PLUNGE.includes(e.code)) {
     e.preventDefault();
     if (game.state === 'lane' && game.ballInLane()) game.plunge(true, e.timeStamp);
@@ -213,6 +226,7 @@ function startGame() {
   $('title').hidden = true; $('over').hidden = true; $('pause').hidden = true;
   paused = false;
   msgs.length = 0; // nothing left over from the last game
+  games++;
   game.start('play');
   play('start');
 }
@@ -276,7 +290,8 @@ function gameOver(g) {
   stopFeed();
   setTimeout(() => { stopFeed = feed($('payout'), won, { tick: () => play('rollover') }); }, 900);
   $('final').textContent = fmt(score);
-  $('overNote').textContent = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
+  const placed = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
+  $('overNote').textContent = [placed, rate(table)].filter(Boolean).join(' ');
   $('scores').innerHTML = '';
   store[table.scoresKey].forEach(s => {
     const li = document.createElement('li');
@@ -347,6 +362,9 @@ function hud(now) {
   const showLaunch = game.mode === 'play' && game.state === 'lane' && game.ballInLane() && !paused;
   if (launch.hidden === showLaunch) launch.hidden = !showLaunch;
   if (showLaunch) $('meter').style.height = (game.table.plunger.pull * 100) + '%';
+  // How to flip, from the first launch of the visit's first game until the first flip (see flip()).
+  const showHint = game.mode === 'play' && games === 1 && !flipped && game.state === 'live' && !paused;
+  if (hint.hidden === showHint) hint.hidden = !showHint;
 }
 
 document.fonts?.ready.then(() => { renderer.dirty = true; });

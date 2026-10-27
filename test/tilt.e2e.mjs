@@ -1,14 +1,15 @@
 // Plays Tilt, on the Free Play floor, in Chromium through the real page:  node test/tilt.e2e.mjs  (needs Playwright)
-// Checks a link's preview says what the title card says, starts a game, launches with the Launch button, flips with
-// touches on each half of the screen, nudges with Space as How to play says, pauses, drains every ball, checks the high
-// score survives a reload, that a link to a table that isn't there opens the first, plays a game of Space and one of
-// Haunted House (down to its basement and back) from the table picker, ends a game from the menu as its last ball
-// counts its bonus (it's saved once), dates a high score in the player's own time zone, fits the backbox's longest
-// messages on a 320 px phone, shows them one after another when they come together, keeps the Launch button out of an
-// iPhone's home indicator and off the right flipper on a small table, follows the title card's links from the
-// keyboard, plays on over saved data it didn't write and in a window with no room for the table, covers the page with
-// its message when JavaScript is off, checks the screen slides between a table's floors, and loads once more offline
-// (sw.js must keep every file the page loads).
+// Checks a link's preview says what the title card says, and that the cards say how to play and what a table pays,
+// starts a game, launches with the Launch button, says how to flip until the first flip (in a visit's first game
+// only), flips with touches on each half of the screen, nudges with Space as How to play says, pauses, drains every
+// ball, checks the high score survives a reload, that a link to a table that isn't there opens the first, plays a game
+// of Space and one of Haunted House (down to its basement and back) from the table picker, ends a game from the menu
+// as its last ball counts its bonus (it's saved once), dates a high score in the player's own time zone, fits the
+// backbox's longest messages on a 320 px phone, shows them one after another when they come together, keeps the Launch
+// button out of an iPhone's home indicator and off the right flipper on a small table, follows the title card's links
+// from the keyboard, plays on over saved data it didn't write and in a window with no room for the table, covers the
+// page with its message when JavaScript is off, checks the screen slides between a table's floors, and loads once more
+// offline (sw.js must keep every file the page loads).
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -60,6 +61,12 @@ assert.equal(await page.isVisible('#tables'), await page.locator('#tables input'
 // tools/screenshots.mjs draws).
 const lede = await page.textContent('.lede');
 assert.equal(await page.getAttribute('meta[property="og:description"]', 'content'), lede, "the link preview's line says something else");
+// Without opening How to play, it says how to flip and launch, and what the table in the machine pays (its own
+// rate, so it stays right if the pay changes).
+const rateLine = p => p.evaluate(() => `A ticket for every ${window.tilt.table.perTicket.toLocaleString('en-US')} points.`);
+assert.ok(await page.isVisible('#title .ctl'), 'the title card does not say how to play without opening How to play');
+assert.match(await page.textContent('#title .ctl'), /hold either side to flip\. Hold Launch and let go/);
+assert.equal(await page.textContent('#rate'), await rateLine(page), 'the title card does not say what the table pays');
 
 await page.tap('#startBtn');
 await page.waitForFunction(() => window.tilt.game.mode === 'play');
@@ -79,10 +86,13 @@ assert.ok((await peek()).pull > 0.3, 'the plunger pulls back while held');
 await touch('touchEnd', []);
 await page.waitForFunction(() => window.tilt.game.state === 'live', null, { timeout: 5000 });
 assert.ok(await page.isHidden('#launch'), 'Launch goes away once the ball is in play');
+// In the first game of a visit, the apron then says how to flip, until the first flip.
+await page.waitForSelector('#hint:not([hidden])', { timeout: 2000 });
 
 // Touches on each half work the flippers, both at once too.
 await touch('touchStart', [{ x: 60, y: 600, id: 2 }]);
 assert.ok((await peek()).left);
+await page.waitForSelector('#hint', { state: 'hidden', timeout: 2000 });
 await touch('touchStart', [{ x: 60, y: 600, id: 2 }, { x: 330, y: 600, id: 3 }]);
 p = await peek();
 assert.ok(p.left && p.right, 'both flippers up');
@@ -98,9 +108,10 @@ await page.keyboard.press('Space');
 assert.ok(await page.evaluate(() => window.tilt.game.tiltMeter > 0.5), 'Space did not nudge');
 assert.match(await page.textContent('#howTo'), /Nudge:[^.]*Space/, 'How to play does not say Space nudges');
 
-// The menu pauses everything.
+// The menu pauses everything, and says how to flip and launch.
 await page.tap('#menuBtn');
 assert.ok(await page.isVisible('#pause'));
+assert.match(await page.textContent('#pause .ctl'), /hold either side to flip\. Hold Launch and let go/);
 const frozen = await page.evaluate(() => window.tilt.game.world.time);
 await page.waitForTimeout(300);
 assert.equal(await page.evaluate(() => window.tilt.game.world.time), frozen, 'the clock stops while paused');
@@ -115,6 +126,7 @@ for (let i = 0; i < 3; i++) {
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const final = await page.textContent('#final');
 assert.ok(Number(final.replace(/,/g, '')) >= 12340, 'final score shown');
+assert.equal(await page.textContent('#overNote'), 'Number 1 on your list. ' + await rateLine(page), 'the end card does not say what the table pays');
 assert.equal(await page.locator('#scores li').count(), 1);
 
 await page.reload();
@@ -168,6 +180,8 @@ await page.tap('#tables label:has(input[value="haunted"])');
 await page.waitForFunction(() => window.tilt.table.name === 'Haunted House');
 assert.equal(await page.evaluate(() => window.tilt.game.table.flippers.length), 4);
 assert.match(await page.textContent('#howTo'), /the stairs back up/);
+assert.equal(await page.textContent('#rate'), await rateLine(page));
+assert.notEqual(await rateLine(page), 'A ticket for every 10,000 points.', 'the hard table pays what the others do');
 assert.equal(new URL(page.url()).searchParams.get('table'), 'haunted');
 await page.keyboard.press('Enter');
 await page.waitForSelector('#launch:not([hidden])');
@@ -236,6 +250,19 @@ await west.waitForSelector('#over:not([hidden])');
 assert.equal(await west.evaluate(() => window.tilt.store.scores[0].date), '2026-10-13');
 assert.equal(await west.textContent('#scores li.me small'), '10/13');
 await west.context().close();
+
+// Only the first game of a visit says how to flip, and not while it's paused.
+const second = await freshPage();
+await second.goto(base);
+await second.waitForFunction(() => window.tilt);
+await second.evaluate(() => { window.tilt.startGame(); window.tilt.game.state = 'live'; });
+await second.waitForSelector('#hint:not([hidden])', { timeout: 2000 });
+await second.evaluate(() => window.tilt.setPaused(true));
+await second.waitForSelector('#hint', { state: 'hidden', timeout: 2000 });
+await second.evaluate(() => { window.tilt.setPaused(false); window.tilt.startGame(); window.tilt.game.state = 'live'; });
+await second.waitForTimeout(300);
+assert.ok(await second.isHidden('#hint'), 'the second game of a visit says how to flip again');
+await second.context().close();
 
 // On a 320 px phone the backbox display still fits the longest messages and an eight-digit score, end to end.
 const small = await freshPage({ viewport: { width: 320, height: 568 } });

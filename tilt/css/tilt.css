@@ -73,6 +73,14 @@ body {
 .launch .lbl { position: relative; }
 .launch .lbl::before { content: "▲"; display: block; text-align: center; font-size: 16px; margin-bottom: 6px; }
 .launch .meter { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(var(--amber), #e2551a); opacity: .5; }
+/* How to flip, on the apron under the flippers (main.js puts it there), through the first game until the first flip. */
+.hint {
+  position: absolute; margin: 0; transform: translate(-50%, -50%); width: max-content; max-width: calc(100% - 24px);
+  padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255, 165, 58, .55); background: #120a02;
+  color: var(--ink); font: 600 13px/1.25 var(--body); text-align: center; pointer-events: none;
+  animation: breathe 2.4s ease-in-out infinite;
+}
+@keyframes breathe { 50% { color: var(--ink3); border-color: rgba(255, 165, 58, .25); } }
 
 /* ---- menus ---- */
 .sheet {
@@ -90,7 +98,10 @@ h1 {
   text-shadow: 0 0 10px rgba(255, 140, 30, .6), 0 3px 0 #a33a10;
 }
 h2 { margin: 0; font: 30px/1.1 var(--disp); color: var(--amber); }
-.lede { margin: 8px 0 18px; color: var(--ink2); }
+.lede { margin: 8px 0 4px; color: var(--ink2); }
+/* the controls, on the title card and the pause card (How to play has the rest) */
+.ctl { margin: 0 0 16px; color: var(--ink2); font-size: 14px; }
+#pause .ctl { margin: 8px 0 16px; }
 /* The table picker: a radio button for each table, drawn as a tile; the one in the machine is lit. */
 .tables { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 0 0 14px; padding: 0; border: 0; min-width: 0; }
 .tables legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -104,6 +115,8 @@ h2 { margin: 0; font: 30px/1.1 var(--disp); color: var(--amber); }
 .tables input:checked + span { border-color: var(--amber); background: var(--amber-dim); }
 .tables input:checked + span b { color: var(--amber); }
 .tables input:focus-visible + span { outline: 2px solid var(--amber); outline-offset: 3px; }
+/* what the table in the machine pays */
+.rate { margin: -6px 0 14px; color: var(--ink2); font-size: 14px; }
 .go {
   display: block; width: 100%; padding: 14px 18px; border: 0; border-radius: 12px; cursor: pointer;
   background: linear-gradient(#ffb04d, #f07a1a); color: #2a1200; font: 18px var(--disp); letter-spacing: .03em;
@@ -148,5 +161,8 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 
 .noscript { position: fixed; inset: 0; z-index: 10; margin: 0; display: flex; align-items: center; justify-content: center; padding: 16px; text-align: center; font: 22px var(--disp); color: var(--amber); background: var(--bg); }
 
-@media (max-height: 640px) { h1 { font-size: 48px; } .card { padding: 18px 18px 14px; } }
-@media (prefers-reduced-motion: reduce) { .display.msg { animation: none; } }
+@media (max-height: 640px) {
+  h1 { font-size: 48px; } .card { padding: 18px 18px 14px; }
+  .ctl { margin-bottom: 12px; } .tables { gap: 4px; } .tables span { padding-block: 6px; } .best { margin-top: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .display.msg, .hint { animation: none; } }
