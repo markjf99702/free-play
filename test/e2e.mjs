@@ -49,6 +49,22 @@ assert.equal(await page.locator('.cab').count(), 8);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
 assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
+// To a screen reader each cabinet is a link named by its machine and what it says about you (its description comes
+// after, as the link's description, and the picture keeps its own words), and the purse says it opens the counter.
+// (A name as Chromium's accessibility tree has it: the first line of the element's ARIA snapshot, which is YAML, so a
+// name with an apostrophe in it comes in single quotes, the apostrophe doubled.)
+const nameOf = async loc => {
+  const top = (await loc.ariaSnapshot()).split('\n')[0];
+  const line = top.startsWith("- '") ? top.slice(3).replace(/':?$/, '').replace(/''/g, "'") : top.slice(2).replace(/:$/, '');
+  return line.match(/^[a-z]+ "(.*)"$/)?.[1];
+};
+const cabinetNames = async () => { const out = []; for (const cab of await page.locator('.cab').all()) out.push(await nameOf(cab)); return out; };
+const MACHINES = ['Roll Up', 'Tilt', 'Clutch', 'Topple', 'Highrise', 'Popgun', 'Bonkers', 'Hoops'];
+for (const [i, name] of (await cabinetNames()).entries()) {
+  assert.ok(name?.startsWith(MACHINES[i] + ' ') && name.length < 120, `cabinet ${i + 1} is named "${name}" (${name?.length} characters)`);
+}
+assert.equal(await page.locator('.cab.roll-up').getAttribute('aria-describedby'), 'rollUpWhat');
+assert.equal(await nameOf(page.locator('#purse')), '0 tickets · Prize counter', "the purse's name");
 
 // Roll Up: in from the floor, a game, and its tickets.
 await page.click('.cab.roll-up');
@@ -190,6 +206,11 @@ assert.equal(await tickets(), beforeHoops + Math.floor(hooped / 4), 'Hoops pays 
 await page.click('#over .back a');
 await page.waitForURL(base);
 
+// With every machine played, each cabinet's name still starts with the machine and stays short.
+for (const [i, name] of (await cabinetNames()).entries()) {
+  assert.ok(name?.startsWith(MACHINES[i] + ' ') && name.length < 120, `played: cabinet ${i + 1} is named "${name}" (${name?.length} characters)`);
+}
+
 // The prize counter, from the floor.
 const have = await tickets();
 await page.click('#trade');
@@ -201,8 +222,14 @@ assert.ok(await page.isHidden('.fp-sheet'));
 assert.equal(await page.textContent('#tix'), String(have - 15));
 assert.match(await page.textContent('#shelf'), /🎈/, 'the balloon is on the shelf');
 
-// A double tap at the counter buys one, not two; two taps a second apart buy two.
+// A prize the pocket can't run to says how far short it is, to a screen reader too (it's only dimmed to the eye).
 const pocket = async w => { await page.evaluate(w => localStorage.setItem('free-play.wallet', JSON.stringify(w)), w); await page.reload(); };
+await pocket({ tickets: 7, prizes: {} });
+await page.click('#trade');
+assert.deepEqual(await page.locator('.fp-prize').evaluateAll(els => els.slice(0, 2).map(e => e.getAttribute('aria-label'))), ['Lollipop, 5 tickets', 'Spider ring, 10 tickets, 3 more than you have']);
+await page.click('.fp-x');
+
+// A double tap at the counter buys one, not two; two taps a second apart buy two.
 const stored = () => page.evaluate(() => localStorage.getItem('free-play.wallet'));
 const tapPrize = async n => {
   const box = await page.locator('.fp-prize').nth(n).boundingBox();

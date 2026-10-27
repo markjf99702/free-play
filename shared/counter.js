@@ -115,7 +115,8 @@ function render() {
     b.querySelector('.e').textContent = p.emoji;
     b.querySelector('.n').textContent = p.name;
     b.querySelector('.c').append(fmt(p.cost));
-    b.setAttribute('aria-label', `${p.name}, ${fmt(p.cost)} tickets`);
+    // (dimmed when it's more than the pocket holds, and said so)
+    b.setAttribute('aria-label', `${p.name}, ${tickets(p.cost)}` + (w.tickets < p.cost ? `, ${fmt(p.cost - w.tickets)} more than you have` : ''));
     b.dataset.id = p.id;
     b.addEventListener('click', () => trade(p));
     grid.append(b);
