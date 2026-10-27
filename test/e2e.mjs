@@ -289,6 +289,17 @@ assert.equal(await page.textContent('.fp-toast'), 'Plush alien.');
 assert.ok(await page.isVisible('.fp-sheet .fp-toast'), 'in the counter, the name comes up at its foot');
 await page.click('.fp-x');
 
+// Scrolling the counter scrolls the counter, not the floor behind it: opened from the foot of the floor and scrolled
+// up past its top, it leaves the floor where it was.
+await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
+const foot = await page.evaluate(() => scrollY);
+await page.click('#trade');
+await page.mouse.move(195, 600);
+for (let i = 0; i < 12; i++) { await page.mouse.wheel(0, -400); await page.waitForTimeout(50); }
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => scrollY), foot, 'scrolling up the counter scrolled the floor behind it');
+await page.click('.fp-x');
+
 // Saves with an odd value in them still open: a best of null (what a NaN is saved as), and today's card saved
 // without its balls. (The saves there were are put back after.)
 const ODD = ['free-play.popgun', 'free-play.bonkers', 'free-play.hoops', 'free-play.roll-up'];

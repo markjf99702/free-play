@@ -79,7 +79,7 @@ body {
   padding: 16px; background: rgba(3, 5, 10, .45);
 }
 .card {
-  width: min(380px, 100%); max-height: 100%; overflow: auto; text-align: center;
+  width: min(380px, 100%); max-height: 100%; overflow: auto; overscroll-behavior: contain; text-align: center;
   background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px 18px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, .5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   user-select: text; -webkit-user-select: text;
