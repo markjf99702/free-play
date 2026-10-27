@@ -91,8 +91,9 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .stop:focus-visible { outline-offset: 5px; border-radius: 50%; }
 
 /* ---------- cards: title, the choice at floor 11, the end of a game, the menu ---------- */
+/* left: over the cabinet on a wide screen, where the deck stands beside it (js/app.js sets --card-x) */
 .card {
-  position: fixed; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  position: fixed; z-index: 3; left: var(--card-x, 50%); top: 50%; transform: translate(-50%, -50%);
   width: min(380px, calc(100vw - 32px)); max-height: calc(100dvh - 24px); overflow: auto; overscroll-behavior: contain;
   padding: 22px 22px 16px; text-align: center; background: var(--card);
   border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5);

@@ -50,7 +50,12 @@ function layout() {
   const cab = draw.cabinet();
   if (side) {
     Object.assign(deck.style, { left: `${cab.left + cab.width + 18}px`, top: `${(cab.top + cab.bottom) / 2 - deck.offsetHeight / 2}px` });
+    // The cards stand over the cabinet, not the middle of the window, so they keep off the deck beside it (as far as
+    // the window allows: a card stays 16 px inside it). On a phone held upright they're in the middle.
+    const half = Math.min(380, innerWidth - 32) / 2;
+    document.documentElement.style.setProperty('--card-x', `${Math.max(16 + half, Math.min(innerWidth - 16 - half, cab.left + cab.width / 2))}px`);
   } else {
+    document.documentElement.style.removeProperty('--card-x');
     Object.assign(deck.style, { left: `${cab.left + cab.width * 0.05}px`, width: `${cab.width * 0.9}px`, top: `${cab.bottom - 2}px` });
     // On a short phone the cabinet is narrower, and the deck with it: its hint gets smaller, then goes (see the CSS).
     deck.classList.toggle('narrow', deck.offsetWidth < 290);

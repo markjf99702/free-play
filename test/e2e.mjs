@@ -503,6 +503,33 @@ for (const [opts, shown] of [[{ viewport: { width: 1280, height: 800 } }, true],
   await kc.close();
 }
 
+// On a wide screen, where the deck stands beside the cabinet, every card stands over the cabinet and keeps off what's
+// on the deck: the title, the menu, the end of a round (Clutch's win) and Highrise's choice at floor 11.
+const wide = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
+const wp = await wide.newPage();
+wp.on('pageerror', e => problems.push(e.message));
+for (const [width, height] of [[1280, 800], [1024, 768]]) {
+  await wp.setViewportSize({ width, height });
+  for (const name of ['clutch', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops']) {
+    await wp.goto(base + name + '/');
+    await wp.waitForFunction(name => !!window[name], name, { timeout: 10000 });
+    await wp.evaluate(() => document.fonts.ready);
+    const over = await wp.evaluate(() => {
+      const on = [...document.querySelectorAll('#deck *')].map(el => el.getBoundingClientRect()).filter(r => r.width);
+      const deck = Math.min(...on.map(r => r.left)), out = [];
+      for (const card of document.querySelectorAll('.card')) {
+        for (const c of document.querySelectorAll('.card')) c.hidden = c !== card;
+        const r = card.getBoundingClientRect();
+        if (r.right > deck) out.push(`${card.id} runs ${Math.round(r.right - deck)} px onto the deck`);
+        if (r.left < 16 || r.right > innerWidth - 16) out.push(`${card.id} runs off the window`);
+      }
+      return out;
+    });
+    assert.deepEqual(over, [], `${name}'s cards at ${width} x ${height}`);
+  }
+}
+await wide.close();
+
 // On a shorter phone each machine's cabinet is narrower, and the control deck under it: everything on the deck stays
 // on it, a hint shows whole or not at all (no line cut off below, no word cut off at the side), the points-a-basket
 // label on Hoops' deck stays on one line, and nothing on a deck is smaller than 11 px, the smallest size Apple's Human
