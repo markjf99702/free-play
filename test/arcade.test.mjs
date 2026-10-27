@@ -202,3 +202,21 @@ test("the dispenser says when the last ticket is out, and not when it's stopped"
   feed(payoutBox(), 7, { fresh: false, onDone: () => done++ });
   assert.equal(done, 2);
 });
+
+// An installed offline copy is downloaded whole again only when sw.js changes. Otherwise each file in it is refreshed
+// only when a page that loads it is visited online, so the copy could hold one release's shared/counter.js beside
+// another's topple/js/app.js, and a page opened from it would run that mix. sw.js carries a fingerprint of every file
+// it keeps, so a change to any of them is a change to sw.js too.
+test('sw.js changes whenever a file in the offline copy does', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { createHash } = await import('node:crypto');
+  const root = new URL('../', import.meta.url);
+  const sw = await readFile(new URL('sw.js', root), 'utf8');
+  const shell = [...sw.match(/SHELL = \[([^\]]*)\]/)[1].matchAll(/'([^']*)'/g)].map(m => m[1]);
+  const all = createHash('sha1');
+  // each file in the list's order, an address ('./', 'hoops/') read as its index.html
+  for (const f of shell) all.update(createHash('sha1').update(await readFile(new URL(f.endsWith('/') ? f + 'index.html' : f, root))).digest());
+  const files = all.digest('hex').slice(0, 8);
+  const kept = sw.replace(/SHELL = \[[^\]]*\]/, '').match(/const FILES = '([0-9a-f]*)'; \/\/ test\/arcade\.test\.mjs checks this/)?.[1];
+  assert.equal(kept, files, `a file sw.js keeps for offline has changed: set FILES in sw.js to '${files}'`);
+});

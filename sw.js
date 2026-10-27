@@ -3,9 +3,13 @@
 // Network first, so a new version shows up as soon as you're online, but a page the network hasn't answered in a few
 // seconds opens from the offline copy instead.
 
-// Bump the number when the file list changes, or before a release that should refresh every offline copy: a new name
-// is what makes an installed copy download the whole list again.
+// An installed copy downloads the whole list again only when this file changes by a byte. Otherwise each file in it is
+// refreshed only when a page that loads it is visited online, and the copy could mix two releases. So FILES is a
+// fingerprint of every file in SHELL: change any of them and test/arcade.test.mjs fails until FILES is changed to
+// match (it says what to), which changes this file, so every copy is made whole again at once. Bump CACHE's number
+// as well when the list itself changes.
 const CACHE = 'free-play-v9';
+const FILES = 'f403237b'; // test/arcade.test.mjs checks this
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the page for an address that is not there

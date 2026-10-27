@@ -155,7 +155,7 @@ A machine is a folder with its own `index.html`. To put one on the floor:
 1. Load `../shared/carry.js` first in its `<head>` and `../shared/arcade.css` before its own styles, and point its icon, manifest and fonts at the arcade's (`../icon.svg`, `../manifest.webmanifest`, `../fonts/`).
 2. Pay tickets with `pay(n)` from `shared/wallet.js`, and show them coming out of the slot with `feed()` and `PAYOUT` from `shared/counter.js`; or, for a machine that pays in prizes the way Clutch does, put them on the shelf with `give(prize)` (and list them in `shared/prizes.js`). Open the prize counter with `openCounter()`. A machine with physics can use matter-js from `shared/matter.min.js`, as Clutch and Topple do.
 3. Keep its own saves under a key starting `free-play.` and its name, link back to the floor (`../`), and register `../sw.js` for offline.
-4. Give it a cabinet in `index.html` (a picture of it in `floor/`, which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list, and give it a test.
+4. Give it a cabinet in `index.html` (a picture of it in `floor/`, which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list (bump `CACHE`, and set `FILES` to what `npm test` says), and give it a test.
 
 ## Running it
 
@@ -194,4 +194,4 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `tools/`: `screenshots.mjs` draws the pictures (`floor/*.jpg`, `docs/*.png` and `og.png`) from the pages themselves, `make-icons.mjs` draws the PNG icons from `icon.svg` and `tools/icon-full-bleed.svg` (the one with square corners, for phones that round them), and `tune.mjs` plays Tilt's tables with the autopilot and reports how balls drain and what they score.
 - `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the prize counter on every page (`counter.e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
 - `fonts/`: Bungee, Bungee Outline and Figtree (SIL Open Font License), served from here so nothing loads from elsewhere.
-- `sw.js`: keeps a copy of the floor and every machine for playing offline.
+- `sw.js`: keeps a copy of the floor and every machine for playing offline. An installed copy is downloaded whole again only when `sw.js` itself changes, so it carries `FILES`, a fingerprint of every file it keeps: change any of them and `npm test` fails until `FILES` is changed to match (it says what to), so a release never leaves a copy half old and half new. When its list of files changes, bump the number in `CACHE` too.
