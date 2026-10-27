@@ -212,6 +212,7 @@ async function rollUpBoard(page) {
   await page.waitForTimeout(400);
   await page.evaluate(() => { tilt.game.score = 268550; });
   await page.click('#menuBtn');
+  await page.click('#quitBtn'); // (End game asks first)
   await page.click('#quitBtn');
   await page.waitForTimeout(4400);
   await page.screenshot({ path: join(root, 'docs/phone-tilt.png') });

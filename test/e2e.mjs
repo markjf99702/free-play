@@ -94,6 +94,7 @@ assert.equal(await page.textContent('#tixT'), String(before), "Tilt's title card
 await page.click('#startBtn');
 await page.evaluate(() => { window.tilt.game.score = 154320; });
 await page.click('#menuBtn');
+await page.click('#quitBtn'); // (End game asks first)
 await page.click('#quitBtn');
 await page.waitForFunction(() => !document.getElementById('over').hidden, null, { timeout: 5000 });
 assert.equal(await tickets(), before + 15, 'Classic pays a ticket for every 10,000 points');

@@ -229,8 +229,16 @@ const listed = await page.evaluate(() => window.tilt.store.scores.length);
 await page.evaluate(() => { const g = window.tilt.game, b = g.world.balls[0]; g.settings.ballSave = 0; g.saveUntil = 0; g.ballNo = 3; g.score += 40000; g.lamps.bonus = 10; b.x = 243; b.y = 980; b.vx = 0; b.vy = 300; g.state = 'live'; });
 await page.waitForFunction(() => window.tilt.game.state === 'bonus', null, { timeout: 15000 });
 await page.tap('#menuBtn');
+// End game sits by Sound, and one tap only asks, with the score it would end at: the game is still on, and asks no
+// more after three seconds. A second tap while it asks ends it.
+const asked = await page.evaluate(() => { document.getElementById('quitBtn').click(); return [window.tilt.game.mode, document.getElementById('quitBtn').textContent, window.tilt.game.score]; });
+assert.deepEqual(asked, ['play', `End at ${asked[2].toLocaleString('en-US')}?`, asked[2]], 'one tap on End game');
+assert.ok(await page.isVisible('#pause'), 'one tap on End game put the pause card away');
+await page.waitForFunction(() => document.getElementById('quitBtn').textContent === 'End game', null, { timeout: 4000 });
+assert.equal(await page.evaluate(() => window.tilt.game.mode), 'play');
 const ended = await page.evaluate(() => {
   const g = window.tilt.game, score = g.score;
+  document.getElementById('quitBtn').click();
   document.getElementById('quitBtn').click();
   for (let i = 0; i < 60; i++) { g.world.time += 0.1; g.update(0); }
   return { score, after: g.score };
@@ -258,6 +266,7 @@ await west.waitForFunction(() => window.tilt);
 await west.tap('#startBtn');
 await west.evaluate(() => { window.tilt.game.score += 4321; });
 await west.tap('#menuBtn');
+await west.tap('#quitBtn');
 await west.tap('#quitBtn');
 await west.waitForSelector('#over:not([hidden])');
 assert.equal(await west.evaluate(() => window.tilt.store.scores[0].date), '2026-10-13');
@@ -418,7 +427,7 @@ for (const junk of ['42', '[]', '{"scores":"lots"}', '{"scores":[null,{"score":5
   await p.addInitScript(v => localStorage.setItem('free-play.tilt', v), junk);
   await p.goto(base);
   await p.waitForFunction(() => window.tilt?.game.world.time > 0.2, null, { timeout: 10000 });
-  await p.evaluate(() => { window.tilt.startGame(); window.tilt.game.score += 4321; document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); });
+  await p.evaluate(() => { window.tilt.startGame(); window.tilt.game.score += 4321; document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
   await p.waitForSelector('#over:not([hidden])', { timeout: 5000 });
   const kept = await p.evaluate(() => JSON.parse(localStorage.getItem('free-play.tilt')).scores.map(s => s.score));
   assert.deepEqual(kept, junk.includes('5000') ? [5000, 4321] : [4321], `the scores saved over ${junk}`);

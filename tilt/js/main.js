@@ -243,7 +243,22 @@ $('menuBtn').addEventListener('click', () => {
   if (game.mode === 'play') setPaused(!paused);
 });
 $('resumeBtn').addEventListener('click', () => setPaused(false));
+// End game sits by Sound, where a thumb can slip, so it takes two taps: the first asks, with the score it would end
+// at, for three seconds, and a second then ends it there.
+let ending = 0;
+function unarm() {
+  clearTimeout(ending); ending = 0;
+  $('quitBtn').textContent = 'End game';
+  $('quitBtn').classList.remove('armed');
+}
 $('quitBtn').addEventListener('click', () => {
+  if (!ending) {
+    $('quitBtn').textContent = `End at ${fmt(game.score)}?`;
+    $('quitBtn').classList.add('armed');
+    ending = setTimeout(unarm, 3000);
+    return;
+  }
+  unarm();
   $('pause').hidden = true; paused = false;
   // The game ends here, at the score it has: the rest of the ball (a bonus still counting, the next ball) never comes.
   game.timers = [];
@@ -263,6 +278,7 @@ $('soundBtn').addEventListener('click', () => {
 
 function setPaused(p) {
   paused = p;
+  unarm();
   $('pause').hidden = !p;
   for (const f of game.table.flippers) f.pressed = false;
   game.plunge(false);
