@@ -34,6 +34,13 @@
 .fp-head h2 { margin: 0; font: 400 20px var(--fp-disp); flex: 1; color: var(--fp-ink); text-shadow: none; }
 .fp-bal { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--fp-ink2); }
 .fp-bal b { font: 400 18px var(--fp-disp); color: var(--fp-gold); }
+/* A phone hasn't room for the heading and a balance in the thousands side by side, so the balance goes under it. */
+@media (max-width: 460px) {
+  .fp-head { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; row-gap: 2px; }
+  .fp-head h2 { grid-area: 1 / 1; white-space: nowrap; }
+  .fp-bal { grid-area: 2 / 1; white-space: nowrap; }
+  .fp-x { grid-area: 1 / 2 / 3; }
+}
 .fp-x {
   width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--fp-line); background: rgba(251, 238, 210, .07);
   color: var(--fp-ink); font: 24px/1 var(--fp-body); cursor: pointer;

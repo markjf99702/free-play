@@ -92,6 +92,33 @@ for (const [path, hook, tix, opener] of PAGES) {
   }
 }
 
+// On a phone the counter's heading stays on one line, whatever the balance, with the balance and the close button clear
+// of it and of each other.
+for (const [width, height] of [[360, 640], [390, 844]]) {
+  await page.setViewportSize({ width, height });
+  for (const tickets of [1320, 99999]) {
+    await page.goto(base);
+    await page.evaluate(tickets => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets, prizes: {} })), tickets);
+    await page.reload();
+    await page.waitForFunction(() => !!window.freePlay);
+    await page.evaluate(() => document.fonts.ready);
+    await page.click('#purse');
+    const head = await page.evaluate(() => {
+      const box = sel => document.querySelector(sel).getBoundingClientRect();
+      const h = document.querySelector('.fp-head h2');
+      return { h: box('.fp-head h2'), size: parseFloat(getComputedStyle(h).fontSize), bal: box('.fp-bal'), x: box('.fp-x'), sheet: box('.fp-sheet-in') };
+    });
+    const at = `${width} px, ${tickets} tickets`;
+    assert.ok(head.h.height < head.size * 1.6, `${at}: the heading wraps (${head.h.height} px tall)`);
+    assert.ok(head.bal.height < 32, `${at}: the balance wraps (${head.bal.height} px tall)`);
+    const apart = (a, b) => a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+    assert.ok(apart(head.h, head.bal) && apart(head.h, head.x) && apart(head.bal, head.x), `${at}: the heading, balance and close button overlap`);
+    assert.ok(head.bal.right <= head.sheet.right && head.x.right <= head.sheet.right, `${at}: off the side`);
+    await page.keyboard.press('Escape');
+  }
+}
+await page.setViewportSize({ width: 390, height: 844 });
+
 assert.deepEqual(problems, [], 'problems at the counter');
 await browser.close();
 server.close();
