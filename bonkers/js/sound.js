@@ -60,10 +60,11 @@ function bell(f, at, peak) {
   tone('sine', f * 2.01, f * 2.01, peak * 0.3, 0.3, at);
 }
 
-// A mole popping up: a quick squeaky boing. A peek is just a sniff.
-export function pop() {
+// A mole popping up: a quick squeaky boing, with a sparkle for a golden one. A peek is just a sniff.
+export function pop(gold = false) {
   if (!ac || !enabled) return;
   tone('sine', 380, 760, 0.12, 0.09);
+  if (gold) [2637, 3136, 3951].forEach((f, i) => bell(f, 0.05 + i * 0.05, 0.03));
 }
 export function peek() {
   if (!ac || !enabled) return;
@@ -103,6 +104,18 @@ export function run() {
 export function frenzy() {
   if (!ac || !enabled) return;
   for (let i = 0; i < 6; i++) tone('square', i % 2 ? 660 : 880, i % 2 ? 660 : 880, 0.05, 0.08, i * 0.1);
+}
+// Each of the last five seconds: a short beep, higher for the last one.
+export function count(n) {
+  if (!ac || !enabled) return;
+  const f = n === 1 ? 1175 : 880, t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'square'; o.frequency.value = f;
+  const v = n === 1 ? 0.08 : 0.1;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.005);
+  g.gain.setValueAtTime(v, t + (n === 1 ? 0.16 : 0.08)); g.gain.exponentialRampToValueAtTime(0.0001, t + (n === 1 ? 0.22 : 0.12));
+  o.connect(g); g.connect(out);
+  o.start(t); o.stop(t + 0.25);
 }
 export function over() {
   if (!ac || !enabled) return;

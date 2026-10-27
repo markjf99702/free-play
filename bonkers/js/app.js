@@ -99,7 +99,7 @@ function happened() {
       sound.frenzy(); say('Frenzy! Ten seconds left.');
       pops.push({ x: 250, y: -130, text: 'Frenzy!', t: -0.1, gold: true, big: true });
     } else if (e === 'over') { sound.over(); endIn = 0.9; }
-    else if (e.pop !== undefined) sound.pop();
+    else if (e.pop !== undefined) sound.pop(e.gold);
     else if (e.peek !== undefined) sound.peek();
     else if (e.away !== undefined) sound.away();
     else if (e.hat !== undefined) { sound.hat(); pops.push({ x: HOLES[e.hat], y: -80, text: 'Clank!', t: 0 }); }
@@ -114,6 +114,8 @@ function happened() {
     }
   }
   const clock = Math.ceil(burrow.left);
+  // a beep for each of the last five seconds
+  if (clock !== ticked && clock >= 1 && clock <= 5 && clock < ticked) sound.count(clock);
   if (events.length || clock !== ticked) { ticked = clock; hud(); }
 }
 

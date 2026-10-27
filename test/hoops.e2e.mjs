@@ -24,6 +24,19 @@ const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+// Which of the page's sounds play: the function in its sound.js each tone or noise is made for, and when.
+await ctx.addInitScript(() => {
+  window.__sounds = [];
+  for (const k of ['createOscillator', 'createBufferSource']) {
+    const make = AudioContext.prototype[k];
+    AudioContext.prototype[k] = function () {
+      const at = /at (?:Module\.)?(\w+) \([^)]*\/js\/sound\.js/.exec(new Error().stack.split('\n').filter(l => !/at (tone|burst|bell|env|noise|white|chink) /.test(l)).join('\n'));
+      const now = performance.now(), last = window.__sounds.at(-1);
+      if (at && !(last && last[0] === at[1] && now - last[1] < 2)) window.__sounds.push([at[1], now]);
+      return make.call(this);
+    };
+  }
+});
 const page = await ctx.newPage();
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
@@ -143,6 +156,8 @@ await page.waitForTimeout(300);
 assert.equal(await court('clock'), clock, 'the clock waits while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => hoops.saved.sound), false);
+await page.click('#sound');
+assert.equal(await page.evaluate(() => hoops.saved.sound), true, 'and on again');
 await page.click('#resume');
 // Leaving the page mid-round opens the menu, so the clock waits there for the player to come back.
 await hide(true);
@@ -157,7 +172,7 @@ await page.click('#resume');
 // rounds with a best of 10.)
 await page.evaluate(() => Object.assign(hoops.saved, { best: 10, rounds: 2 }));
 const t0 = await tickets();
-await page.evaluate(() => { hoops.speed = 4; });
+await page.evaluate(() => { hoops.speed = 4; __sounds.length = 0; });
 let bonus = false;
 while (!(await court('over'))) {
   bonus ||= await page.evaluate(() => document.getElementById('worthBox').classList.contains('bonus'));
@@ -170,6 +185,7 @@ while (!(await court('over'))) {
   await page.waitForTimeout(40);
 }
 assert.ok(bonus, 'the deck says when a basket is worth 3');
+assert.equal(await page.evaluate(() => __sounds.filter(s => s[0] === 'count').length), 5, 'a beep for each of the last five seconds');
 const score = await court('score');
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await countsAlong(await tickets(), Math.floor(score / 4));

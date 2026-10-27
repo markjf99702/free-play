@@ -102,3 +102,16 @@ test('a hard hat takes two bonks, and ten in a row are worth fifty more', () => 
 test('a ticket for every 15 points', () => {
   assert.deepEqual([0, 14, 15, 340, 690].map(ticketsFor), [0, 0, 1, 22, 46]);
 });
+
+test('a mole popping up says whether it is golden, or in a hard hat', () => {
+  const b = createBurrow({ random: seeded(5) });
+  const pops = [];
+  run(b, ROUND, b => { for (const e of b.take()) if (e.pop !== undefined) { const m = b.moles.find(m => m.hole === e.pop && m.state === 'rising'); pops.push({ e, m: { gold: m.gold, hat: m.hat } }); } });
+  assert.ok(pops.length > 30);
+  for (const { e, m } of pops) {
+    assert.equal(typeof e.gold, 'boolean');
+    assert.equal(e.gold, m.gold, 'gold as the mole is');
+    assert.equal(e.hat, !!m.hat, 'and its hat');
+  }
+  assert.ok(pops.some(p => p.e.gold) || pops.length < 60, 'a round has a golden mole in it');
+});

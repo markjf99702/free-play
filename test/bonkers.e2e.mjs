@@ -24,6 +24,19 @@ const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+// Which of the page's sounds play: the function in its sound.js each tone or noise is made for, and when.
+await ctx.addInitScript(() => {
+  window.__sounds = [];
+  for (const k of ['createOscillator', 'createBufferSource']) {
+    const make = AudioContext.prototype[k];
+    AudioContext.prototype[k] = function () {
+      const at = /at (?:Module\.)?(\w+) \([^)]*\/js\/sound\.js/.exec(new Error().stack.split('\n').filter(l => !/at (tone|burst|bell|env|noise|white|chink) /.test(l)).join('\n'));
+      const now = performance.now(), last = window.__sounds.at(-1);
+      if (at && !(last && last[0] === at[1] && now - last[1] < 2)) window.__sounds.push([at[1], now]);
+      return make.call(this);
+    };
+  }
+});
 const page = await ctx.newPage();
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
@@ -116,6 +129,8 @@ await page.waitForTimeout(300);
 assert.equal(await page.evaluate(() => bonkers.burrow.clock), clock, 'the moles wait while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => bonkers.saved.sound), false);
+await page.click('#sound');
+assert.equal(await page.evaluate(() => bonkers.saved.sound), true, 'and on again');
 await page.click('#resume');
 // Leaving the page mid-round opens the menu, so the moles wait there for the player to come back.
 await hide(true);
@@ -128,7 +143,7 @@ await page.click('#resume');
 
 // The rest of the round, quickly, and its tickets: one for every 15 points.
 const t0 = await tickets();
-await page.evaluate(() => { bonkers.speed = 4; });
+await page.evaluate(() => { bonkers.speed = 4; __sounds.length = 0; });
 let frenzy = false, shown = false;
 while (!(await page.evaluate(() => bonkers.burrow.over))) {
   frenzy ||= await page.evaluate(() => document.querySelector('.clock').classList.contains('frenzy'));
@@ -138,6 +153,7 @@ while (!(await page.evaluate(() => bonkers.burrow.over))) {
 }
 assert.ok(frenzy, 'the clock says when it is a frenzy');
 assert.ok(shown, 'and so does the lawn, in words');
+assert.equal(await page.evaluate(() => __sounds.filter(s => s[0] === 'count').length), 5, 'a beep for each of the last five seconds');
 const score = await page.evaluate(() => bonkers.burrow.score);
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await countsAlong(await tickets(), Math.floor(score / 15));

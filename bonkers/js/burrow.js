@@ -112,7 +112,7 @@ export function createBurrow({ random = Math.random } = {}) {
     m.state = m.plan === 'peek' ? 'peeking' : 'rising';
     m.gold = !m.hat && m.plan === 'pop' && random() < 0.07;
     m.timer = m.plan === 'peek' ? 0.45 : pace(f(), frenzy).up;
-    events.push({ [m.plan === 'peek' ? 'peek' : 'pop']: m.hole });
+    events.push(m.plan === 'peek' ? { peek: m.hole } : { pop: m.hole, gold: m.gold, hat: !!m.hat });
     return m.state;
   }
 
@@ -231,7 +231,7 @@ export function createBurrow({ random = Math.random } = {}) {
     get run() { return run; },
     get bonks() { return bonks; },
     get swings() { return swings; },
-    // what's happened since the last look: { pop }, { peek }, { bonk, kind, points, run }, { hat }, { miss, peeking },
+    // what's happened since the last look: { pop, gold, hat }, { peek }, { bonk, kind, points, run }, { hat }, { miss, peeking },
     // { away }, 'frenzy', 'over'
     take() { const e = events; events = []; return e; },
   };

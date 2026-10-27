@@ -24,6 +24,19 @@ const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+// Which of the page's sounds play: the function in its sound.js each tone or noise is made for, and when.
+await ctx.addInitScript(() => {
+  window.__sounds = [];
+  for (const k of ['createOscillator', 'createBufferSource']) {
+    const make = AudioContext.prototype[k];
+    AudioContext.prototype[k] = function () {
+      const at = /at (?:Module\.)?(\w+) \([^)]*\/js\/sound\.js/.exec(new Error().stack.split('\n').filter(l => !/at (tone|burst|bell|env|noise|white|chink) /.test(l)).join('\n'));
+      const now = performance.now(), last = window.__sounds.at(-1);
+      if (at && !(last && last[0] === at[1] && now - last[1] < 2)) window.__sounds.push([at[1], now]);
+      return make.call(this);
+    };
+  }
+});
 const page = await ctx.newPage();
 // The pocket in the corner as a round's tickets feed out of the slot, and how many the strip has fed so far. It counts
 // along with the strip, from what it held before the round paid, and holds them all, with a bump, once they're out.
@@ -86,8 +99,9 @@ const counter = await page.evaluate(() => popgun.draw.at(150, 600));
 await ready();
 await page.mouse.click(counter.x, counter.y);
 assert.equal(await corks(), 19, 'the counter is not a target');
-await page.evaluate(() => { popgun.fire(200, 200); popgun.fire(200, 200); });
+const twice = await page.evaluate(() => { const shots = [popgun.fire(200, 200), popgun.fire(200, 200)]; return [...shots, popgun.jogging, __sounds.some(s => s[0] === 'dry')]; });
 assert.equal(await corks(), 18, 'two shots straight after each other fire one cork');
+assert.deepEqual(twice, [true, false, true, true], 'the second, while the gun reloads, is a dry click and a jog of the gun');
 
 // With a mouse the sights follow it; the keyboard moves them and fires.
 p = await page.evaluate(() => popgun.draw.at(280, 250));

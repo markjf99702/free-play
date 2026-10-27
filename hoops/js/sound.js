@@ -118,6 +118,18 @@ export function bonus() {
   for (let i = 0; i < 3; i++) tone('square', 988, 988, 0.06, 0.09, i * 0.14);
   tone('square', 1319, 1319, 0.07, 0.3, 0.42);
 }
+// Each of the last five seconds: a short beep, the shot clock's, higher for the last one.
+export function count(n) {
+  if (!ac || !enabled) return;
+  const f = n === 1 ? 1319 : 988, t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'square'; o.frequency.value = f;
+  const v = n === 1 ? 0.08 : 0.1;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.005);
+  g.gain.setValueAtTime(v, t + (n === 1 ? 0.16 : 0.08)); g.gain.exponentialRampToValueAtTime(0.0001, t + (n === 1 ? 0.22 : 0.12));
+  o.connect(g); g.connect(out);
+  o.start(t); o.stop(t + 0.25);
+}
 export function buzzer() {
   if (!ac || !enabled) return;
   tone('sawtooth', 196, 196, 0.16, 1.0); tone('square', 207, 207, 0.1, 1.0);

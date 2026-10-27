@@ -59,13 +59,18 @@ export function createGallery({ random = Math.random } = {}) {
         if (row.dir > 0 && t.x > W + MARGIN) { t.x -= row.loop; renew(row, t); }
         if (row.dir < 0 && t.x < -MARGIN) { t.x += row.loop; renew(row, t); }
         if (t.hit) t.down = Math.min(1, t.down + dt * 6);
+        // a golden duck or a bell, just round the conveyor, coming into view
+        if (t.coming && t.x + KINDS[t.kind].w / 2 > 0 && t.x - KINDS[t.kind].w / 2 < W) {
+          t.coming = false;
+          events.push({ arrive: t.kind, x: t.x, y: row.rail - KINDS[t.kind].h / 2 });
+        }
       }
     }
     for (const f of flights) f.t += dt;
     while (flights.length && flights[0].t >= FLIGHT) land(flights.shift());
     if (!corks && !flights.length && !over) { over = true; events.push('over'); }
   }
-  function renew(row, t) { t.kind = pick(row.kinds); t.hit = false; t.down = 0; }
+  function renew(row, t) { t.kind = pick(row.kinds); t.hit = false; t.down = 0; t.coming = t.kind === 'gold' || t.kind === 'bell'; }
 
   // The target (if any) a point on the back of the booth is on, right now: inside its cutout, near enough.
   function targetAt(x, y) {
@@ -118,7 +123,8 @@ export function createGallery({ random = Math.random } = {}) {
     get hits() { return hits; },
     get ready() { return reload === 0 && corks > 0 && !over; },
     get over() { return over; },
-    // what's happened since the last look: 'pop', { hit, x, y, points, corks, run }, { miss, x, y }, 'over'
+    // what's happened since the last look: 'pop', { hit, x, y, points, corks, run }, { miss, x, y }, 'over', and
+    // { arrive, x, y } as a golden duck or a bell comes round into view
     take() { const e = events; events = []; return e; },
   };
 }

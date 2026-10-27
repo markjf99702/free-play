@@ -63,7 +63,7 @@ if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), documen
 // ---------- a round ----------
 let gallery = createGallery();
 let mode = 'title';           // title → play → over
-let aim = { x: W / 2, y: H / 2 }, cross = false, recoil = 9, wink = -1, glow = 0, paused = false, timeScale = 1;
+let aim = { x: W / 2, y: H / 2 }, cross = false, recoil = 9, wink = -1, glow = 0, jog = -1, paused = false, timeScale = 1;
 let endIn = 0;                // seconds from the last cork landing to the end card, on the round's clock (it waits while paused)
 const marks = [], pops = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
@@ -81,7 +81,11 @@ function fire(x, y) {
   if (mode !== 'play' || paused || carded()) return false;
   if (y > H || y < -10 || x < -10 || x > W + 10) return false; // the counter, the awning or the posts
   aim = { x, y };
-  if (!gallery.fire(x, y)) return false;
+  if (!gallery.fire(x, y)) {
+    // a tap while the gun reloads: a dry click and a jog of the gun, so it's plain no cork went
+    if (gallery.corks > 0 && !gallery.over) { sound.dry(); jog = 0; }
+    return false;
+  }
   recoil = 0;
   hud();
   return true;
@@ -90,6 +94,7 @@ function fire(x, y) {
 function happened() {
   for (const e of gallery.take()) {
     if (e === 'pop') sound.pop();
+    else if (e.arrive) sound.arrive(e.arrive);
     else if (e === 'over') endIn = 0.7;
     else if (e.miss) {
       const moon = Math.hypot(e.x - MOON.x, e.y - MOON.y) < MOON.r;
@@ -268,12 +273,13 @@ function tick(now) {
   }
   recoil += dt;
   if (wink >= 0) wink += dt;
+  if (jog >= 0 && (jog += dt) > 0.2) jog = -1;
   glow = Math.max(0, glow - dt);
   for (const m of marks) m.t += dt;
   while (marks.length && marks[0].t > 1.2) marks.shift();
   for (const p of pops) p.t += dt;
   while (pops.length && pops[0].t > 1.1) pops.shift();
-  draw.frame(gallery, { now, aim, cross: cross && mode === 'play', marks, pops, recoil, wink, glow, ready: mode !== 'play' || gallery.ready });
+  draw.frame(gallery, { now, aim, cross: cross && mode === 'play', marks, pops, recoil, wink, glow, jog, ready: mode !== 'play' || gallery.ready });
   requestAnimationFrame(tick);
 }
 
@@ -290,6 +296,7 @@ window.popgun = {
   get mode() { return mode; },
   get saved() { return saved; },
   get glow() { return glow; },
+  get jogging() { return jog >= 0; },
   start,
   fire,
   set speed(k) { timeScale = k; },

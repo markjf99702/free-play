@@ -172,7 +172,7 @@ export function createDraw(canvas) {
   // s: what to draw. g: the gallery. aim: where the gun points ({ x, y }, on the back of the booth). cross: show a
   // crosshair there. marks: misses on the backdrop ({ x, y, t }). pops: what a hit was worth ({ x, y, text, t, gold }).
   // recoil: seconds since the last shot. wink: seconds since the moon was hit (or -1). glow: the sign's bulbs blazing.
-  function frame(g, { now = 0, aim = { x: W / 2, y: H / 2 }, cross = false, marks = [], pops = [], recoil = 9, wink = -1, glow = 0, ready = true } = {}) {
+  function frame(g, { now = 0, aim = { x: W / 2, y: H / 2 }, cross = false, marks = [], pops = [], recoil = 9, wink = -1, glow = 0, jog = -1, ready = true } = {}) {
     const t = now / 1000;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -227,7 +227,7 @@ export function createDraw(canvas) {
       const x = from.x + (f.to.x - from.x) * e, y = from.y + (f.to.y - from.y) * e - Math.sin(u * Math.PI) * 18;
       cork(x, y, 1.3 - u * 0.75, a);
     }
-    gun(angle, recoil, ready);
+    gun(angle, recoil, ready, jog);
     if (cross) {
       ctx.strokeStyle = 'rgba(255, 246, 220, .9)'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(aim.x, aim.y, 14, 0, Math.PI * 2); ctx.stroke();
@@ -243,11 +243,13 @@ export function createDraw(canvas) {
     ctx.restore();
   }
 
-  // The popgun: a wooden stock and a tin barrel, turned towards where it's aimed, kicking back a little when it fires.
-  function gun(angle, recoil, ready) {
+  // The popgun: a wooden stock and a tin barrel, turned towards where it's aimed, kicking back a little when it fires,
+  // and jogging from side to side for a tap that came while it reloaded (jog: seconds since, or -1).
+  function gun(angle, recoil, ready, jog = -1) {
     const kick = Math.max(0, 1 - recoil / 0.12) * 10;
+    const shake = jog >= 0 && jog < 0.16 ? Math.sin(jog * 80) * 4 * (1 - jog / 0.16) : 0;
     ctx.save();
-    ctx.translate(PIVOT.x, PIVOT.y + 6);
+    ctx.translate(PIVOT.x + shake, PIVOT.y + 6);
     ctx.rotate(angle + Math.PI / 2);
     ctx.scale(GUN, GUN);
     ctx.translate(0, kick);

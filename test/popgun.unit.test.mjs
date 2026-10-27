@@ -114,3 +114,23 @@ test('a knocked-down target can\'t be hit again until it comes round', () => {
 test('a ticket for every 20 points', () => {
   assert.deepEqual([0, 19, 20, 345, 880].map(ticketsFor), [0, 0, 1, 17, 44]);
 });
+
+test('a golden duck or a bell coming round says so as it comes into view, once', () => {
+  const g = createGallery({ random: seeded(7) });
+  const seen = [];
+  for (let i = 0; i < 60 * 120; i++) {
+    g.step(1 / 60);
+    for (const e of g.take()) {
+      if (!e.arrive) continue;
+      const row = g.rows.find(r => r.targets.some(t => t.x === e.x));
+      const t = row.targets.find(t => t.x === e.x), w = KINDS[t.kind].w;
+      assert.equal(t.kind, e.arrive, 'it says what came');
+      assert.ok(e.arrive === 'gold' || e.arrive === 'bell', `a ${e.arrive} arrives quietly`);
+      assert.ok(t.x + w / 2 > 0 && t.x - w / 2 < W, 'as it comes into view');
+      const was = t.x - row.dir * row.now / 60;
+      assert.ok(!(was + w / 2 > 0 && was - w / 2 < W), 'and not before: a step earlier it was out of sight');
+      seen.push(e.arrive);
+    }
+  }
+  assert.ok(seen.includes('gold') && seen.includes('bell'), `two minutes of the conveyor bring both round (${seen})`);
+});

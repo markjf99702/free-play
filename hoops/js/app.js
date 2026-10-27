@@ -117,7 +117,11 @@ function happened() {
     else if (e.fire === false) sound.fire(false);
   }
   if (events.length) hud();
+  // a beep for each of the last five seconds
+  const s = Math.ceil(court.left);
+  if (s !== counted) { if (s >= 1 && s <= 5 && s < counted && mode === 'play') sound.count(s); counted = s; }
 }
+let counted = -1;
 
 let feeding = () => {};
 $('payout').innerHTML = PAYOUT;

@@ -82,6 +82,20 @@ export function hit(kind) {
   if (kind === 'gold') [1568, 1976, 2349, 3136].forEach((n, i) => bell(n, 0.08 + i * 0.07, 0.12, 0.5));
 }
 
+// A tap while the gun reloads: the trigger's dry click on a spring that isn't set.
+export function dry() {
+  if (!ac || !enabled) return;
+  burst('bandpass', 2400, 3, 2.4, 0.014);
+  tone('triangle', 1100, 820, 0.25, 0.045);
+}
+
+// A golden duck coming round the conveyor: a little tinkle. A bell: a small ding-ding.
+export function arrive(kind) {
+  if (!ac || !enabled) return;
+  if (kind === 'bell') { bell(1568, 0, 0.07, 0.5); bell(1568, 0.13, 0.055, 0.5); return; }
+  [2349, 2793, 3136].forEach((f, i) => bell(f, i * 0.06, 0.05, 0.35));
+}
+
 // A cork into the painted backdrop.
 export function miss() {
   if (!ac || !enabled) return;
