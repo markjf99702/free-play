@@ -53,6 +53,9 @@ svg { width: 1.3em; height: .9em; flex: none; }
   height: 40px; border-radius: 999px; border: 1px solid var(--line); background: rgba(29, 20, 10, .6);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
+/* The 40 px buttons answer a tap 4 px round them too, 48 px in all (a box the layout doesn't see). */
+.hud button { position: relative; }
+.hud button::after { content: ""; position: absolute; inset: -5px; border-radius: inherit; } /* (from inside the border) */
 .hud .tix { display: flex; align-items: center; gap: 6px; padding: 0 12px 0 10px; font: 400 15px var(--disp); }
 .hud .menu { width: 40px; display: grid; place-content: center; gap: 4px; padding: 0; }
 .hud .menu span { display: block; width: 16px; height: 2px; border-radius: 2px; background: var(--ink); }
@@ -115,14 +118,20 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .plain { font-weight: 600; background: rgba(251, 238, 210, .07); border: 1px solid var(--line); }
 .plain:active { background: rgba(251, 238, 210, .14); }
 a.plain { color: inherit; text-decoration: none; }
-.floor { display: block; width: max-content; margin: -6px 0 10px -2px; padding: 4px 2px; font: 600 14px var(--body); color: var(--ink2); text-decoration: none; }
+/* The way back to the floor is 44 px tall to tap, and placed so its words sit where they did in a 25 px box. */
+.floor {
+  display: flex; align-items: center; width: max-content; min-height: 44px; margin: -15.5px 0 .5px -10px; padding: 0 10px;
+  font: 600 14px var(--body); color: var(--ink2); text-decoration: none;
+}
 .floor:hover, .floor:focus-visible { color: var(--ink); text-decoration: underline; }
 .back { margin: 14px 0 0; font-size: 14px; }
-.back a { color: var(--ink2); text-decoration: none; }
+/* 44 px tall to tap, its words where they were */
+.back a { display: inline-flex; align-items: center; min-height: 44px; margin: -13.5px -10px; padding: 0 10px; color: var(--ink2); text-decoration: none; }
 .back a:hover, .back a:focus-visible { color: var(--ink); text-decoration: underline; }
 
 .jd-foot { margin-top: 16px; font-size: 12px; color: var(--ink3); }
-.jd-foot a { color: var(--ink3); text-decoration: none; }
+/* each link 44 px tall to tap (and a little wider), its words where they were */
+.jd-foot a { padding: 15px 4px; margin: 0 -4px; color: var(--ink3); text-decoration: none; }
 .jd-foot a:hover, .jd-foot a:focus-visible { text-decoration: underline; color: var(--ink2); }
 .jd-foot span { margin: 0 6px; }
 

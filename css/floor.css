@@ -162,7 +162,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .trade:active { background: rgba(255, 211, 106, .22); }
 
 .jd-foot { margin: 28px 0 0; padding: 0 0 28px; text-align: center; font-size: 13px; color: var(--ink3); }
-.jd-foot a { color: var(--ink3); text-decoration: none; }
+.jd-foot a { padding: 15px 4px; margin: 0 -4px; color: var(--ink3); text-decoration: none; } /* 44 px tall to tap */
 .jd-foot a:hover, .jd-foot a:focus-visible { color: var(--ink2); text-decoration: underline; }
 .jd-foot span { margin: 0 6px; }
 .noscript { text-align: center; color: var(--ink2); }

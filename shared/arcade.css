@@ -42,7 +42,7 @@
   .fp-x { grid-area: 1 / 2 / 3; }
 }
 .fp-x {
-  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--fp-line); background: rgba(251, 238, 210, .07);
+  width: 44px; height: 44px; margin: -2px; border-radius: 50%; /* the room of a 40 px button */ border: 1px solid var(--fp-line); background: rgba(251, 238, 210, .07);
   color: var(--fp-ink); font: 24px/1 var(--fp-body); cursor: pointer;
 }
 .fp-sheet h3 { margin: 12px 2px 8px; font: 600 12px var(--fp-body); letter-spacing: .14em; text-transform: uppercase; color: var(--fp-ink3); }

@@ -2,8 +2,8 @@
 // In from the floor to each machine and back, with the tickets each one pays adding up in the one wallet, the prize
 // counter from the floor, every file the pages load kept for offline, Chrome offering to install it, all of it
 // opening again offline, each machine's control deck on a shorter phone and clear of an iPhone's home indicator and
-// notch, and a new release's offline copy made whole from the server. (Each machine's own browser test,
-// test/<machine>.e2e.mjs, plays it in depth.)
+// notch, everything on the cards big enough to tap, and a new release's offline copy made whole from the server.
+// (Each machine's own browser test, test/<machine>.e2e.mjs, plays it in depth.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -417,6 +417,47 @@ for (const [width, height, insets] of [[390, 844, { top: 47, bottom: 34, left: 0
   }
 }
 await notch.close();
+
+// Everything to tap on the floor and on every card is 44 px each way at least (Apple's Human Interface Guidelines,
+// and WCAG 2.2's 2.5.5): the way back to the floor, the links at the foot of each card, the counter's close. The
+// 40 px buttons along the top answer a tap a few px round them too (checked 2.5 px out). (The prizes on a shelf, a
+// row of 40 px tiles, are left out.)
+const taps = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+const tp = await taps.newPage();
+tp.on('pageerror', e => problems.push(e.message));
+const tooSmall = (label, within) => tp.evaluate(([label, within]) => {
+  const out = [], hit = (el, x, y) => el.contains(document.elementFromPoint(x, y));
+  for (const el of document.querySelector(within).querySelectorAll('a, button, summary')) {
+    const r = el.getBoundingClientRect();
+    if (!r.width || el.closest('[hidden]') || el.matches('.fp-item')) continue;
+    let { width: w, height: h } = r;
+    const x = r.left + w / 2, y = r.top + h / 2;
+    if (el.closest('.hud') && hit(el, r.left - 2.5, y) && hit(el, r.right + 2.5, y) && hit(el, x, r.top - 2.5) && hit(el, x, r.bottom + 2.5)) { w += 5; h += 5; }
+    if (w < 44 || h < 44) out.push(`${label}: "${(el.getAttribute('aria-label') || el.textContent).trim().slice(0, 24)}" ${Math.round(w)} x ${Math.round(h)}`);
+  }
+  return out;
+}, [label, within]);
+const small = [];
+await tp.goto(base);
+await tp.waitForFunction(() => !!window.freePlay, null, { timeout: 10000 });
+await tp.evaluate(() => document.fonts.ready);
+small.push(...await tooSmall('the floor', 'body'));
+await tp.click('#trade');
+small.push(...await tooSmall('the counter', '.fp-sheet'));
+for (const [path, name] of Object.entries(OFFLINE).slice(1)) {
+  await tp.goto(base + path);
+  await tp.waitForFunction(name => !!window[name], name, { timeout: 10000 });
+  await tp.evaluate(() => document.fonts.ready);
+  for (const card of ['title', 'menu', 'over']) {
+    await tp.evaluate(card => {
+      const cards = { title: ['title'], menu: ['menu', 'pause'], over: ['over', 'win'] };
+      for (const [k, ids] of Object.entries(cards)) for (const id of ids) { const el = document.getElementById(id); if (el) el.hidden = k !== card; }
+    }, card);
+    small.push(...await tooSmall(`${name}'s ${card} card`, 'body'));
+  }
+}
+assert.deepEqual([...new Set(small)], [], 'smaller than 44 px to tap');
+await taps.close();
 
 // A page saved as a single file (how a machine is tried out before it joins the floor) says so with data-single on
 // <html>: it hides every link back to the floor, which isn't there, and keeps no offline copy. Tilt leaves its address
