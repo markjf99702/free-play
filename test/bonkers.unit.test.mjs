@@ -78,6 +78,36 @@ test('a bonk on a mole that is up scores; a swing at nothing, or at a peek, cost
   assert.ok(b.take().some(e => e.miss !== undefined && e.peeking), 'and the miss says it was only a peek');
 });
 
+test('a swing at a hole whose mole is still coming up its shaft is a miss that says it was too soon, and what it cost', () => {
+  const b = createBurrow({ random: seeded(9) });
+  const climbing = () => b.moles.find(m => m.hole >= 0 && m.state === 'travel' && m.leg === m.path.length - 2 && m.along > 10);
+  let m;
+  while (!(m = climbing())) b.step(1 / 60);
+  assert.equal(b.score, 0);
+  b.take();
+  const r = b.swing(HOLES[m.hole], -40);
+  assert.equal(r.hit, false, 'a mole in its shaft can\'t be bonked yet');
+  let e = b.take().find(e => e.miss !== undefined);
+  assert.equal(e.early, true, 'the miss says it was too soon');
+  assert.equal(e.cost, 0, 'and at a score of 0 it cost nothing');
+  // one that has only just started to pop up is still too soon
+  while (!(m = b.moles.find(m => m.state === 'rising' && m.rise > 0 && m.rise <= 0.4))) b.step(1 / 60);
+  b.take();
+  assert.equal(b.swing(HOLES[m.hole], -40).hit, false);
+  assert.equal(b.take().find(e => e.miss !== undefined).early, true);
+  // with points on the board, a swing at an empty hole costs 5, and wasn't too soon
+  let up;
+  while (!(up = upIn(b)) || up.hat) b.step(1 / 60);
+  b.swing(HOLES[up.hole], -40);
+  assert.ok(b.score >= MISS);
+  const empty = HOLES.findIndex((_, i) => !b.moles.some(x => x.hole === i));
+  b.take();
+  b.swing(HOLES[empty], -40);
+  e = b.take().find(e => e.miss !== undefined);
+  assert.equal(e.early, false);
+  assert.equal(e.cost, MISS);
+});
+
 test('a hard hat takes two bonks, and ten in a row are worth fifty more', () => {
   const b = createBurrow({ random: seeded(4) });
   let hat = null;

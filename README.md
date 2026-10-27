@@ -129,7 +129,7 @@ Whack-a-mole, with the side of the cabinet made of glass. Five holes along a sun
 
 - **Tap a mole as it pops up** to bonk it (or press 1 to 5 for the holes from the left). A round is 45 seconds.
 - **Watch the tunnels.** Each mole picks a free hole and runs to it through the tunnels, stopping to sniff at the junctions, then climbs the shaft and pops up for a moment before ducking back down. You can see where they're going, if you can keep track of all of them.
-- **Some only peek:** a nose out, and back down. A swing at a peek, or at an empty hole, is a miss: it costs 5 and ends your run.
+- **Some only peek:** a nose out, and back down. A swing at a peek, at an empty hole, or at a mole still on its way up, is a miss: it costs 5 and ends your run.
 - **A hard hat takes two bonks**, the first knocking it off, and is worth 30. **A golden mole** is worth 50, an ordinary one 10. Ten bonks in a row are worth 50 more.
 - **It gets busier**: more moles, faster tunnels and quicker pops as the round goes on, and the last ten seconds are a frenzy. A bonked mole goes home to its burrow to see stars for a bit.
 - A ticket for every 15 points, paid at the end of the round.

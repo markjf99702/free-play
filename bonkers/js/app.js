@@ -106,7 +106,8 @@ function happened() {
     else if (e.miss !== undefined) {
       sound.miss();
       puffs.push({ x: HOLES[e.miss], t: 0 });
-      pops.push({ x: HOLES[e.miss], y: -60, text: e.peeking ? 'Only a peek!' : '−5', t: 0 });
+      // what it was: too soon (the mole was still on its way up), only a peek, or nothing there; and what it cost
+      pops.push({ x: HOLES[e.miss], y: -60, text: e.early ? 'Too soon!' : e.peeking ? 'Only a peek!' : e.cost ? `−${e.cost}` : 'Miss', t: 0 });
     } else if (e.bonk !== undefined) {
       sound.bonk(e.kind);
       pops.push({ x: HOLES[e.bonk], y: -90, text: `+${e.points}`, t: 0, gold: e.kind !== 'mole', big: e.kind === 'gold' });

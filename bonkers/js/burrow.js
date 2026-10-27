@@ -197,9 +197,13 @@ export function createBurrow({ random = Math.random } = {}) {
     swings++;
     const m = moles.find(m => m.hole === hole && m.state === 'rising' && m.rise > 0.4);
     if (!m) {
-      run = 0; score = Math.max(0, score - MISS);
+      const cost = Math.min(MISS, score);
+      run = 0; score -= cost;
       const peeking = moles.some(m => m.hole === hole && m.state === 'peeking');
-      events.push({ miss: hole, peeking });
+      // too soon: its mole is on the way up, climbing the shaft (or sniffing at the foot of it), or only just popping out
+      const early = moles.some(m => m.hole === hole && (
+        ((m.state === 'travel' || m.state === 'sniff') && m.leg >= m.path.length - 2) || (m.state === 'rising' && m.rise <= 0.4)));
+      events.push({ miss: hole, peeking, early, cost });
       return { hole, hit: false };
     }
     if (m.hat) {
@@ -231,8 +235,9 @@ export function createBurrow({ random = Math.random } = {}) {
     get run() { return run; },
     get bonks() { return bonks; },
     get swings() { return swings; },
-    // what's happened since the last look: { pop, gold, hat }, { peek }, { bonk, kind, points, run }, { hat }, { miss, peeking },
-    // { away }, 'frenzy', 'over'
+    // what's happened since the last look: { pop, gold, hat }, { peek }, { bonk, kind, points, run }, { hat },
+    // { miss, peeking, early, cost } (early: its mole was still coming up; cost: what it took off the score), { away },
+    // 'frenzy', 'over'
     take() { const e = events; events = []; return e; },
   };
 }
