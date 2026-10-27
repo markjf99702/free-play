@@ -34,6 +34,11 @@ page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the
 await page.goto(base + 'bonkers/');
 await page.evaluate(() => document.fonts.ready);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 const HOLES = [50, 150, 250, 350, 450];
 // The hole a mole is up in right now (a bare-headed one, unless any will do), waiting for one if need be.
 const upHole = (any = false) => page.waitForFunction(any => {
@@ -79,6 +84,14 @@ await page.waitForTimeout(300);
 assert.equal(await page.evaluate(() => bonkers.burrow.clock), clock, 'the moles wait while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => bonkers.saved.sound), false);
+await page.click('#resume');
+// Leaving the page mid-round opens the menu, so the moles wait there for the player to come back.
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-round did not open the menu');
+const away = await page.evaluate(() => bonkers.burrow.clock);
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => bonkers.burrow.clock), away, 'the moles run on behind the menu');
+await hide(false);
 await page.click('#resume');
 
 // The rest of the round, quickly, and its tickets: one for every 15 points.

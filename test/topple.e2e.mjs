@@ -35,6 +35,11 @@ await page.goto(base + 'topple/');
 await page.evaluate(() => document.fonts.ready);
 const left = () => page.evaluate(() => topple.cup?.left ?? 0);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 const reloaded = () => page.waitForFunction(() => topple.machine.ready);
 
 // The title card, then a cup of twenty.
@@ -106,6 +111,16 @@ await page.waitForTimeout(300);
 assert.equal(await page.evaluate(() => topple.machine.lip), lip, 'the shelf waits while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => topple.saved.sound), false);
+await page.click('#resume');
+// Leaving the page mid-cup saves the deck and opens the menu, so the shelf waits there for the player to come back.
+await page.evaluate(() => localStorage.removeItem('free-play.topple'));
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-cup did not open the menu');
+assert.ok(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.topple'))?.field), 'leaving the page did not save the deck');
+const away = await page.evaluate(() => topple.machine.lip);
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => topple.machine.lip), away, 'the shelf runs on behind the menu');
+await hide(false);
 await page.click('#resume');
 
 // The last coins, and the cup's done once the pile goes quiet: the card says what it paid.

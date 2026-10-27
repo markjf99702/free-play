@@ -361,6 +361,9 @@ function toggleMenu(open = $('menu').hidden) {
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
+// Leaving the page mid-round (a call, another app, the phone locked) opens the menu, so the round waits there
+// rather than carrying on the moment the page is back.
+document.addEventListener('visibilitychange', () => { if (document.hidden && $('title').hidden && $('over').hidden) toggleMenu(true); });
 $('restart').addEventListener('click', () => { toggleMenu(false); newGame(!!game.card); });
 $('sound').addEventListener('click', () => {
   saved.sound = !saved.sound; save();

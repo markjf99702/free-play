@@ -34,6 +34,11 @@ page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the
 await page.goto(base + 'popgun/');
 await page.evaluate(() => document.fonts.ready);
 const corks = () => page.evaluate(() => popgun.gallery.corks);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
 const ready = () => page.waitForFunction(() => popgun.gallery.ready, null, { timeout: 5000 });
 // Where on the page to tap to meet a standing target of a kind (any, if none given), leading it as it moves.
@@ -86,6 +91,14 @@ await page.waitForTimeout(300);
 assert.equal(await page.evaluate(() => popgun.gallery.rows[0].targets[0].x), xs, 'the targets wait while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => popgun.saved.sound), false);
+await page.click('#resume');
+// Leaving the page mid-round opens the menu, so the targets wait there for the player to come back.
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-round did not open the menu');
+const away = await page.evaluate(() => popgun.gallery.rows[0].targets[0].x);
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => popgun.gallery.rows[0].targets[0].x), away, 'the targets run on behind the menu');
+await hide(false);
 await page.click('#resume');
 
 // The rest of the corks, and the round's over: a ticket for every 20 points.

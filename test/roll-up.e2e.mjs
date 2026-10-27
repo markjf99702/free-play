@@ -34,10 +34,18 @@ page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the
 await page.goto(base + 'roll-up/');
 await page.evaluate(() => document.fonts.ready);
 const mode = () => page.evaluate(() => rollUp.mode);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 const ballOnScreen = () => page.evaluate(() => { const b = rollUp.ball; const s = rollUp.scene.project({ x: b.x, y: b.y, z: b.z }); return { x: s.x, y: s.y }; });
 
 // The title card, then a game.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+await hide(true);
+assert.ok(await page.isHidden('#menu'), 'leaving the page from the title card opened the menu');
+await hide(false);
 await page.click('#play');
 assert.equal(await mode(), 'aim');
 assert.ok(await page.isVisible('#hint'), 'a first-timer is told how to roll');
@@ -151,6 +159,15 @@ await page.keyboard.down('Space');
 await page.waitForTimeout(500);
 await page.keyboard.up('Space');
 assert.equal(await mode(), 'roll', 'Space should roll the ball');
+
+// Leaving the page mid-game opens the menu, so the ball waits there for the player to come back.
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-game did not open the menu');
+const away = await page.evaluate(() => JSON.stringify(rollUp.ball));
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => JSON.stringify(rollUp.ball)), away, 'the ball rolls on behind the menu');
+await hide(false);
+await page.click('#resume');
 
 // The menu pauses, and comes back.
 await page.click('#menuBtn');

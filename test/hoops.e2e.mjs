@@ -35,6 +35,11 @@ await page.goto(base + 'hoops/');
 await page.evaluate(() => document.fonts.ready);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
 const court = expr => page.evaluate(`hoops.court.${expr}`);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 const pocket = () => page.waitForFunction(() => !!hoops.court.pocket(), null, { timeout: 8000, polling: 16 });
 // A flick as the finger would make it: points up the screen from (x, y), `speed` cabinet-heights a second over 90ms.
 const flickAt = (speed, x = 195, y = 640, across = 0) => page.evaluate(([speed, x, y, across]) => {
@@ -105,6 +110,14 @@ await page.waitForTimeout(300);
 assert.equal(await court('clock'), clock, 'the clock waits while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => hoops.saved.sound), false);
+await page.click('#resume');
+// Leaving the page mid-round opens the menu, so the clock waits there for the player to come back.
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-round did not open the menu');
+const away = await court('clock');
+await page.waitForTimeout(300);
+assert.equal(await court('clock'), away, 'the clock runs on behind the menu');
+await hide(false);
 await page.click('#resume');
 
 // The rest of the round, quickly, aiming where the hoop will be, and its tickets: one for every 4 points.

@@ -286,7 +286,9 @@ addEventListener('storage', e => { if (e.key === KEY) reread(); });
 addEventListener('pageshow', e => { if (e.persisted) reread(); });
 // the coins stay where they are for next time
 addEventListener('pagehide', save);
-document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+// Leaving the page mid-cup (a call, another app, the phone locked) opens the menu, so the shelf waits there rather
+// than carrying on the moment the page is back.
+document.addEventListener('visibilitychange', () => { if (document.hidden) { save(); toggleMenu(true); } });
 
 // ---------- every frame ----------
 let last = performance.now(), owed = 0, lastLip = machine.lip;

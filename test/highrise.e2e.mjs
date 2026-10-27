@@ -34,6 +34,11 @@ page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the
 await page.goto(base + 'highrise/');
 await page.evaluate(() => document.fonts.ready);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 const ready = () => page.waitForFunction(() => highrise.ready, null, { timeout: 5000 });
 // Builds floors with the rows set down where they're told (a straight tower at column 3), up to a floor.
 async function build(to, at = 3) {
@@ -82,11 +87,25 @@ assert.equal(await page.evaluate(() => JSON.stringify(highrise.tower.rows)), sho
 await page.click('#resume');
 assert.equal(where, '3');
 
+// Leaving the page mid-game opens the menu, so the row waits there for the player to come back.
+await ready();
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-game did not open the menu');
+const away = await page.evaluate(() => highrise.shown);
+await page.waitForTimeout(300);
+assert.equal(await page.evaluate(() => highrise.shown), away, 'the row slides on behind the menu');
+await hide(false);
+await page.click('#resume');
+
 // Floor 11, taking the minor prize: 11 tickets and 25 more.
 const t0 = await tickets();
 await page.evaluate(() => highrise.start());
 await build(11);
 await page.waitForSelector('#choose:not([hidden])');
+// Leaving the page there leaves the choice as it is: no menu over it.
+await hide(true);
+assert.ok(await page.isVisible('#choose') && await page.isHidden('#menu'), 'leaving the page covered the floor-11 choice');
+await hide(false);
 await page.click('#takeMinor');
 assert.ok(await page.isVisible('#over'));
 assert.equal(await tickets(), t0 + 36);

@@ -35,6 +35,11 @@ await page.goto(base + 'clutch/');
 await page.evaluate(() => document.fonts.ready);
 const state = () => page.evaluate(() => clutch.state);
 const clawX = () => page.evaluate(() => clutch.machine.claw.x);
+// The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
+const hide = gone => page.evaluate(gone => {
+  if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
+  document.dispatchEvent(new Event('visibilitychange'));
+}, gone);
 // The claw home again. Any go can win (even one that only brushes the heap), so a win card that comes up is put away,
 // without moving the mouse off the button.
 async function ready() {
@@ -99,6 +104,24 @@ assert.equal(await page.evaluate(() => clutch.machine.claw.y), stopped, 'the cla
 await page.click('#sound');
 assert.equal(await page.evaluate(() => clutch.saved.sound), false);
 await page.click('#resume');
+await ready();
+
+// Leaving the page with the button held lets go of it and opens the menu, so the claw waits there for the player to
+// come back, and drops once they do.
+const hb = await page.locator('#hold').boundingBox();
+await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+await page.mouse.down();
+await page.waitForFunction(() => clutch.state === 'move');
+await hide(true);
+assert.ok(await page.isVisible('#menu'), 'leaving the page mid-go did not open the menu');
+assert.ok(!(await page.evaluate(() => document.getElementById('hold').classList.contains('down'))), 'the button is still held behind the menu');
+const away = await clawX();
+await page.waitForTimeout(300);
+assert.equal(await clawX(), away, 'the claw moves on behind the menu');
+await hide(false);
+await page.mouse.up();
+await page.click('#resume');
+await page.waitForFunction(() => clutch.state === 'drop' || clutch.state === 'close', null, { timeout: 2000 });
 await ready();
 
 // Goes aimed at the plush on top of the heap, till one comes out of the prize door.
