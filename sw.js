@@ -2,7 +2,9 @@
 // Anything the person saves lives in localStorage, not here.
 // Network first, so a new version shows up as soon as you're online.
 
-const CACHE = 'free-play-v7'; // bump the number when the file list changes
+// Bump the number when the file list changes, or before a release that should refresh every offline copy: a new name
+// is what makes an installed copy download the whole list again.
+const CACHE = 'free-play-v8';
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the machines by their addresses as well as by index.html, so either opens offline
@@ -45,8 +47,12 @@ const SHELL = [
   'hoops/js/sound.js',
 ];
 
+// Each file straight from the server (a quick "not modified" for one that hasn't changed), not from the browser's own
+// copies, which can be ten minutes old (see fresh() below): an offline copy made from those could mix in old files.
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'no-cache' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {

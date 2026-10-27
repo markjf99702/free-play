@@ -1,13 +1,15 @@
 // Walks round the Free Play floor in Chromium through the real pages:  node test/e2e.mjs  (needs Playwright)
 // In from the floor to each machine and back, with the tickets each one pays adding up in the one wallet, the prize
-// counter from the floor, every file the pages load kept for offline, Chrome offering to install it, and all of it
-// opening again offline. (Each machine's own browser test, test/<machine>.e2e.mjs, plays it in depth.)
+// counter from the floor, every file the pages load kept for offline, Chrome offering to install it, all of it
+// opening again offline, each machine's control deck on a shorter phone, and a new release's offline copy made whole
+// from the server. (Each machine's own browser test, test/<machine>.e2e.mjs, plays it in depth.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { SHELF } from '../shared/prizes.js';
 
@@ -413,6 +415,45 @@ for (const [path, name] of Object.entries(OFFLINE)) {
   if (name === 'tilt') assert.equal(new URL(one.url()).search, '', 'Tilt, as a single file, changed its address');
 }
 await solo.close();
+
+// The offline copy, from a server that answers the way GitHub Pages does: a browser may keep each file for ten
+// minutes (cache-control: max-age=600), and ask again by its ETag. With `next` it serves a new release: sw.js under a
+// new cache name, and a change to Topple's machine.js.
+const gh = { next: false };
+const pages = createServer(async (req, res) => {
+  let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (path.endsWith('/')) path += 'index.html';
+  let body;
+  try { body = await readFile(join(root, path)); } catch { res.writeHead(404); res.end(); return; }
+  if (gh.next && path === '/sw.js') body = Buffer.from(String(body).replace(/free-play-v\d+/, '$&-next'));
+  if (gh.next && path === '/topple/js/machine.js') body = Buffer.concat([body, Buffer.from('\n// the next release\n')]);
+  const etag = `"${createHash('sha1').update(body).digest('hex').slice(0, 16)}"`;
+  const head = { etag, 'cache-control': 'max-age=600', 'content-type': TYPES[extname(path)] || 'text/html' };
+  if (req.headers['if-none-match'] === etag) { res.writeHead(304, head); res.end(); return; }
+  res.writeHead(200, head);
+  res.end(body);
+}).listen(0);
+const ghBase = `http://localhost:${pages.address().port}/`;
+const ghCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+const gp = await ghCtx.newPage();
+gp.on('pageerror', e => problems.push(e.message));
+const until = async (ok, ms, what) => {
+  for (const end = Date.now() + ms; !(await ok());) { assert.ok(Date.now() < end, what); await new Promise(r => setTimeout(r, 100)); }
+};
+await gp.goto(ghBase);
+await gp.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 15000 });
+const copy = await gp.evaluate(async () => (await caches.keys()).join());
+
+// A new release goes up a minute later, and the next check for one finds it: the new offline copy is all new, though
+// the browser still has its own copies of the old files.
+gh.next = true;
+await gp.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
+await until(async () => (await gp.evaluate(() => caches.keys())).join() === copy + '-next', 20000, 'the new release made no new offline copy');
+const kept = await gp.evaluate(async name => (await (await caches.open(name)).match('topple/js/machine.js'))?.text(), copy + '-next');
+assert.ok(kept?.endsWith('// the next release\n'), "the new release's offline copy kept an old file");
+gh.next = false;
+await ghCtx.close();
+pages.close();
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();
