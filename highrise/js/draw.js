@@ -181,11 +181,17 @@ export function createDraw(canvas) {
     // what the floor just built said: PERFECT, or a ticket
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const p of pops) {
-      const q = P((COLS * CELL) / 2, rowY(p.floor) - 10 - p.t * 40);
-      ctx.globalAlpha = Math.max(0, 1 - p.t / 1);
-      ctx.font = `400 ${18 * k}px Bungee, Impact, sans-serif`;
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(6, 10, 30, .85)'; ctx.strokeText(p.text, q.x, q.y);
+      // a pop rises and fades over a second; one that's held (the top-out's) grows to 1.6 times the size, rises a
+      // little way and stays, fading only in its last half second
+      const held = p.hold > 1, grow = held ? Math.min(1, p.t / 0.25) : 1, ease = 1 - (1 - grow) ** 3;
+      const q = P((COLS * CELL) / 2, rowY(p.floor) - 10 - (held ? 26 * (1 - (1 - Math.min(1, p.t / 0.5)) ** 2) : p.t * 40));
+      ctx.globalAlpha = held ? Math.max(0, Math.min(1, (p.hold - p.t) / 0.5)) : Math.max(0, 1 - p.t / 1);
+      const size = 18 * (held ? 1.25 + 0.35 * ease : 1);
+      ctx.font = `400 ${size * k}px Bungee, Impact, sans-serif`;
+      ctx.lineWidth = held ? 6 : 4; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(6, 10, 30, .85)'; ctx.strokeText(p.text, q.x, q.y);
+      if (held) { ctx.save(); ctx.shadowColor = 'rgba(255, 196, 80, .8)'; ctx.shadowBlur = 16 * k; }
       ctx.fillStyle = p.gold ? C.gold : C.glow; ctx.fillText(p.text, q.x, q.y);
+      if (held) ctx.restore();
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -198,17 +204,44 @@ export function createDraw(canvas) {
     }
   }
 
+  // Eight bursts over the city across the 2.6 s of the ending, each once: a bright core, and 20 to 24 sparks flying out
+  // as short streaks, slowing, and falling slowly as they fade.
+  const BURSTS = [[40, -66, 0.05], [250, -44, 0.3], [140, -92, 0.6], [-46, 40, 0.85], [340, 250, 1.1], [80, -30, 1.4], [210, -84, 1.7], [-30, -80, 2.0]];
+  const SPARK = [C.gold, C.blue, '#ff6fae', C.glow];
+  const spark = (i, b) => 36 + ((i * 37 + b * 11) % 31);   // how far a spark flies, the same every time
   function fireworks(s) {
-    const bursts = [[40, -70, 0], [230, -40, 0.4], [130, -90, 0.8], [300, 60, 1.2], [-40, 80, 1.6], [160, -60, 2.0]];
-    for (const [x, y, at] of bursts) {
-      const u = (s - at) % 2.4;
-      if (u < 0 || u > 1.1) continue;
-      const c = P(x, y), r = u * 60 * k;
-      ctx.globalAlpha = Math.max(0, 1 - u / 1.1);
-      ctx.fillStyle = [C.gold, C.blue, '#ff6fae', C.glow][Math.round(at * 2.5) % 4];
-      for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; ctx.beginPath(); ctx.arc(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r + u * u * 20 * k, 2.2 * k, 0, Math.PI * 2); ctx.fill(); }
-    }
-    ctx.globalAlpha = 1;
+    const LIFE = 1.2;
+    ctx.save();
+    ctx.lineCap = 'round';
+    BURSTS.forEach(([x, y, at], b) => {
+      const u = s - at;
+      if (u < 0 || u > LIFE) return;
+      const c = P(x, y), n = 20 + (b * 3) % 5, col = SPARK[b % 4];
+      const out = r => 1 - (1 - Math.min(1, r)) ** 3;            // flying out fast, then hanging
+      const fade = Math.max(0, 1 - u / LIFE) ** 1.3;
+      if (u < 0.3) {
+        // the bang: a bright core
+        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 18 * k);
+        g.addColorStop(0, `rgba(255, 250, 230, ${1 - u / 0.3})`); g.addColorStop(1, 'rgba(255, 250, 230, 0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, 18 * k, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.strokeStyle = col; ctx.lineWidth = 2.2 * k; ctx.globalAlpha = fade;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + b * 0.7 + ((i * 7) % 5) * 0.04, v = spark(i, b); // each spark a little faster or slower
+        const head = out(u / 0.9), tail = out(Math.max(0, u - 0.2) / 0.9), sag = u * u * 30;
+        ctx.moveTo(c.x + Math.cos(a) * v * tail * k, c.y + (Math.sin(a) * v * tail + sag * 0.7) * k);
+        ctx.lineTo(c.x + Math.cos(a) * v * head * k, c.y + (Math.sin(a) * v * head + sag) * k);
+      }
+      ctx.stroke();
+      // and the spark at the head of each streak, brighter
+      ctx.fillStyle = C.glow;
+      for (let i = 0; i < n; i += 2) {
+        const a = (i / n) * Math.PI * 2 + b * 0.7 + ((i * 7) % 5) * 0.04, v = spark(i, b), head = out(u / 0.9);
+        ctx.beginPath(); ctx.arc(c.x + Math.cos(a) * v * head * k, c.y + (Math.sin(a) * v * head + u * u * 30) * k, 1.4 * k, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+    ctx.restore();
   }
 
   // Where a window is on the page (for the screenshot tool).

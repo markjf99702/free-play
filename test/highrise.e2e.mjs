@@ -133,6 +133,7 @@ await page.click('#takeMinor');
 assert.ok(await page.isVisible('#over'));
 assert.equal(await tickets(), t0 + 36);
 assert.match(await page.textContent('#overT'), /minor prize/);
+assert.ok(await page.isHidden('#overTrophy'), 'the trophy is for a top-out');
 assert.deepEqual(await bestLine(), { text: 'Your highest yet! The old one was floor 6.', big: true, size: '18px' });
 
 // Floor 11 again, going on, and a row that misses on floor 12: the 25 goes, the floors still pay.
@@ -162,8 +163,13 @@ await build(11);
 await page.waitForSelector('#choose:not([hidden])');
 await page.click('#keepGoing');
 await build(15);
+// 'Topped out!' stays up through the ending, not fading out as an ordinary floor's word does after a second
+await page.waitForTimeout(1600);
+assert.ok(await page.evaluate(() => highrise.pops.some(p => p.text === 'Topped out!')), "'Topped out!' had gone 1.6 s into the ending");
 await page.waitForSelector('#over:not([hidden])', { timeout: 8000 });
 assert.equal(await page.textContent('#overT'), 'Topped out!');
+// and the card has the trophy on it, big
+assert.deepEqual(await page.evaluate(() => { const e = document.getElementById('overTrophy'); return [e.hidden, e.textContent, getComputedStyle(e).fontSize]; }), [false, '🏆', '72px']);
 assert.deepEqual(await bestLine(), { text: 'Your highest yet! The old one was floor 11.', big: true, size: '18px' });
 assert.equal(await tickets(), t2 + 215);
 const shelf = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes);

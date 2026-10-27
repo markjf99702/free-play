@@ -101,7 +101,7 @@ function stop() {
   if (r.perfect && r.cols.length > 1) { pops.length = 0; pops.push({ floor: r.floor, text: 'Perfect', t: 0 }); }
   if (r.top) {
     cheer = 0; sound.top();
-    pops.length = 0; pops.push({ floor: r.floor, text: 'Topped out!', t: 0, gold: true });
+    pops.length = 0; pops.push({ floor: r.floor, text: 'Topped out!', t: 0, gold: true, hold: 2.6 }); // up for the whole ending
     say('Topped out! The trophy is yours.');
     mode = 'ending'; ended = { at: clock + 2600 };
   } else if (r.minor) {
@@ -131,6 +131,9 @@ function endGame() {
   if (built > saved.best) saved.best = built;
   if (top) saved.tops = (saved.tops || 0) + 1;
   save();
+  // the trophy, big, over a top-out's heading
+  $('overTrophy').hidden = !top;
+  $('overTrophy').textContent = TROPHIES[0].emoji;
   $('overT').textContent = top ? 'Topped out!' : tookMinor ? 'Floor 11, and the minor prize' : built >= MINOR ? `${words[built]}. So close.` : built ? words[built] : 'Not a floor';
   $('overHow').textContent = top ? 'All fifteen floors. The Highrise trophy is on your shelf.'
     : tookMinor ? `A ticket for every floor, and 25 for stopping at the minor prize.`
@@ -245,7 +248,7 @@ function tick(now) {
   for (const f of falling) f.t += s;
   while (falling.length && falling[0].t > 1) falling.shift();
   for (const p of pops) p.t += s;
-  while (pops.length && pops[0].t > 1) pops.shift();
+  while (pops.length && pops[0].t > (pops[0].hold || 1)) pops.shift();
   if (flash) flash.t += s;
   if (cheer >= 0) cheer += s;
   if (mode === 'over' || mode === 'ending' && !cheer) dim = Math.min(1, dim + s);
@@ -283,6 +286,7 @@ window.highrise = {
   get saved() { return saved; },
   get ready() { return mode === 'play' && clock >= rowFrom && !paused; },
   get shown() { return shown; },
+  get pops() { return pops; },
   start,
   stop,
   stopAt(start) { if (!(mode === 'play' && clock >= rowFrom)) return false; shown = start; stop(); return true; },

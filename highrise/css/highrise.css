@@ -110,6 +110,12 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .lede { margin: 0 0 8px; font-weight: 600; text-wrap: balance; }
 .how { margin: 0 0 14px; font-size: 14px; color: var(--ink2); }
 .best { margin: 12px 0 0; font-size: 13px; color: var(--ink3); min-height: 1em; }
+/* A top-out's card: the trophy, big, in a glow of its own, over the heading */
+.trophy {
+  margin: -2px auto 4px; width: 120px; font: 72px/1.15 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  background: radial-gradient(closest-side, rgba(242, 193, 78, .42), rgba(242, 193, 78, 0)); filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .45));
+}
+.trophy[hidden] { display: none; }
 .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .col { display: grid; gap: 8px; margin-bottom: 14px; }
 .big, .plain {
