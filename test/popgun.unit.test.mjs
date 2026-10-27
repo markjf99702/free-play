@@ -58,6 +58,35 @@ test('a cork has to lead a moving target: aimed at where it is, it misses the fa
   assert.equal(s2.t.down, 1);
 });
 
+test('a cork fired at a target that has moved on by the time it lands says which one it was behind', () => {
+  const g = createGallery({ random: seeded(2) });
+  run(g, 0.5);
+  const star = lead(g, 'star');
+  g.fire(star.t.x, star.y); // dead on its centre, as it is now
+  run(g, FLIGHT + 0.02);
+  const e = g.take().find(e => e.miss || e.hit);
+  assert.equal(e.miss, true);
+  assert.equal(e.behind, 'star', 'the star it was aimed at ran on, so the cork landed behind it');
+  // at the empty backdrop, it was behind nothing
+  run(g, RELOAD);
+  g.fire(5, 5); run(g, FLIGHT + 0.02);
+  const e2 = g.take().find(e => e.miss || e.hit);
+  assert.equal(e2.miss, true);
+  assert.equal(e2.behind, undefined);
+  // and at a target another cork knocks down first, it wasn't behind it either: it missed a fallen tin
+  run(g, RELOAD);
+  const d = lead(g, 'duck');
+  const x = d.t.x + d.row.dir * d.row.now * FLIGHT;
+  g.fire(x, d.y);
+  run(g, RELOAD + 0.01);
+  g.fire(d.t.x, d.y);
+  run(g, FLIGHT + 0.02);
+  const after = g.take().filter(e => e.miss || e.hit);
+  assert.equal(after[0].hit, 'duck');
+  assert.equal(after[1].miss, true);
+  assert.equal(after[1].behind, undefined);
+});
+
 test('a round is twenty corks, one at a time, and ends when the last has landed', () => {
   const g = createGallery({ random: seeded(3) });
   assert.equal(g.corks, CORKS);

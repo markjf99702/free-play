@@ -65,13 +65,14 @@ let gallery = createGallery();
 let mode = 'title';           // title → play → over
 let aim = { x: W / 2, y: H / 2 }, cross = false, recoil = 9, wink = -1, glow = 0, jog = -1, paused = false, timeScale = 1;
 let endIn = 0;                // seconds from the last cork landing to the end card, on the round's clock (it waits while paused)
+let told = 0;                 // how many times this round a cork that landed behind its target has said 'Aim ahead!'
 const marks = [], pops = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   gallery = createGallery();
   mode = 'play';
-  marks.length = 0; pops.length = 0; endIn = 0;
+  marks.length = 0; pops.length = 0; endIn = 0; told = 0;
   hud();
 }
 
@@ -99,7 +100,11 @@ function happened() {
     else if (e.miss) {
       const moon = Math.hypot(e.x - MOON.x, e.y - MOON.y) < MOON.r;
       if (moon) { wink = 0; sound.boing(); } else sound.miss();
-      marks.push({ x: e.x, y: e.y, t: 0 });
+      // A cork that landed behind the tin it was fired at, which ran on while it flew: the first few times in a round,
+      // a bigger puff and a word, since a tap dead on a rabbit or a star can't ever catch it.
+      const ahead = e.behind && told < 3;
+      if (ahead) { told++; pops.push({ x: Math.max(80, Math.min(W - 80, e.x)), y: e.y, text: 'Aim ahead!', t: 0 }); }
+      marks.push({ x: e.x, y: e.y, t: 0, big: ahead });
     } else if (e.hit) {
       sound.hit(e.hit);
       if (e.corks) { pops.push({ x: e.x, y: e.y, text: `+${e.corks} corks`, t: 0, gold: true }); say(`The bell! ${e.corks} more corks.`); }

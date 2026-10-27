@@ -174,7 +174,7 @@ export function createDraw(canvas) {
   }
 
   // s: what to draw. g: the gallery. aim: where the gun points ({ x, y }, on the back of the booth). cross: show a
-  // crosshair there. marks: misses on the backdrop ({ x, y, t }). pops: what a hit was worth ({ x, y, text, t, gold }).
+  // crosshair there. marks: misses on the backdrop ({ x, y, t, big }). pops: what a hit was worth ({ x, y, text, t, gold }).
   // recoil: seconds since the last shot. wink: seconds since the moon was hit (or -1). glow: the sign's bulbs blazing.
   function frame(g, { now = 0, aim = { x: W / 2, y: H / 2 }, cross = false, marks = [], pops = [], recoil = 9, wink = -1, glow = 0, jog = -1, ready = true } = {}) {
     const t = now / 1000;
@@ -202,9 +202,10 @@ export function createDraw(canvas) {
     }
     for (const m of marks) {
       ctx.globalAlpha = Math.max(0, 1 - m.t / 1.2);
-      ctx.fillStyle = 'rgba(20, 10, 0, .5)'; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(20, 10, 0, .5)'; ctx.beginPath(); ctx.arc(m.x, m.y, m.big ? 8 : 5, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = 'rgba(255, 240, 210, .6)'; ctx.lineWidth = 1.5;
-      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r0 = 7 + m.t * 10, r1 = 11 + m.t * 16; ctx.beginPath(); ctx.moveTo(m.x + Math.cos(a) * r0, m.y + Math.sin(a) * r0); ctx.lineTo(m.x + Math.cos(a) * r1, m.y + Math.sin(a) * r1); ctx.stroke(); }
+      const k = m.big ? 1.5 : 1;
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r0 = 7 * k + m.t * 10, r1 = 11 * k + m.t * 16; ctx.beginPath(); ctx.moveTo(m.x + Math.cos(a) * r0, m.y + Math.sin(a) * r0); ctx.lineTo(m.x + Math.cos(a) * r1, m.y + Math.sin(a) * r1); ctx.stroke(); }
     }
     ctx.globalAlpha = 1;
     for (const row of g.rows) for (const tg of row.targets) target(ctx, tg.kind, tg.x, row.rail, row.dir, tg.down, t);

@@ -118,8 +118,8 @@ A stacker: a tower against a night skyline, its windows the grid, seven across a
 
 A carnival shooting gallery: a booth with a striped awning, a painted night fair behind, and three rows of tin targets running along brass rails, each row the other way from the one below.
 
-- **Tap a target to fire** a cork at it from the popgun on the counter. (With a mouse, the pointer becomes the sights; on a keyboard, the arrows move them and Space fires.) A round is 20 corks, and the gun takes a moment to reload between them.
-- **Lead the fast ones.** A cork takes about a third of a second to reach the back of the booth, and the targets keep moving, so aim a little ahead of them: a little for the ducks, more than a star's width for the stars. Each row's motor surges a bit faster and a bit slower as it runs, so the lead that worked a moment ago won't quite now.
+- **Tap where you want the cork to go** and the popgun on the counter fires it there. (With a mouse, the pointer becomes the sights; on a keyboard, the arrows move them and Space fires.) A round is 20 corks, and the gun takes a moment to reload between them.
+- **Aim ahead.** A cork takes about a third of a second to reach the back of the booth, and the targets keep moving, so a tap dead on a rabbit or a star lands behind it. Aim a little ahead of the ducks, half a rabbit ahead of the rabbits and a whole star ahead of the stars. The first few corks in a round that land just behind their target say so. Each row's motor surges a bit faster and a bit slower as it runs, so what worked a moment ago won't quite now.
 - **What they're worth.** Ducks along the pond at the bottom are 10, rabbits in the middle 20, and the small fast stars up top 30. Now and then a golden duck comes along, worth 100, and a bell, which wins three more corks. Five hits in a row are worth 50 more. A target knocked flat stands up again once it's been round the back of the conveyor.
 - A ticket for every 20 points, paid at the end of the round. (Try the moon.)
 

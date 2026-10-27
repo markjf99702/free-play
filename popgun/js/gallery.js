@@ -90,7 +90,9 @@ export function createGallery({ random = Math.random } = {}) {
     if (!corks || reload > 0 || over) return false;
     corks--; shots++;
     reload = RELOAD;
-    flights.push({ to: { x, y }, t: 0 });
+    // the tin under the tap as it fires: if the cork misses and that tin's still standing, it ran on ahead of the cork
+    const at = targetAt(x, y);
+    flights.push({ to: { x, y }, t: 0, at: at && at.t, kind: at && at.t.kind });
     events.push('pop');
     return true;
   }
@@ -98,7 +100,12 @@ export function createGallery({ random = Math.random } = {}) {
   // A cork arriving: it knocks over whatever it meets there, or thuds into the backdrop.
   function land(f) {
     const at = targetAt(f.to.x, f.to.y);
-    if (!at) { streak = 0; events.push({ miss: true, x: f.to.x, y: f.to.y }); return; }
+    if (!at) {
+      streak = 0;
+      const behind = f.at && !f.at.hit && f.at.kind === f.kind ? f.kind : undefined;
+      events.push(behind ? { miss: true, x: f.to.x, y: f.to.y, behind } : { miss: true, x: f.to.x, y: f.to.y });
+      return;
+    }
     const { t } = at, k = KINDS[t.kind];
     t.hit = true;
     hits++; streak++;
@@ -124,7 +131,8 @@ export function createGallery({ random = Math.random } = {}) {
     get ready() { return reload === 0 && corks > 0 && !over; },
     get over() { return over; },
     // what's happened since the last look: 'pop', { hit, x, y, points, corks, run }, { miss, x, y }, 'over', and
-    // { arrive, x, y } as a golden duck or a bell comes round into view
+    // { arrive, x, y } as a golden duck or a bell comes round into view. A miss at a tin that was under the tap when
+    // the cork went, and has run on ahead of it, says which: { miss, x, y, behind: 'star' }.
     take() { const e = events; events = []; return e; },
   };
 }
