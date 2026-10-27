@@ -4,6 +4,9 @@
 import { PRIZES, SHELF } from './prizes.js';
 import { read, buy, refund } from './wallet.js';
 
+// A count as people write it: 1,234 tickets. Anything that isn't a number reads as 0.
+export const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
+
 export const TICKET = '<svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg>';
 
 let sheet = null, opts = {}, lastFocus = null;
@@ -39,7 +42,7 @@ function build() {
 
 function render() {
   const w = read();
-  sheet.querySelector('.fp-bal b').textContent = w.tickets;
+  sheet.querySelector('.fp-bal b').textContent = fmt(w.tickets);
   const shelf = sheet.querySelector('.fp-shelf');
   shelf.replaceChildren();
   const owned = SHELF.filter(p => w.prizes[p.id]);
@@ -53,8 +56,8 @@ function render() {
     const s = document.createElement('span');
     s.textContent = p.emoji; s.title = p.name;
     s.setAttribute('role', 'img');
-    s.setAttribute('aria-label', w.prizes[p.id] > 1 ? `${w.prizes[p.id]} × ${p.name}` : p.name);
-    if (w.prizes[p.id] > 1) { const n = document.createElement('sub'); n.textContent = w.prizes[p.id]; s.append(n); }
+    s.setAttribute('aria-label', w.prizes[p.id] > 1 ? `${fmt(w.prizes[p.id])} × ${p.name}` : p.name);
+    if (w.prizes[p.id] > 1) { const n = document.createElement('sub'); n.textContent = fmt(w.prizes[p.id]); s.append(n); }
     shelf.append(s);
   }
   const grid = sheet.querySelector('.fp-grid');
@@ -68,8 +71,8 @@ function render() {
     b.innerHTML = `<span class="e" aria-hidden="true"></span><span class="n"></span><span class="c">${TICKET}</span>`;
     b.querySelector('.e').textContent = p.emoji;
     b.querySelector('.n').textContent = p.name;
-    b.querySelector('.c').append(String(p.cost));
-    b.setAttribute('aria-label', `${p.name}, ${p.cost} tickets`);
+    b.querySelector('.c').append(fmt(p.cost));
+    b.setAttribute('aria-label', `${p.name}, ${fmt(p.cost)} tickets`);
     b.dataset.id = p.id;
     b.addEventListener('click', () => trade(p));
     grid.append(b);
@@ -81,7 +84,7 @@ function trade(p) {
   if (performance.now() - lastTrade < SAME_TAP) return;
   const have = read().tickets;
   const w = buy(p);
-  if (!w) return toast(`You need ${p.cost - have} more tickets for that.`);
+  if (!w) return toast(`You need ${fmt(p.cost - have)} more tickets for that.`);
   lastTrade = performance.now();
   opts.onBuy?.(p);
   const n = w.prizes[p.id];
@@ -92,7 +95,7 @@ function trade(p) {
     toastUndo = null;
     lastTrade = performance.now(); // and a double tap on Undo doesn't trade whatever is under it once it's gone
     const focused = toastEl.contains(document.activeElement);
-    toast(refund(p) ? `Traded back. Your ${p.cost.toLocaleString('en-US')} tickets are back in your pocket.` : `There's no ${p.name.toLowerCase()} on your shelf to trade back.`);
+    toast(refund(p) ? `Traded back. Your ${fmt(p.cost)} tickets are back in your pocket.` : `There's no ${p.name.toLowerCase()} on your shelf to trade back.`);
     if (!counterOpen()) return;
     render();
     // the Undo button has gone: the keyboard goes back to the prize
@@ -161,7 +164,7 @@ export function feed(box, n, { tick, fresh = true } = {}) {
   const strip = box.querySelector('.fp-strip'), count = box.querySelector('.fp-won b'), word = box.querySelector('.fp-won span');
   word.textContent = n === 1 ? 'ticket' : 'tickets';
   const show = k => {
-    count.textContent = k;
+    count.textContent = fmt(k);
     strip.style.height = Math.min(k, 7) * 22 + (k ? 4 : 0) + 'px';
     strip.style.backgroundPositionY = k * 22 + 'px';
   };

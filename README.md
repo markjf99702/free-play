@@ -163,7 +163,7 @@ It's a static site: plain HTML, CSS and JavaScript, with no build step.
 
 ```sh
 npx serve .                   # or any static file server, then open the printed address
-npm test                      # unit tests in node, then the floor, the move and each machine in Chromium (needs Playwright)
+npm test                      # unit tests in node, then the floor, the prize counter, the move and each machine in Chromium (needs Playwright)
 node tools/screenshots.mjs    # redraws floor/*.jpg, docs/*.png and og.png
 node tools/make-icons.mjs     # redraws the PNG icons from icon.svg
 node tools/tune.mjs 60 space  # plays Tilt's tables with the autopilot and reports how balls drain and what they score
@@ -188,6 +188,6 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `highrise/`: Highrise. `js/tower.js` is the rules, with no clock of its own, `js/draw.js` draws the tower and the city, `js/app.js` keeps time and runs the stop button and the prizes, and `js/sound.js` makes the noises.
 - `topple/`: Topple. `js/machine.js` is the shelf, the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
 - `floor/`: the pictures on the cabinets' screens.
-- `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
+- `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the prize counter on every page (`counter.e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
 - `fonts/`: Bungee, Bungee Outline and Figtree (SIL Open Font License), served from here so nothing loads from elsewhere.
 - `sw.js`: keeps a copy of the floor and every machine for playing offline.

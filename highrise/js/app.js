@@ -8,7 +8,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
-import { openCounter, counterOpen, feed, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, PAYOUT, fmt } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.highrise';
@@ -174,7 +174,7 @@ addEventListener('keydown', e => {
 // ---------- the scoreboard ----------
 function hud() {
   $('floorNo').textContent = mode === 'title' ? '1' : Math.min(FLOORS, mode === 'play' ? tower.floor : tower.built || 1);
-  $('tix').textContent = wallet.read().tickets;
+  $('tix').textContent = fmt(wallet.read().tickets);
   $('titleBest').textContent = saved.games ? `Highest: floor ${saved.best}.${saved.tops ? ` Topped out ${saved.tops === 1 ? 'once' : saved.tops === 2 ? 'twice' : `${saved.tops} times`}.` : ''}` : '';
 }
 

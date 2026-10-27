@@ -104,7 +104,7 @@ await page.click('.fp-x');
 // Everything is still there after a reload.
 await page.reload();
 await page.evaluate(() => document.fonts.ready);
-assert.match(await page.textContent('#titleBest'), new RegExp(`Best: ${score}`));
+assert.match(await page.textContent('#titleBest'), new RegExp(`Best: ${score.toLocaleString('en-US')}`));
 assert.equal(await page.textContent('#tix'), String(stored.tickets - 5));
 
 // Today's card: nine called shots. Rolling at each call's speed hits most of them.
@@ -138,7 +138,7 @@ assert.match(shared, new RegExp(`^Roll Up · .+ · ${daily.score}\n[★☆]{9}\n
 // Once it's played, today's card shows how it went instead of starting again.
 await page.reload();
 await page.evaluate(() => document.fonts.ready);
-assert.equal(await page.textContent('#daily'), `Today: ${daily.score}`);
+assert.equal(await page.textContent('#daily'), `Today: ${daily.score.toLocaleString('en-US')}`);
 await page.click('#daily');
 assert.ok(await page.isVisible('#over'), 'today’s result shows again');
 assert.equal(await mode(), 'title', 'and no new game starts');

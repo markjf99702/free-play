@@ -7,7 +7,7 @@ import { createScene } from './scene.js';
 import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine } from './daily.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, toast, feed, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, PAYOUT, fmt } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.roll-up';
@@ -190,7 +190,7 @@ let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
 function showOver(r, fresh) {
   const daily = !!r.key;
-  $('overT').textContent = daily ? `Today's card, ${r.score} points` : `Nine balls, ${r.score} points`;
+  $('overT').textContent = daily ? `Today's card, ${fmt(r.score)} points` : `Nine balls, ${fmt(r.score)} points`;
   $('tally').replaceChildren(...r.balls.map(b => {
     const c = document.createElement('span');
     c.textContent = b.points;
@@ -206,7 +206,7 @@ function showOver(r, fresh) {
     b.textContent = r.balls.map(x => (x.hit ? '★' : '☆')).join('');
     $('stars').append(b, `${hits} of 9 calls${r.streak > 1 ? ` · ${r.streak} days in a row` : ''}`);
   }
-  $('overBest').textContent = daily ? 'A new card comes at midnight.' : r.isBest ? 'A new best.' : `Best: ${saved.best}`;
+  $('overBest').textContent = daily ? 'A new card comes at midnight.' : r.isBest ? 'A new best.' : `Best: ${fmt(saved.best)}`;
   $('share').hidden = !daily;
   $('again').textContent = daily ? 'Play' : 'Roll again';
   $('over').hidden = false;
@@ -220,10 +220,10 @@ function showOver(r, fresh) {
 
 // ---------- the scoreboard ----------
 function hud() {
-  $('score').textContent = Math.round(shown);
+  $('score').textContent = fmt(Math.round(shown));
   const n = mode === 'result' || mode === 'over' ? game.thrown : game.thrown + 1;
   $('ballNo').textContent = mode === 'over' ? 'Game over' : `Ball ${Math.min(BALLS, Math.max(1, n))} of ${BALLS}`;
-  $('tix').textContent = wallet.read().tickets;
+  $('tix').textContent = fmt(wallet.read().tickets);
   $('hint').hidden = !(mode === 'aim' && !thrownOnce);
   const ready = ['aim', 'drag', 'deal'].includes(mode);
   const call = callNow();
@@ -333,7 +333,7 @@ $('again').addEventListener('click', () => start());
 function dailyButton() {
   const d = playedToday(), done = !!d;
   $('daily').classList.toggle('done', !!done);
-  $('daily').textContent = done ? `Today: ${d.score}` : "Today's card";
+  $('daily').textContent = done ? `Today: ${fmt(d.score)}` : "Today's card";
   $('dailyHow').textContent = done
     ? `${d.balls.filter(b => b.hit).length} of 9 calls${d.streak > 1 ? `, ${d.streak} days in a row` : ''}. A new card comes at midnight.`
     : 'Nine called shots, the same for everyone today. Hit the call for double.';
@@ -450,7 +450,7 @@ function update(dt) {
 }
 
 hud();
-function titleBest() { $('titleBest').textContent = saved.best ? `Best: ${saved.best}` : ''; }
+function titleBest() { $('titleBest').textContent = saved.best ? `Best: ${fmt(saved.best)}` : ''; }
 titleBest();
 requestAnimationFrame(tick);
 

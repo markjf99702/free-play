@@ -4,12 +4,11 @@
 // (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
-import { openCounter } from '../shared/counter.js';
+import { openCounter, fmt } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
 import { dayKey } from '../roll-up/js/daily.js';
 
 const $ = id => document.getElementById(id);
-const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
 const readSave = key => {
   try { const v = JSON.parse(localStorage.getItem(key)); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
 };

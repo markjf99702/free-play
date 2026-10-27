@@ -10,6 +10,18 @@ const wallet = await import('../shared/wallet.js');
 const { PRIZES, PLUSH, SHELF } = await import('../shared/prizes.js');
 const { TABLES } = await import('../tilt/js/tables.js');
 
+test('counts read as people write them, with commas', async () => {
+  const { fmt } = await import('../shared/counter.js');
+  assert.equal(fmt(0), '0');
+  assert.equal(fmt(999), '999');
+  assert.equal(fmt(1234), '1,234');
+  assert.equal(fmt(99999), '99,999');
+  assert.equal(fmt(1234567), '1,234,567');
+  assert.equal(fmt('2500'), '2,500');
+  assert.equal(fmt(NaN), '0');
+  assert.equal(fmt(undefined), '0');
+});
+
 test('every machine pays into one wallet, and the counter spends from it', () => {
   kept.clear();
   assert.deepEqual(wallet.read(), { tickets: 0, prizes: {} });

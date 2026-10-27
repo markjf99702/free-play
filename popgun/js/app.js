@@ -6,7 +6,7 @@ import { createGallery, ticketsFor, CORKS, W, H } from './gallery.js';
 import { createDraw, MOON } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, PAYOUT, fmt } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.popgun';
@@ -167,7 +167,7 @@ addEventListener('blur', () => keys.clear());
 // ---------- the scoreboard ----------
 function hud() {
   $('score').textContent = gallery.score.toLocaleString('en-US');
-  $('tix').textContent = wallet.read().tickets;
+  $('tix').textContent = fmt(wallet.read().tickets);
   const left = mode === 'title' ? CORKS : gallery.corks;
   $('left').textContent = left;
   $('corksWord').textContent = left === 1 ? 'cork' : 'corks';

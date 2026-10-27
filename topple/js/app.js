@@ -10,7 +10,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TRINKETS } from '../../shared/prizes.js';
-import { openCounter, counterOpen, toast, feed, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, PAYOUT, fmt } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.topple';
@@ -200,22 +200,22 @@ function showDone() {
   const { won, before, first } = done;
   if (won > (saved.best || 0)) saved.best = won;
   save();
-  $('overT').textContent = `${CUP} coins, ${won} ${won === 1 ? 'ticket' : 'tickets'}`;
-  $('overBest').textContent = won > before && !first ? 'A new best cup.' : `Best cup: ${saved.best} tickets`;
+  $('overT').textContent = `${CUP} coins, ${fmt(won)} ${won === 1 ? 'ticket' : 'tickets'}`;
+  $('overBest').textContent = won > before && !first ? 'A new best cup.' : `Best cup: ${fmt(saved.best)} tickets`;
   hud();
 }
 
 // ---------- the scoreboard ----------
 function hud(bump = false) {
-  $('won').textContent = cup ? cup.won : done ? done.won : 0;
-  $('tix').textContent = wallet.read().tickets;
+  $('won').textContent = fmt(cup ? cup.won : done ? done.won : 0);
+  $('tix').textContent = fmt(wallet.read().tickets);
   const left = cup ? cup.left : 0;
   $('left').textContent = left;
   $('coinsWord').textContent = left === 1 ? 'coin' : 'coins';
   document.querySelector('.cup').classList.toggle('empty', !left);
   $('drop').disabled = !left;
   if (bump) { const b = $('won'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
-  $('titleBest').textContent = saved.cups ? `Best cup: ${saved.best} tickets.` : '';
+  $('titleBest').textContent = saved.cups ? `Best cup: ${fmt(saved.best)} tickets.` : '';
   $('play').textContent = cup && cup.left > 0 ? 'Carry on' : 'Play';
 }
 

@@ -6,7 +6,7 @@ import { createCourt, ticketsFor, power, flickFor, FLICK, SWEET, HOOP, LAUNCH } 
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, PAYOUT, fmt } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.hoops';
@@ -216,7 +216,7 @@ addEventListener('keyup', e => {
 // ---------- the scoreboard ----------
 function hud() {
   $('score').textContent = court.score.toLocaleString('en-US');
-  $('tix').textContent = wallet.read().tickets;
+  $('tix').textContent = fmt(wallet.read().tickets);
   const playing = mode === 'play';
   const worth = (playing && court.bonus ? 3 : 2) + (playing && court.fire ? 1 : 0);
   if ($('worth').textContent !== String(worth)) { $('worth').textContent = worth; if (playing) bump($('worth')); }
