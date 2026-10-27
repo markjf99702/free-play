@@ -306,6 +306,10 @@ await west.tap('#quitBtn');
 await west.waitForSelector('#over:not([hidden])');
 assert.equal(await west.evaluate(() => window.tilt.store.scores[0].date), '2026-10-13');
 assert.equal(await west.textContent('#scores li.me small'), '10/13');
+// A game that pays nothing says how close it came, in place of the rate.
+const under = Number((await west.textContent('#final')).replace(/,/g, ''));
+assert.ok(under < 10000, `a game of ${under} paid a ticket`);
+assert.equal(await west.textContent('#overNote'), `Number 1 on your list. ${(10000 - under).toLocaleString('en-US')} more points and it's a ticket.`);
 await west.context().close();
 
 // Only the first game of a visit says how to flip, and not while it's paused.

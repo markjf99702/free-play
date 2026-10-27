@@ -9,7 +9,7 @@ import { NORMAL } from './settings.js';
 import { play, unlock, setSound } from './sound.js';
 import { TABLES } from './tables.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, tickets, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.tilt'; // what was 'tilt.v1' at tilt.junkdrawer.works; ../shared/carry.js brings it over
@@ -315,7 +315,8 @@ function gameOver(g) {
   setTimeout(() => { stopFeed = feed($('payout'), won, { tick: () => play('rollover') }); }, 900);
   $('final').textContent = fmt(score);
   const placed = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
-  $('overNote').textContent = [placed, rate(table)].filter(Boolean).join(' ');
+  // with no ticket, how far off one it was, in place of the rate: '3,550 more points and it's a ticket.'
+  $('overNote').textContent = [placed, won ? rate(table) : shortOfATicket(score, table.perTicket)].filter(Boolean).join(' ');
   const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won)}.`;
   $('scores').innerHTML = '';
   store[table.scoresKey].forEach(s => {

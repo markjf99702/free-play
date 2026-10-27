@@ -6,7 +6,7 @@ import { createGallery, ticketsFor, CORKS, W, H } from './gallery.js';
 import { createDraw, MOON } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -144,9 +144,9 @@ function endRound() {
   sound.over();
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   // and with no ticket, how far off one it was
-  const { hits, shots } = gallery, short = 20 - (score % 20);
+  const { hits, shots } = gallery;
   $('overHow').textContent = `${hits} ${hits === 1 ? 'hit' : 'hits'} from ${shots} ${shots === 1 ? 'cork' : 'corks'}. `
-    + (won ? 'A ticket for every 20 points.' : `${{ 10: 'Ten', 20: 'Twenty' }[short] || short} more points and it's a ticket.`);
+    + (won ? 'A ticket for every 20 points.' : shortOfATicket(score, 20));
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;

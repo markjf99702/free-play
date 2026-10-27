@@ -8,6 +8,14 @@ import { KEY, read, buy, refund } from './wallet.js';
 export const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
 // And as many tickets: '1 ticket', '12,345 tickets'.
 export const tickets = n => `${fmt(n)} ${+n === 1 ? 'ticket' : 'tickets'}`;
+// What the end card says, in place of the rate, for a round that paid nothing, at a ticket for every `per` points: how
+// close it came. 'Two more points and it's a ticket.', '3,550 more points and it's a ticket.'
+const WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
+  'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
+export function shortOfATicket(score, per) {
+  const n = per - (Math.max(0, score) % per);
+  return `${WORDS[n] || fmt(n)} more ${n === 1 ? 'point' : 'points'} and it's a ticket.`;
+}
 // The ticket count in a machine's corner is the way to the counter, and its name says both: 'Prize counter, 214 tickets'.
 export function pocketButton(el, n) {
   const name = `Prize counter, ${tickets(n)}`;

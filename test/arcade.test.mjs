@@ -22,6 +22,17 @@ test('counts read as people write them, with commas', async () => {
   assert.equal(fmt(undefined), '0');
 });
 
+test("a round that paid nothing says how close it came: 'Two more points and it's a ticket.'", async () => {
+  const { shortOfATicket } = await import('../shared/counter.js');
+  assert.equal(shortOfATicket(2, 4), "Two more points and it's a ticket.");
+  assert.equal(shortOfATicket(3, 4), "One more point and it's a ticket.");
+  assert.equal(shortOfATicket(0, 4), "Four more points and it's a ticket.");
+  assert.equal(shortOfATicket(10, 20), "Ten more points and it's a ticket.");
+  assert.equal(shortOfATicket(10, 15), "Five more points and it's a ticket.");
+  assert.equal(shortOfATicket(6450, 10000), "3,550 more points and it's a ticket.");
+  assert.equal(shortOfATicket(0, 5000), "5,000 more points and it's a ticket.");
+});
+
 test('every machine pays into one wallet, and the counter spends from it', () => {
   kept.clear();
   assert.deepEqual(wallet.read(), { tickets: 0, prizes: {} });

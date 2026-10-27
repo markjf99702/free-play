@@ -213,7 +213,12 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await countsAlong(await tickets(), Math.floor(score / 4));
 assert.ok(score > 40, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
-assert.match(await page.textContent('#overHow'), /^\d+ baskets? from \d+ shots?/);
+// how it went, and the swishes among the baskets, said of the baskets: '1 basket from 18 shots, a swish.'
+{
+  const [n, sw, shots] = [await court('baskets'), await court('swishes'), await court('shots')];
+  const said = !sw ? '' : n === 1 ? ', a swish' : sw === n ? `, all ${n} of them swishes` : sw === 1 ? ', 1 of them a swish' : `, ${sw} of them swishes`;
+  assert.equal(await page.textContent('#overHow'), `${n} ${n === 1 ? 'basket' : 'baskets'} from ${shots} ${shots === 1 ? 'shot' : 'shots'}${said}. A ticket for every 4 points.`);
+}
 await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, { timeout: 2000 }).catch(() => {});
 assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 4));
@@ -256,6 +261,8 @@ for (const leave of ['Escape', 'hide']) {
   await page.click('#resume');
   await page.waitForSelector('#over:not([hidden])', { timeout: 3000 });
   assert.deepEqual(await cards(), ['over'], `after ${leave} and Keep playing, the end card shows by itself`);
+  // a round that paid nothing says how close it came, in place of the rate
+  assert.equal(await page.textContent('#overHow'), "0 baskets from 0 shots. Four more points and it's a ticket.");
   await page.click('#again');
   assert.equal(await page.evaluate(() => hoops.mode), 'play', 'Play again works');
   assert.deepEqual(await cards(), []);

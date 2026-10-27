@@ -6,7 +6,7 @@ import { createCourt, ticketsFor, power, flickFor, FLICK, SWEET, HOOP, LAUNCH } 
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -153,8 +153,11 @@ function endRound() {
   save();
   const n = court.baskets, swish = court.swishes;
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
-  $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}`
-    + (swish ? `, ${swish === n ? (n === 1 ? 'nothing but net' : 'all of them nothing but net') : `${swish} nothing but net`}` : '') + '. A ticket for every 4 points.';
+  // '1 basket from 18 shots, a swish.', '5 baskets from 20 shots, 2 of them swishes.' And with no ticket, how far off
+  // one it was.
+  const swishes = !swish ? '' : n === 1 ? ', a swish' : swish === n ? `, all ${n} of them swishes` : swish === 1 ? ', 1 of them a swish' : `, ${swish} of them swishes`;
+  $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}${swishes}. `
+    + (won ? 'A ticket for every 4 points.' : shortOfATicket(score, 4));
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
