@@ -67,6 +67,21 @@ function hold(on) {
   document[on ? 'addEventListener' : 'removeEventListener']('keydown', keys, true);
 }
 
+// The counter is a step in the page's history, as a sheet on a phone is: opening it adds an entry, so the phone's Back
+// closes it rather than leaving the page (or, on the floor of the installed app, closing the app), and closing it any
+// other way takes that entry off again. `going` is a Back of the counter's own still on its way: when it lands, the
+// counter has nothing to do, unless it has been opened again meanwhile and needs an entry of its own once more.
+let going = false;
+const ours = () => !!globalThis.history?.state?.fpCounter; // (no history in node, where the tests import this)
+function step() { try { history.pushState({ fpCounter: true }, ''); } catch { /* an address it can't change: Back leaves */ } }
+globalThis.addEventListener?.('popstate', () => {
+  if (going) { going = false; if (counterOpen() && !ours()) step(); return; }
+  if (counterOpen() && !ours()) shut();
+});
+// A page opened afresh on the counter's entry (reloaded with the counter open, say) shows it shut, and the entry is
+// the page's own from then on: a Back from it to the page's first entry would load the page again.
+if (ours()) { try { history.replaceState(null, ''); } catch { /* as above */ } }
+
 function render() {
   const w = read();
   sheet.querySelector('.fp-bal b').textContent = fmt(w.tickets);
@@ -160,10 +175,16 @@ export function openCounter(o = {}) {
   sheet.querySelector('.fp-foot').append(toastBox());
   sheet.hidden = false;
   hold(true);
+  if (!ours() && !going) step();
   sheet.querySelector('.fp-x').focus({ preventScroll: true });
 }
+// Closed by ×, the backdrop or Escape: the counter's step in the history goes too.
 export function closeCounter() {
   if (!counterOpen()) return;
+  shut();
+  if (ours() && !going) { going = true; history.back(); }
+}
+function shut() {
   sheet.hidden = true;
   hold(false);
   // a trade can only be undone at the counter

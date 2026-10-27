@@ -2,6 +2,7 @@
 // (needs Playwright). On the floor and on each machine: the arcade's tickets with their commas, the counter opened
 // from the ticket count, a lollipop traded for, and Escape closing the counter and nothing else; and each page's link
 // preview pointing at that page. On a computer, the keyboard kept in the counter and the page held still behind it.
+// Back closing the counter, on the floor and on Tilt, and on a page brought back as it was by Back and Forward.
 // (test/e2e.mjs walks the floor in depth, and each machine's own test plays it.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -175,7 +176,64 @@ for (const [path, hook, opener] of [['', 'freePlay', '#purse'], ['hoops/', 'hoop
 }
 await page.setViewportSize({ width: 390, height: 844 });
 
+// Back closes the counter (it's a step in the page's history), on the floor and on Tilt with a table in its address,
+// and leaves the address as it was. Closed by ×, the counter takes its step back off, so the next Back leaves the
+// page for the one before.
+const atRest = () => page.waitForFunction(() => !history.state?.fpCounter, null, { timeout: 3000 });
+for (const [path, hook, opener] of [['', 'freePlay', '#purse'], ['tilt/?table=space', 'tilt', '#prizesBtn']]) {
+  const where = path || 'the floor', before = path ? base : base + 'hoops/';
+  await page.goto(before);
+  await page.goto(base + path);
+  await page.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
+  await page.click(opener);
+  await page.goBack();
+  assert.ok(await page.isHidden('.fp-sheet'), `${where}: Back closes the counter`);
+  assert.equal(page.url(), base + path, `${where}: Back with the counter open left the page`);
+  if (hook === 'tilt') assert.equal(await page.evaluate(() => window.tilt.table.name), 'Space', 'tilt: the table after Back');
+  await page.click(opener);
+  await page.click('.fp-x');
+  await atRest();
+  assert.equal(page.url(), base + path, `${where}: closing the counter changed the address`);
+  if (hook === 'tilt') assert.equal(await page.evaluate(() => window.tilt.table.name), 'Space', 'tilt: the table after ×');
+  await page.goBack();
+  assert.equal(page.url(), before, `${where}: after ×, Back went somewhere other than the page before`);
+}
+
+// A browser that keeps pages for Back and Forward as they were (as phones do), which takes Playwright's full Chromium
+// with that turned back on: the floor, its counter opened and closed by Back, Forward onto the counter's step, then off
+// to a machine and Back again. The floor comes back as it was, with the counter's step on top of its history and the
+// counter shut, and from there it opens and closes as ever, and the next Back is the page before.
+let kept = 'checked';
+const cache = await pw.chromium.launch({ channel: 'chromium', ignoreDefaultArgs: ['--disable-back-forward-cache'] }).catch(() => null);
+if (!cache) kept = "skipped: Playwright's full Chromium isn't installed";
+else try {
+  const bp = await (await cache.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' })).newPage();
+  bp.on('pageerror', e => problems.push(e.message));
+  await bp.goto(base + 'hoops/');
+  await bp.goto(base);
+  await bp.waitForFunction(() => !!window.freePlay);
+  await bp.evaluate(() => addEventListener('pageshow', e => { window.restored = e.persisted; }));
+  await bp.click('#purse');
+  await bp.goBack();
+  await bp.goForward();
+  assert.ok(await bp.evaluate(() => history.state?.fpCounter && document.querySelector('.fp-sheet').hidden), "Forward onto the counter's step leaves it shut");
+  await bp.goto(base + 'hoops/');
+  await bp.goBack({ waitUntil: 'commit' }); // (a page brought back as it was has no load event)
+  await bp.waitForFunction(() => window.restored !== undefined, null, { timeout: 5000 }).catch(() => {});
+  assert.ok(await bp.evaluate(() => window.restored), "the floor didn't come back as it was");
+  assert.ok(await bp.evaluate(() => history.state?.fpCounter), "the floor came back on the counter's step");
+  assert.ok(await bp.isHidden('.fp-sheet'), 'the floor came back with the counter open');
+  await bp.click('#purse');
+  assert.ok(await bp.isVisible('.fp-sheet'), 'the counter opens');
+  await bp.keyboard.press('Escape');
+  await bp.waitForFunction(() => !history.state?.fpCounter, null, { timeout: 3000 });
+  assert.ok(await bp.isHidden('.fp-sheet'));
+  assert.equal(bp.url(), base);
+  await bp.goBack({ waitUntil: 'commit' });
+  assert.equal(bp.url(), base + 'hoops/', 'after the counter, Back went somewhere other than the page before the floor');
+} finally { await cache.close(); }
+
 assert.deepEqual(problems, [], 'problems at the counter');
 await browser.close();
 server.close();
-console.log('all good');
+console.log(`all good (the page kept for Back: ${kept})`);
