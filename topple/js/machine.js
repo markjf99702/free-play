@@ -114,11 +114,15 @@ export function createMachine(Matter, { random = Math.random, field = null, priz
   // From what save() kept: every piece where it was, and the pusher where it was in its stroke.
   function restore(f) {
     clock = Number(f.clock) || 0; lip = lipAt(clock); place();
-    for (const [x, z, layer, kind] of f.coins) addCoin(x, z, layer === 1 ? 'shelf' : 'deck', kind === 1 ? 'gold' : 'coin');
+    for (const [x, z, layer, kind] of f.coins.filter(inPlay)) addCoin(x, z, layer === 1 ? 'shelf' : 'deck', kind === 1 ? 'gold' : 'coin');
     if (f.prize) addPrize(f.prize.id, f.prize.x, f.prize.z, f.prize.layer === 1 ? 'shelf' : 'deck', f.prize.angle);
   }
-  const usable = f => f && Array.isArray(f.coins) && f.coins.length > 40 && f.coins.length < 400
-    && f.coins.every(c => Array.isArray(c) && c.length >= 3 && c.slice(0, 2).every(Number.isFinite) && c[0] > 0 && c[0] < DECK.W && c[1] > 0 && c[1] < DECK.D)
+  // A kept coin is still on the machine by the same rule a step uses to say one has gone over an edge: up to the
+  // front edge itself, and out in the gutters past the ends of the side walls. (Coins hang there all the time, so a
+  // stricter rule threw away the whole deck and stocked a fresh one.) A save with too few of those is ignored.
+  const inPlay = c => Array.isArray(c) && c.length >= 3 && c.slice(0, 2).every(Number.isFinite)
+    && c[1] > 0 && c[1] <= DECK.D && c[0] >= -2 && c[0] <= DECK.W + 2 && (c[1] > DECK.D - DECK.gutter - COIN.r || (c[0] > 0 && c[0] < DECK.W));
+  const usable = f => f && Array.isArray(f.coins) && f.coins.length < 400 && f.coins.filter(inPlay).length > 40
     && (!f.prize || (typeof f.prize.id === 'string' && [f.prize.x, f.prize.z].every(Number.isFinite)));
   if (usable(field)) restore(field); else stock();
 

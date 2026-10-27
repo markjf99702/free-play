@@ -131,6 +131,13 @@ test('what the machine keeps between visits brings every piece back where it was
   assert.equal(b.pieces.find(p => p.kind === 'prize').prize, 'robot');
   run(b, 2);
   assert.ok(b.pieces.length > 100, 'and it carries on from there');
+  // coins hanging at the front edge or out in the gutters past the side walls are still on the machine, and come back
+  const edge = JSON.parse(JSON.stringify(kept));
+  edge.coins[0] = [-1.5, DECK.D - 20, 0, 0];
+  edge.coins[1] = [DECK.W + 1.5, DECK.D - 30, 0, 0];
+  edge.coins[2] = [150, DECK.D, 0, 1];
+  const e = createMachine(Matter, { random: seeded(98), field: edge });
+  assert.deepEqual(e.save().coins, edge.coins, 'the deck comes back as it was, not a fresh one');
   // a save someone has meddled with is ignored, and the machine starts fresh
   for (const junk of [null, {}, { coins: 'lots' }, { coins: [[1e9, 5, 0, 0]] }, { ...kept, coins: kept.coins.map(c => [-5, ...c.slice(1)]) }]) {
     const c = createMachine(Matter, { random: seeded(8), field: junk });
