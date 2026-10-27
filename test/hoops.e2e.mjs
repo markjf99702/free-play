@@ -35,6 +35,8 @@ await page.goto(base + 'hoops/');
 await page.evaluate(() => document.fonts.ready);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
 const court = expr => page.evaluate(`hoops.court.${expr}`);
+// Which cards are up.
+const cards = () => page.evaluate(() => ['title', 'over', 'menu', 'choose'].filter(id => document.getElementById(id)?.hidden === false));
 // The page going out of sight and back (another app, a call, the phone locked), as the browser tells it.
 const hide = gone => page.evaluate(gone => {
   if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
@@ -162,6 +164,27 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Back on the floor, Hoops' cabinet has the best round.
 await page.goto(base);
 assert.equal(await page.textContent('#hoopsStat'), `Best: ${score.toLocaleString('en-US')}.`);
+
+// The menu opened in the moment between the buzzer and the end card, by Escape or by leaving the page, holds the card
+// back: only the menu shows, and after Keep playing the end card comes up by itself, with its buttons working.
+await page.goto(base + 'hoops/');
+await page.click('#play');
+for (const leave of ['Escape', 'hide']) {
+  await page.evaluate(() => { hoops.speed = 20; });
+  await page.waitForFunction(() => hoops.court.left < 3, null, { timeout: 20000, polling: 'raf' });
+  await page.evaluate(() => { hoops.speed = 1; });
+  await page.waitForFunction(() => hoops.court.over, null, { timeout: 8000, polling: 'raf' });
+  if (leave === 'Escape') await page.keyboard.press('Escape'); else await hide(true);
+  await page.waitForTimeout(1100);
+  assert.deepEqual(await cards(), ['menu'], `after ${leave} at the buzzer, only the menu shows`);
+  if (leave === 'hide') await hide(false);
+  await page.click('#resume');
+  await page.waitForSelector('#over:not([hidden])', { timeout: 3000 });
+  assert.deepEqual(await cards(), ['over'], `after ${leave} and Keep playing, the end card shows by itself`);
+  await page.click('#again');
+  assert.equal(await page.evaluate(() => hoops.mode), 'play', 'Play again works');
+  assert.deepEqual(await cards(), []);
+}
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

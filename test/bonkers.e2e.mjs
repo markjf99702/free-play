@@ -39,6 +39,8 @@ const hide = gone => page.evaluate(gone => {
   if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
   document.dispatchEvent(new Event('visibilitychange'));
 }, gone);
+// Which cards are up.
+const cards = () => page.evaluate(() => ['title', 'over', 'menu', 'choose'].filter(id => document.getElementById(id)?.hidden === false));
 const HOLES = [50, 150, 250, 350, 450];
 // The hole a mole is up in right now (a bare-headed one, unless any will do), waiting for one if need be.
 const upHole = (any = false) => page.waitForFunction(any => {
@@ -130,6 +132,27 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Back on the floor, Bonkers' cabinet has the best round.
 await page.goto(base);
 assert.equal(await page.textContent('#bonkersStat'), `Best: ${score.toLocaleString('en-US')}.`);
+
+// The menu opened in the moment between the buzzer and the end card, by Escape or by leaving the page, holds the card
+// back: only the menu shows, and after Keep playing the end card comes up by itself, with its buttons working.
+await page.goto(base + 'bonkers/');
+await page.click('#play');
+for (const leave of ['Escape', 'hide']) {
+  await page.evaluate(() => { bonkers.speed = 20; });
+  await page.waitForFunction(() => bonkers.burrow.left < 3, null, { timeout: 20000, polling: 'raf' });
+  await page.evaluate(() => { bonkers.speed = 1; });
+  await page.waitForFunction(() => bonkers.burrow.over, null, { timeout: 5000, polling: 'raf' });
+  if (leave === 'Escape') await page.keyboard.press('Escape'); else await hide(true);
+  await page.waitForTimeout(1300);
+  assert.deepEqual(await cards(), ['menu'], `after ${leave} at the buzzer, only the menu shows`);
+  if (leave === 'hide') await hide(false);
+  await page.click('#resume');
+  await page.waitForSelector('#over:not([hidden])', { timeout: 3000 });
+  assert.deepEqual(await cards(), ['over'], `after ${leave} and Keep playing, the end card shows by itself`);
+  await page.click('#again');
+  assert.equal(await page.evaluate(() => bonkers.mode), 'play', 'Play again works');
+  assert.deepEqual(await cards(), []);
+}
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

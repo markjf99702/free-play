@@ -65,13 +65,14 @@ if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), documen
 let burrow = createBurrow();
 let mode = 'title';            // title → play → over (behind the title, the moles go about their business)
 let swingAt = null, paused = false, timeScale = 1;
+let endIn = 0;                 // seconds from the buzzer to the end card, on the round's clock (it waits while paused)
 const pops = [], puffs = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   burrow = createBurrow();
   mode = 'play';
-  pops.length = 0; puffs.length = 0; swingAt = null;
+  pops.length = 0; puffs.length = 0; swingAt = null; endIn = 0;
   hud();
 }
 
@@ -88,7 +89,7 @@ function swing(x, y) {
 function happened() {
   for (const e of burrow.take()) {
     if (e === 'frenzy') { sound.frenzy(); say('Frenzy! Ten seconds left.'); }
-    else if (e === 'over') { sound.over(); setTimeout(endRound, 900); }
+    else if (e === 'over') { sound.over(); endIn = 0.9; }
     else if (e.pop !== undefined) sound.pop();
     else if (e.peek !== undefined) sound.peek();
     else if (e.away !== undefined) sound.away();
@@ -220,6 +221,7 @@ function tick(now) {
     owed = Math.min(owed + dt * timeScale, STEP * 6 * timeScale);
     while (owed >= STEP) {
       burrow.step(STEP); owed -= STEP;
+      if (endIn > 0 && (endIn -= STEP) < 1e-6) { endIn = 0; endRound(); }
       if (mode === 'play') happened();
       else { burrow.take(); if (burrow.over) burrow = createBurrow(); } // behind the title and the end card, quietly
     }

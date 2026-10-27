@@ -40,6 +40,8 @@ const hide = gone => page.evaluate(gone => {
   document.dispatchEvent(new Event('visibilitychange'));
 }, gone);
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+// Which cards are up.
+const cards = () => page.evaluate(() => ['title', 'over', 'menu', 'choose'].filter(id => document.getElementById(id)?.hidden === false));
 const ready = () => page.waitForFunction(() => popgun.gallery.ready, null, { timeout: 5000 });
 // Where on the page to tap to meet a standing target of a kind (any, if none given), leading it as it moves.
 const aimAt = kind => page.evaluate(kind => {
@@ -143,6 +145,29 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Back on the floor, Popgun's cabinet has the best round.
 await page.goto(base);
 assert.equal(await page.textContent('#popgunStat'), `Best: ${score.toLocaleString('en-US')}.`);
+
+// The menu opened in the moment between the last cork landing and the end card, by Escape or by leaving the page,
+// holds the card back: only the menu shows, and after Keep playing the end card comes up by itself, buttons working.
+await page.goto(base + 'popgun/');
+await page.click('#play');
+for (const leave of ['Escape', 'hide']) {
+  await page.evaluate(() => { popgun.speed = 10; });
+  while (!(await page.evaluate(() => popgun.gallery.over))) {
+    await page.waitForFunction(() => popgun.gallery.ready || !popgun.gallery.corks, null, { timeout: 5000, polling: 'raf' });
+    // the last cork fired, the clock goes back to normal speed for the moment it takes to land
+    await page.evaluate(() => { if (popgun.gallery.ready) popgun.fire(280, 250); if (!popgun.gallery.corks) popgun.speed = 1; });
+  }
+  if (leave === 'Escape') await page.keyboard.press('Escape'); else await hide(true);
+  await page.waitForTimeout(1100);
+  assert.deepEqual(await cards(), ['menu'], `after ${leave} as the last cork landed, only the menu shows`);
+  if (leave === 'hide') await hide(false);
+  await page.click('#resume');
+  await page.waitForSelector('#over:not([hidden])', { timeout: 3000 });
+  assert.deepEqual(await cards(), ['over'], `after ${leave} and Keep playing, the end card shows by itself`);
+  await page.click('#again');
+  assert.equal(await page.evaluate(() => popgun.mode), 'play', 'Play again works');
+  assert.deepEqual(await cards(), []);
+}
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

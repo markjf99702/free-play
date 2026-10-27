@@ -64,13 +64,14 @@ if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), documen
 let gallery = createGallery();
 let mode = 'title';           // title → play → over
 let aim = { x: W / 2, y: H / 2 }, cross = false, recoil = 9, wink = -1, glow = 0, paused = false, timeScale = 1;
+let endIn = 0;                // seconds from the last cork landing to the end card, on the round's clock (it waits while paused)
 const marks = [], pops = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   gallery = createGallery();
   mode = 'play';
-  marks.length = 0; pops.length = 0;
+  marks.length = 0; pops.length = 0; endIn = 0;
   hud();
 }
 
@@ -89,7 +90,7 @@ function fire(x, y) {
 function happened() {
   for (const e of gallery.take()) {
     if (e === 'pop') sound.pop();
-    else if (e === 'over') setTimeout(endRound, 700);
+    else if (e === 'over') endIn = 0.7;
     else if (e.miss) {
       const moon = Math.hypot(e.x - MOON.x, e.y - MOON.y) < MOON.r;
       if (moon) { wink = 0; sound.boing(); } else sound.miss();
@@ -240,7 +241,11 @@ function tick(now) {
   last = now;
   if (!paused) {
     owed = Math.min(owed + dt * timeScale, STEP * 6 * timeScale);
-    while (owed >= STEP) { gallery.step(STEP); owed -= STEP; happened(); }
+    while (owed >= STEP) {
+      gallery.step(STEP); owed -= STEP;
+      if (endIn > 0 && (endIn -= STEP) < 1e-6) { endIn = 0; endRound(); }
+      happened();
+    }
     if (keys.size) {
       const v = 340 * dt;
       aim = {

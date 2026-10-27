@@ -40,6 +40,8 @@ const hide = gone => page.evaluate(gone => {
   document.dispatchEvent(new Event('visibilitychange'));
 }, gone);
 const ready = () => page.waitForFunction(() => highrise.ready, null, { timeout: 5000 });
+// Which cards are up.
+const cards = () => page.evaluate(() => ['title', 'over', 'menu', 'choose'].filter(id => document.getElementById(id)?.hidden === false));
 // Builds floors with the rows set down where they're told (a straight tower at column 3), up to a floor.
 async function build(to, at = 3) {
   while (await page.evaluate(() => highrise.tower.built) < to) { await ready(); await page.evaluate(at => highrise.stopAt(at), at); }
@@ -154,6 +156,26 @@ const kept = await other.evaluate(() => JSON.parse(localStorage.getItem('free-pl
 assert.deepEqual([kept.best, kept.tops, kept.games], [15, 1, gamesBefore + 2], 'the top-out in the other tab is kept, and both games count');
 assert.equal(await other.textContent('#overBest'), 'Highest: floor 15');
 await other.close();
+
+// The menu opened just as floor 11 lands, before the choice comes up, by Escape or by leaving the page, holds the
+// choice back: only the menu shows, and after Keep playing the choice comes up by itself, with its buttons working.
+for (const leave of ['Escape', 'hide']) {
+  await page.click('#again');
+  await build(10);
+  await ready();
+  await page.evaluate(() => highrise.stopAt(3));
+  if (leave === 'Escape') await page.keyboard.press('Escape'); else await hide(true);
+  await page.waitForTimeout(800);
+  assert.deepEqual(await cards(), ['menu'], `after ${leave} on floor 11, only the menu shows`);
+  if (leave === 'hide') await hide(false);
+  await page.click('#resume');
+  await page.waitForSelector('#choose:not([hidden])', { timeout: 3000 });
+  assert.deepEqual(await cards(), ['choose'], `after ${leave} and Keep playing, the choice shows by itself`);
+  const t = await tickets();
+  await page.click('#takeMinor');
+  assert.deepEqual(await cards(), ['over']);
+  assert.equal(await tickets(), t + 36, 'Take the 25 pays');
+}
 
 // A wide screen: the tower in the middle, its controls standing beside it, nothing sideways.
 await page.setViewportSize({ width: 1280, height: 860 });

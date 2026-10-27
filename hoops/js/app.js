@@ -66,13 +66,14 @@ if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), documen
 let court = createCourt({ timed: false });
 let mode = 'title';            // title → play → over (behind the title, the machine shoots by itself)
 let paused = false, timeScale = 1, hold = 0, demoIn = 1;
+let endIn = 0;                 // seconds from the last ball landing to the end card, on the round's clock (it waits while paused)
 const pops = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   court = createCourt();
   mode = 'play';
-  pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null;
+  pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null; endIn = 0;
   hud();
 }
 
@@ -95,7 +96,7 @@ function happened() {
     if (e === 'slide') { sound.slide(); say('The hoop is on the move.'); pops.push({ text: 'On the move!', t: -0.2, y: 34 }); }
     else if (e === 'bonus') { sound.bonus(); say('Last ten seconds: 3 points a basket.'); pops.push({ text: '3 points!', t: -0.2, y: 34, gold: true, big: true }); }
     else if (e === 'buzzer') { sound.buzzer(); say('Time.'); }
-    else if (e === 'over') setTimeout(endRound, 700);
+    else if (e === 'over') endIn = 0.7;
     else if (e.shot !== undefined) sound.shot();
     else if (e.rim !== undefined) sound.rim(e.rim);
     else if (e.board !== undefined) sound.board(e.board);
@@ -302,6 +303,7 @@ function tick(now) {
         if (court.pocket()) { court.shoot(early.speed, early.aim); early = null; } else if (early.left <= 0) early = null;
       }
       if (mode === 'title') demo(STEP);
+      if (endIn > 0 && (endIn -= STEP) < 1e-6) { endIn = 0; endRound(); }
       if (mode === 'play') happened(); else court.take();
     }
   }

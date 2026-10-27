@@ -69,14 +69,14 @@ let mode = 'title';      // title → play ⇄ (choose at floor 11) → ending �
 let clock = 0;           // ms the game has been running (it stops while paused)
 let rowFrom = 0;         // when on that clock the moving row set off
 let shown = 0;           // where the moving row is on screen now: the stop button sets it down there
-let tookMinor = false, ended = null;
+let tookMinor = false, ended = null, chooseAt = null;
 const falling = [], pops = [];
 let flash = null, cheer = -1, dim = 0, paused = false;
 const carded = () => !$('title').hidden || !$('choose').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newGame() {
   tower = createTower();
-  mode = 'play'; tookMinor = false; ended = null;
+  mode = 'play'; tookMinor = false; ended = null; chooseAt = null;
   falling.length = 0; pops.length = 0; flash = null; cheer = -1; dim = 0;
   rowFrom = clock + PAUSE;
   hud();
@@ -107,8 +107,7 @@ function stop() {
   } else if (r.minor) {
     sound.minor();
     say('Floor 11. Take the minor prize, or keep going?');
-    mode = 'choose';
-    setTimeout(() => { if (mode === 'choose') { $('choose').hidden = false; $('takeMinor').focus({ preventScroll: true }); } }, 450);
+    mode = 'choose'; chooseAt = clock + 450; // the card comes up on the game's clock, so it waits behind the menu
   } else {
     say(`Floor ${r.floor}${r.dropped.length ? `, ${r.kept.length} ${r.kept.length === 1 ? 'window' : 'windows'} left` : ''}.`);
     rowFrom = clock + PAUSE;
@@ -196,7 +195,7 @@ $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
 // Leaving the page mid-round (a call, another app, the phone locked) opens the menu, so the round waits there
 // rather than carrying on the moment the page is back.
-document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'play') toggleMenu(true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && (mode === 'play' || mode === 'choose')) toggleMenu(true); });
 $('sound').addEventListener('click', () => {
   saved.sound = !saved.sound; save();
   sound.setEnabled(saved.sound);
@@ -246,6 +245,11 @@ function tick(now) {
   if (cheer >= 0) cheer += s;
   if (mode === 'over' || mode === 'ending' && !cheer) dim = Math.min(1, dim + s);
   if (mode === 'ending' && clock >= ended.at) endGame();
+  if (mode === 'choose' && chooseAt !== null && clock >= chooseAt) {
+    chooseAt = null;
+    $('choose').hidden = false;
+    $('takeMinor').focus({ preventScroll: true });
+  }
 
   // the moving row: on the floor being built while playing (it appears as it sets off, not before, so it never sits
   // still anywhere), and on the ground floor behind the title card
