@@ -53,7 +53,7 @@ Three pinball tables. Classic is laid out and scored like an early-80s solid-sta
 
 - **Flip** by tapping and holding the left or right half of the screen. On a keyboard: Z and / (or the Shift keys, or ← →).
 - **Launch** by holding the Launch button and letting go: the longer you hold, the harder the shot. Keyboard: hold Space or ↓.
-- **Nudge** with a quick swipe up, or ↑ or Space with the ball in play. Nudge too often and you get a Danger warning, then the machine tilts: the flippers go dead and you lose the bonus.
+- **Nudge** with a quick swipe up, or ↑ or Space with the ball in play. Nudge too often and you get two Danger warnings; once more and the machine tilts: the flippers go dead and nothing else scores on that ball, bonus included.
 - **The bonus** is counted, times the multiplier, when the ball drains. A ball that drains in the first few seconds is given back, once.
 - Each table keeps its own top five scores.
 
