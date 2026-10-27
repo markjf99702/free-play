@@ -94,6 +94,19 @@ await page.click('#menuBtn');
 await page.click('#menu a.to-floor');
 await page.waitForURL(base);
 assert.match(await page.textContent('#clutchStat'), /plush won|Pays in plush/);
+// Back by Clutch's own link, the floor opens at Clutch's cabinet rather than at the top of a long page.
+const inView = sel => page.evaluate(sel => { const r = document.querySelector(sel).getBoundingClientRect(); return r.top >= -1 && r.bottom <= innerHeight + 1; }, sel);
+assert.ok(await inView('.cab.clutch'), "back from Clutch, its cabinet isn't in view");
+// A reload leaves the floor where it is, and so do Back and Forward. (With the browser putting nothing back itself,
+// so that any scrolling is the floor's own.)
+await page.evaluate(() => { history.scrollRestoration = 'manual'; scrollTo(0, 0); });
+await page.reload();
+await page.waitForFunction(() => !!window.freePlay);
+assert.equal(await page.evaluate(() => scrollY), 0, 'a reload of the floor went to Clutch');
+await page.goto(base + 'hoops/');
+await page.goBack();
+await page.waitForFunction(() => !!window.freePlay);
+assert.equal(await page.evaluate(() => scrollY), 0, 'Back to the floor went to Clutch');
 
 // Topple: in from the floor, a few coins and the tickets they push over, and back.
 const beforeTopple = await tickets();

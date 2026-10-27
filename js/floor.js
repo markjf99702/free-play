@@ -92,6 +92,21 @@ addEventListener('pageshow', () => { pocket(); machines(); });
 pocket();
 machines();
 
+// Back from a machine by one of its own links (there's no Back button on a phone's home-screen app), the floor opens
+// at that machine's cabinet rather than at the top of a long page. A reload, or Back and Forward, are left where the
+// browser puts them.
+const CABINETS = ['roll-up', 'tilt', 'clutch', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops'];
+function backFrom() {
+  try {
+    if (performance.getEntriesByType('navigation')[0]?.type !== 'navigate' || !document.referrer) return;
+    const from = new URL(document.referrer), here = location.pathname.replace(/[^/]*$/, '');
+    if (from.origin !== location.origin || !from.pathname.startsWith(here)) return;
+    const name = from.pathname.slice(here.length).split('/')[0];
+    if (CABINETS.includes(name)) document.querySelector('.cab.' + name)?.scrollIntoView({ block: 'center' });
+  } catch { /* no timing or no referrer: the top of the floor will do */ }
+}
+backFrom();
+
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
