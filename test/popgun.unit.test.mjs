@@ -134,3 +134,37 @@ test('a golden duck or a bell coming round says so as it comes into view, once',
   }
   assert.ok(seen.includes('gold') && seen.includes('bell'), `two minutes of the conveyor bring both round (${seen})`);
 });
+
+// How hard it is, pinned: Mark played it and signed it off. The good player from the tuning bot he signed it off with
+// (popgun-bot.mjs) picks a target that will still be in the booth when the cork gets there, favouring bells, golden
+// ducks and stars, and leads it, judging its speed a little wrong and aiming with a wobble. Seeded, so it's the same
+// 200 rounds every run. Today they average about 290 a round; a change to the speeds, the surges, the hit boxes or the
+// points that moves that by 50 or so shows up here.
+test('how hard it is: a good player averages about 290 a round', () => {
+  const gauss = r => Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r());
+  const pl = { jitter: 0.05, judge: 0.12, sigma: 22, lead: 0.85, think: 0.7, likes: { bell: 5, gold: 5, star: 2.5, rabbit: 1.5, duck: 1 } };
+  const scores = [];
+  for (let s = 1; s <= 200; s++) {
+    const r = seeded(s * 7 + 4), g = createGallery({ random: seeded(s) });
+    let wait = 0.5;
+    while (!g.over && g.clock < 300) {
+      g.step(1 / 60); wait -= 1 / 60; g.take();
+      if (wait > 0 || !g.ready) continue;
+      let best = null, bs = 0;
+      for (const row of g.rows) for (const t of row.targets) {
+        if (t.hit) continue;
+        const fx = t.x + row.dir * row.now * FLIGHT;
+        if (fx < 30 || fx > W - 30) continue;
+        const sc = pl.likes[t.kind] * (0.5 + r());
+        if (sc > bs) { bs = sc; best = { row, t }; }
+      }
+      if (!best) { wait = 0.1; continue; }
+      const k = KINDS[best.t.kind], seen = best.row.now * (1 + gauss(r) * pl.judge);
+      g.fire(best.t.x + best.row.dir * (seen * FLIGHT * pl.lead + best.row.now * gauss(r) * pl.jitter) + gauss(r) * pl.sigma, best.row.rail - k.h * 0.5 + gauss(r) * pl.sigma);
+      wait = pl.think * (0.7 + r() * 0.6);
+    }
+    scores.push(g.score);
+  }
+  const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
+  assert.ok(mean >= 245 && mean <= 340, `a good player averaged ${mean.toFixed(0)}`);
+});

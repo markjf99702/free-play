@@ -182,3 +182,32 @@ test('a ticket for every 4 points', () => {
   assert.equal(ticketsFor(4), 1);
   assert.equal(ticketsFor(121), 30);
 });
+
+// How hard it is, pinned: Mark played it and signed off the retune. The steady player from the tuning bot it was
+// retuned with (hoops-people.mjs) throws as soon as a ball is in the pocket, leads the sliding hoop by half, and flicks
+// with a wobble in how hard and which way. Real players' natural flicks differ, so they play 6 rounds at each of five:
+// from about a third softer than the sweet flick to about two thirds harder. Seeded, so it's the same 30 rounds every
+// run. Today they average about 90 a round; a change to the rim, the ramp, the flick or the clock that moves that by
+// 15 or 20 shows up here.
+test('how hard it is: a steady player averages about 90 a round, whatever their natural flick', () => {
+  let seed = 11;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const gauss = () => { let u = 0; for (let i = 0; i < 6; i++) u += rnd(); return (u - 3) / Math.sqrt(0.5); };
+  const p = { s: 0.18, a: 3.5, gap: 0.9, lead: 0.5 };
+  const scores = [];
+  for (const bias of [-0.45, -0.25, 0, 0.25, 0.5]) for (let k = 0; k < 6; k++) {
+    const c = createCourt({ random: rnd });
+    let wait = 0.5;
+    while (!c.over) {
+      c.step(1 / 60); wait -= 1 / 60; c.take();
+      if (wait <= 0 && c.pocket() && !c.buzzer) {
+        const target = c.hoop.x + p.lead * c.hoop.vx * 0.78;
+        c.shoot(power(FLICK.sweet * Math.exp(bias + gauss() * p.s)), Math.atan2(target, HOOP.z - LAUNCH.z) + gauss() * p.a * 0.71 * Math.PI / 180);
+        wait = p.gap * (0.8 + 0.4 * rnd());
+      }
+    }
+    scores.push(c.score);
+  }
+  const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
+  assert.ok(mean >= 75 && mean <= 110, `a steady player averaged ${mean.toFixed(0)}`);
+});

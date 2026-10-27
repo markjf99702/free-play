@@ -137,3 +137,35 @@ test('a mole popping up says whether it is golden, or in a hard hat', () => {
   }
   assert.ok(pops.some(p => p.e.gold) || pops.length < 60, 'a round has a golden mole in it');
 });
+
+// How hard it is, pinned: Mark played it and signed it off. The good player from the tuning bot he signed it off with
+// (bonkers-bot.mjs) notices a pop after half a second, a little sooner if they saw it coming up the tunnels, now and
+// then swings at a peek, and swings again straight away at a mole whose hat came off. Seeded, so it's the same 100
+// rounds every run. Today they average about 505 a round; a change to the pace, the pops or the points that moves that
+// by 75 or so shows up here.
+test('how hard it is: a good player (who reacts in half a second) averages about 500 a round', () => {
+  const gauss = r => Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r());
+  const pl = { react: 0.5, spread: 0.09, anticipate: 0.5, jumpy: 0.15, busy: 0.15 };
+  const scores = [];
+  for (let s = 1; s <= 100; s++) {
+    const r = seeded(s * 31 + 4), b = createBurrow({ random: seeded(s) });
+    const queue = []; let freeAt = 0;
+    while (!b.over) {
+      b.step(1 / 60);
+      for (const e of b.take()) {
+        if (e.pop !== undefined) queue.push({ hole: e.pop, at: b.clock + Math.max(0.12, pl.react - (r() < pl.anticipate ? 0.15 : 0) + gauss(r) * pl.spread) });
+        if (e.peek !== undefined && r() < pl.jumpy) queue.push({ hole: e.peek, at: b.clock + pl.react * 0.8 });
+      }
+      queue.sort((a, c) => a.at - c.at);
+      while (queue.length && queue[0].at <= b.clock && b.clock >= freeAt) {
+        const q = queue.shift();
+        b.swing(HOLES[q.hole], -40);
+        freeAt = b.clock + pl.busy;
+        for (const e of b.take()) if (e.hat !== undefined) queue.unshift({ hole: e.hat, at: b.clock + pl.busy });
+      }
+    }
+    scores.push(b.score);
+  }
+  const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
+  assert.ok(mean >= 430 && mean <= 580, `a good player averaged ${mean.toFixed(0)}`);
+});
