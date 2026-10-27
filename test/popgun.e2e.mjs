@@ -79,13 +79,24 @@ const aimAt = kind => page.evaluate(kind => {
   return null;
 }, kind);
 
+// A real finger's tap, as a phone sends it: down, and up 40 ms later.
+const cdp = await ctx.newCDPSession(page);
+async function tap({ x, y }) {
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  await page.waitForTimeout(40);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
+const middle = sel => page.evaluate(sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, sel);
+
 // The title card, and the targets already running behind it.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
 await page.click('#play');
 assert.equal(await corks(), 20);
 assert.equal(await page.locator('#tray i').count(), 20, 'twenty corks on the counter');
 
-// A tap ahead of a duck knocks it down.
+// A tap ahead of a duck knocks it down. (A tap this soon after Play is taken for the second tap of a double tap on it,
+// below, so the test waits a moment first.)
+await page.waitForTimeout(400);
 await ready();
 let p = await aimAt('duck');
 await page.mouse.click(p.x, p.y);
@@ -169,9 +180,23 @@ assert.equal(await page.evaluate(() => popgun.saved.best), score);
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 40.', big: true, size: '18px' });
 await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), Math.floor(score / 20), { timeout: 8000 });
 await page.waitForFunction(() => popgun.glow > 0, null, { timeout: 1000 });
-await page.click('#again');
-assert.equal(await corks(), 20, 'another round, another twenty corks');
+// A quick double tap on Another round starts it: the second tap lands on the booth where the button was, and doesn't
+// fire a cork.
+await page.evaluate(() => { window.__downs = []; document.getElementById('stage').addEventListener('pointerdown', () => __downs.push(performance.now())); document.getElementById('again').addEventListener('click', () => { window.__again = performance.now(); }); });
+const again = await middle('#again');
+await tap(again);
+const shut = Date.now();
+await page.waitForTimeout(110);
+await tap(again);
+await page.waitForTimeout(300);
+const second = await page.evaluate(() => __downs.map(t => Math.round(t - __again)));
+assert.equal(second.length, 1, 'the second tap landed on the booth');
+assert.deepEqual(await page.evaluate(() => [popgun.gallery.corks, popgun.gallery.shots]), [20, 0], `the second tap of a double tap on Another round, ${second[0]} ms after the first, fired a cork`);
 assert.equal(await page.textContent('#score'), '0');
+// A tap on the booth half a second after the card went is a shot like any other.
+await page.waitForTimeout(Math.max(0, shut + 500 - Date.now()));
+await tap(await page.evaluate(() => popgun.draw.at(280, 250)));
+assert.deepEqual(await page.evaluate(() => [popgun.gallery.corks, popgun.gallery.shots]), [19, 1], 'a tap on the booth half a second after Another round fires a cork');
 
 // A wide screen: the booth in the middle, the corks beside it, nothing sideways.
 await page.setViewportSize({ width: 1280, height: 860 });

@@ -156,6 +156,7 @@ function start() {
   sound.unlock();
   $('title').hidden = true;
   $('over').hidden = true;
+  closed();
   feeding();
   newRound();
 }
@@ -165,9 +166,16 @@ $('again').addEventListener('click', start);
 function say(text) { $('live').textContent = text; }
 
 // ---------- aiming and firing ----------
+// A quick double tap on a card's button: the first tap closes the card, and the second lands on the booth where the
+// button was. A tap that starts this soon after a card or the prize counter closes is taken for that second tap, and
+// doesn't fire a cork.
+let shut = -Infinity;
+function closed() { shut = performance.now(); }
+const justShut = () => performance.now() - shut < 350;
+
 // A tap (or a click) fires where it lands. With a mouse the sights follow it, so you can see where the cork will go.
 canvas.addEventListener('pointerdown', e => {
-  if (e.button > 0) return;
+  if (e.button > 0 || justShut()) return;
   const p = draw.toBooth(e.clientX, e.clientY);
   if (fire(p.x, p.y)) e.preventDefault();
 });
@@ -217,7 +225,7 @@ function toggleMenu(open = $('menu').hidden) {
   $('menu').hidden = !open;
   paused = open;
   keys.clear();
-  if (open) $('resume').focus({ preventScroll: true });
+  if (open) $('resume').focus({ preventScroll: true }); else closed();
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
@@ -240,7 +248,7 @@ function openPrizes() {
   openCounter({
     onBuy: () => sound.buy(),
     onClose: () => {
-      paused = !$('menu').hidden; hud();
+      paused = !$('menu').hidden; hud(); closed();
       // back to the game: the keys go to it again, not to the ticket button the counter handed the focus back to
       if (!carded()) document.activeElement?.blur();
     },

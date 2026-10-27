@@ -97,11 +97,18 @@ function dropCoin() {
   return true;
 }
 
+// A quick double tap on a card's button: the first tap closes the card, and the second lands on the glass where the
+// button was. A touch that starts this soon after a card or the prize counter closes is taken for that second tap, and
+// doesn't aim or drop a coin.
+let shut = -Infinity;
+const closed = () => { shut = performance.now(); };
+const justShut = () => performance.now() - shut < 350;
+
 // Touch the glass to aim: the chute follows the finger along its rail, and letting go drops a coin.
 let finger = null;
 canvas.addEventListener('pointerdown', e => {
   sound.unlock();
-  if (e.button > 0 || carded() || !cup) return;
+  if (e.button > 0 || carded() || !cup || justShut()) return;
   finger = e.pointerId;
   aim = clampAim(draw.railX(e.clientX));
   try { canvas.setPointerCapture(e.pointerId); } catch { /* fine without */ }
@@ -271,6 +278,7 @@ function start() {
   sound.unlock();
   $('title').hidden = true;
   $('over').hidden = true;
+  closed();
   feeding();
   done = null;
   if (!cup) { cup = { left: CUP, won: 0, prizes: [] }; ended = false; }
@@ -285,7 +293,7 @@ function toggleMenu(open = $('menu').hidden) {
   $('menu').hidden = !open;
   paused = open;
   finger = null; keys.clear();
-  if (open) { save(); $('resume').focus({ preventScroll: true }); }
+  if (open) { save(); $('resume').focus({ preventScroll: true }); } else closed();
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
@@ -307,7 +315,7 @@ function openPrizes() {
   openCounter({
     onBuy: () => sound.buy(),
     onClose: () => {
-      paused = !$('menu').hidden; hud();
+      paused = !$('menu').hidden; hud(); closed();
       // back to the game: the keys go to it again, not to the ticket button the counter handed the focus back to
       if (!carded()) document.activeElement?.blur();
     },

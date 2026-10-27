@@ -57,24 +57,47 @@ const hide = gone => page.evaluate(gone => {
 const audio = () => page.evaluate(() => ({ state: window.__loops[0]?.context.state, loop: window.__loops[0]?.gain.value }));
 const reloaded = () => page.waitForFunction(() => topple.machine.ready);
 
-// The title card, then a cup of twenty.
+// A real finger's tap, as a phone sends it: down, and up 40 ms later.
+const cdp = await ctx.newCDPSession(page);
+async function tap({ x, y }) {
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  await page.waitForTimeout(40);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
+const middle = sel => page.evaluate(sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, sel);
+
+// The title card, then a cup of twenty. A quick double tap on Play starts it: the second tap lands on the glass where
+// the button was, and doesn't drop a coin.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
 assert.equal(await page.textContent('#play'), 'Play');
-await page.click('#play');
+await page.evaluate(() => { window.__downs = []; document.getElementById('stage').addEventListener('pointerdown', () => __downs.push(performance.now())); document.getElementById('play').addEventListener('click', () => { window.__play = performance.now(); }); });
+const play = await middle('#play');
+await tap(play);
+const shut = Date.now();
+await page.waitForTimeout(110);
+await tap(play);
+await page.waitForTimeout(300);
+const second = await page.evaluate(() => __downs.map(t => Math.round(t - __play)));
+assert.equal(second.length, 1, 'the second tap landed on the glass');
+assert.ok(await page.isHidden('#title'));
+assert.equal(await left(), 20, `the second tap of a double tap on Play, ${second[0]} ms after the first, dropped a coin`);
+assert.equal(await page.textContent('#left'), '20');
 // (what the pocket had as the cup began: everything the cup pushes over goes on top)
 const atStart = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets - topple.cup.won);
-assert.ok(await page.isHidden('#title'));
-assert.equal(await left(), 20);
-assert.equal(await page.textContent('#left'), '20');
 
-// Touching the glass moves the chute to the finger; letting go drops a coin there.
+// Touching the glass moves the chute to the finger; letting go drops a coin there. A tap half a second after Play
+// is a tap like any other.
 const spot = await page.evaluate(() => [topple.draw.at(60, 148, 6), topple.draw.at(230, 148, 6)]);
+await page.waitForTimeout(Math.max(0, shut + 500 - Date.now()));
+await tap({ x: spot[0].x, y: spot[0].y + 120 });
+assert.equal(await left(), 19, 'a tap on the glass half a second after Play drops a coin');
+await reloaded();
 await page.mouse.move(spot[0].x, spot[0].y + 120);
 await page.mouse.down();
 await page.mouse.move(spot[1].x, spot[1].y + 140, { steps: 5 });
-assert.equal(await left(), 20, 'nothing drops while the finger is down');
+assert.equal(await left(), 19, 'nothing drops while the finger is down');
 await page.mouse.up();
-assert.equal(await left(), 19);
+assert.equal(await left(), 18);
 await page.waitForTimeout(400);
 const landed = await page.evaluate(() => topple.machine.pieces.filter(p => p.layer === 'shelf').map(p => p.position.x));
 assert.ok(landed.some(x => Math.abs(x - 230) < 22), 'the coin landed on the shelf under where the finger let go');
@@ -82,14 +105,14 @@ assert.ok(landed.some(x => Math.abs(x - 230) < 22), 'the coin landed on the shel
 // The drop button drops one where the chute is; the chute has to reload between coins.
 await reloaded();
 await page.evaluate(() => { document.getElementById('drop').click(); document.getElementById('drop').click(); });
-assert.equal(await left(), 18, 'two presses straight after each other drop one coin');
+assert.equal(await left(), 17, 'two presses straight after each other drop one coin');
 
 // The keyboard: arrows move the chute, Space drops. Once a key's been pressed, the deck says how on a keyboard.
 await reloaded();
 assert.equal(await page.textContent('.deck .say'), 'Touch the glass to aim');
 await page.keyboard.down('ArrowLeft'); await page.waitForTimeout(300); await page.keyboard.up('ArrowLeft');
 await page.keyboard.press(' ');
-assert.equal(await left(), 17);
+assert.equal(await left(), 16);
 assert.equal(await page.textContent('.deck .say'), '← → aim, Space drops');
 
 // A prize nudged over the edge goes on the shelf, and the attendant puts another one on.

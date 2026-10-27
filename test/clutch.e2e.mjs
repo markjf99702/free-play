@@ -54,9 +54,19 @@ const hide = gone => page.evaluate(gone => {
 const audio = () => page.evaluate(() => ({ state: window.__loops[0]?.context.state, loop: window.__loops[0]?.gain.value }));
 // The claw home again. Any go can win (even one that only brushes the heap), so a win card that comes up is put away,
 // without moving the mouse off the button.
+// (A press straight after a card closes is taken for the second tap of a double tap on its button, so after closing
+// one the test waits a moment before pressing.)
 async function ready() {
   await page.waitForFunction(() => clutch.state === 'ready', null, { timeout: 30000 });
-  await page.evaluate(() => { if (!document.getElementById('win').hidden) document.getElementById('more').click(); });
+  if (await page.evaluate(() => { if (!document.getElementById('win').hidden) { document.getElementById('more').click(); return true; } return false; })) await page.waitForTimeout(400);
+}
+const resume = async () => { await page.click('#resume'); await page.waitForTimeout(400); };
+// A real finger's tap, as a phone sends it: down, and up 40 ms later.
+const cdp = await ctx.newCDPSession(page);
+async function tap({ x, y }) {
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  await page.waitForTimeout(40);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 }
 
 // The title card, and the claw stays put while it's up.
@@ -66,8 +76,15 @@ const box = await page.locator('#hold').boundingBox();
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 await page.mouse.down(); await page.waitForTimeout(300); await page.mouse.up();
 assert.equal(await state(), 'ready', 'the button does nothing behind the title card');
-await page.click('#play');
+// A quick double tap on Play: the second tap lands on the glass where the button was, and isn't a press of the button.
+const play = await page.evaluate(() => { const r = document.getElementById('play').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+await tap(play);
+await page.waitForTimeout(110);
+await tap(play);
+await page.waitForTimeout(400);
 assert.ok(await page.isHidden('#title'));
+assert.equal(await state(), 'ready');
+assert.equal(await page.evaluate(() => document.querySelector('#deck .say').classList.contains('nudge')), false, 'the second tap of a double tap on Play was a press of the button');
 
 // Holding the button slides the claw across; letting go drops it.
 const home = await clawX();
@@ -123,7 +140,7 @@ await page.waitForTimeout(400);
 assert.equal(await page.evaluate(() => clutch.machine.claw.y), stopped, 'the claw waits while the menu is open');
 await page.click('#sound');
 assert.equal(await page.evaluate(() => clutch.saved.sound), false);
-await page.click('#resume');
+await resume();
 await ready();
 
 // Leaving the page with the button held lets go of it and opens the menu, so the claw waits there for the player to
@@ -185,7 +202,7 @@ await page.click('#menuBtn');
 await page.waitForSelector('#menu:not([hidden])', { timeout: 3000 });
 await page.click('#sound');
 assert.equal(await page.evaluate(() => clutch.saved.sound), true);
-await page.click('#resume');
+await resume();
 await ready();
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 await page.mouse.down();

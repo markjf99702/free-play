@@ -91,9 +91,16 @@ function release() {
 }
 const holding = () => (aim != null ? machine.claw.x < aim : down) && (machine.state !== 'ready' || armed || aim != null);
 
+// A quick double tap on a card's button: the first tap closes the card, and the second lands on the button or the glass
+// under it. A press that starts this soon after a card or the prize counter closes is taken for that second tap, and
+// isn't a press of the button.
+let shut = -Infinity;
+function closed() { shut = performance.now(); }
+const justShut = () => performance.now() - shut < 350;
+
 for (const el of [$('hold'), canvas]) {
   el.addEventListener('pointerdown', e => {
-    if (e.button > 0) return;
+    if (e.button > 0 || justShut()) return;
     press(e);
     try { el.setPointerCapture(e.pointerId); } catch { /* fine without */ }
   });
@@ -185,6 +192,7 @@ function showWin() {
 }
 function closeWin() {
   $('win').hidden = true;
+  closed();
   door = null;
 }
 $('more').addEventListener('click', closeWin);
@@ -214,6 +222,7 @@ function hud(bump = false) {
 function start() {
   sound.unlock();
   $('title').hidden = true;
+  closed();
   $('hold').focus({ preventScroll: true });
 }
 $('play').addEventListener('click', start);
@@ -223,7 +232,7 @@ function toggleMenu(open = $('menu').hidden) {
   $('menu').hidden = !open;
   paused = open;
   release();
-  if (open) $('resume').focus({ preventScroll: true });
+  if (open) $('resume').focus({ preventScroll: true }); else closed();
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
@@ -248,7 +257,7 @@ function openPrizes() {
   openCounter({
     onBuy: () => sound.buy(),
     onClose: () => {
-      paused = !$('menu').hidden; hud();
+      paused = !$('menu').hidden; hud(); closed();
       // back to the game: the keys go to the big button again, not to the ticket button the counter handed the focus to
       if (!carded()) $('hold').focus({ preventScroll: true });
     },
