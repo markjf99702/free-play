@@ -227,6 +227,8 @@ await page.click('#menu a.to-floor');
 await page.waitForSelector('#popgunStat');
 assert.equal(await tickets(), hadGap + Math.floor(gap.score / 20), 'a round left as its end card came still pays');
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.popgun')).rounds), gap.rounds + 1, 'and counts');
+// (and back with the sound on, for listening behind the next end card)
+await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('free-play.popgun')); localStorage.setItem('free-play.popgun', JSON.stringify({ ...s, sound: true })); });
 await page.goto(base + 'popgun/');
 await page.click('#play');
 
@@ -247,6 +249,11 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const [hit, scored] = await page.evaluate(() => [popgun.gallery.hits, popgun.gallery.score]);
 assert.deepEqual([hit, scored], [1, 10], 'one duck hit, and nothing else');
 assert.equal(await page.textContent('#overHow'), "1 hit from 20 corks. Ten more points and it's a ticket.");
+// Behind the end card the booth goes on turning, quietly: a golden duck or a bell coming round doesn't chime there.
+assert.equal(await page.evaluate(() => popgun.saved.sound), true, 'the sound is on');
+await page.evaluate(() => { window.__sounds.length = 0; popgun.speed = 10; });
+await page.waitForTimeout(6000);
+assert.deepEqual(await page.evaluate(() => window.__sounds.filter(([f]) => f === 'arrive').length), 0, 'arrivals chimed behind the end card');
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

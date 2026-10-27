@@ -94,7 +94,7 @@ function fire(x, y) {
 function happened() {
   for (const e of gallery.take()) {
     if (e === 'pop') sound.pop();
-    else if (e.arrive) sound.arrive(e.arrive);
+    else if (e.arrive) { if (mode === 'play') sound.arrive(e.arrive); } // (the booth turns behind the cards too: quietly)
     else if (e === 'over') endIn = 0.7;
     else if (e.miss) {
       const moon = Math.hypot(e.x - MOON.x, e.y - MOON.y) < MOON.r;
