@@ -31,8 +31,7 @@ await ctx.addInitScript(() => {
     const make = AudioContext.prototype[k];
     AudioContext.prototype[k] = function () {
       const at = /at (?:Module\.)?(\w+) \([^)]*\/js\/sound\.js/.exec(new Error().stack.split('\n').filter(l => !/at (tone|burst|bell|env|noise|white|chink) /.test(l)).join('\n'));
-      const now = performance.now(), last = window.__sounds.at(-1);
-      if (at && !(last && last[0] === at[1] && now - last[1] < 2)) window.__sounds.push([at[1], now]);
+      if (at) window.__sounds.push([at[1], performance.now()]);
       return make.call(this);
     };
   }

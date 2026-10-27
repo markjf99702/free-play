@@ -77,7 +77,7 @@ function newRound() {
   court = createCourt();
   mode = 'play';
   tickets = wallet.read().tickets;
-  pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null; endIn = 0;
+  pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null; endIn = 0; duds = 0;
   hud();
 }
 
@@ -204,15 +204,26 @@ function flick(s) {
   const last = s[s.length - 1];
   const from = ms => { let i = s.length - 1; while (i > 0 && last.t - s[i - 1].t <= ms) i--; return s[i]; };
   const first = from(WINDOW), dt = (last.t - first.t) / 1000;
-  if (dt <= 0.004 || last.y - first.y > -4) return null;
+  if (dt <= 0.004 || last.y - first.y > -4) return dud(s);
   const cab = draw.cabinet();
   const speed = Math.hypot(last.x - first.x, last.y - first.y) / dt / (cab.bottom - cab.top);
   // which way: the whole stroke, or the last part of a long one
   const start = from(STROKE), dx = last.x - start.x, dy = last.y - start.y;
-  if (speed < FLICK.min || dy > -4 || Math.abs(dx) > -dy * 1.7) return null;
+  if (speed < FLICK.min || dy > -4 || Math.abs(dx) > -dy * 1.7) return dud(s);
   const across = draw.aimAt(dx, dy);
-  if (across === null) return null;
+  if (across === null) return dud(s);
   return throwIt(power(speed), Math.atan2(across - LAUNCH.x, HOOP.z - LAUNCH.z));
+}
+
+// A stroke up the screen that didn't throw (too slow, mostly sideways, or ending in a pause): the ball drops back into
+// the pocket with a thud, and the first two times a round a word says what to do. (A tap or a twitch says nothing.)
+let duds = 0;
+function dud(s) {
+  if (mode !== 'play' || paused || carded() || !court.pocket()) return null;
+  if (s[0].y - Math.min(...s.map(p => p.y)) < 20) return null;
+  sound.thud(160);
+  if (duds++ < 2) pop({ text: 'Flick it up!', t: 0, word: true });
+  return null;
 }
 
 // The keyboard: the arrows aim, and holding Space winds up a throw; let go when the meter's in the light.

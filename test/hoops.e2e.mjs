@@ -31,8 +31,7 @@ await ctx.addInitScript(() => {
     const make = AudioContext.prototype[k];
     AudioContext.prototype[k] = function () {
       const at = /at (?:Module\.)?(\w+) \([^)]*\/js\/sound\.js/.exec(new Error().stack.split('\n').filter(l => !/at (tone|burst|bell|env|noise|white|chink) /.test(l)).join('\n'));
-      const now = performance.now(), last = window.__sounds.at(-1);
-      if (at && !(last && last[0] === at[1] && now - last[1] < 2)) window.__sounds.push([at[1], now]);
+      if (at) window.__sounds.push([at[1], performance.now()]);
       return make.call(this);
     };
   }
@@ -131,6 +130,18 @@ await pocket();
 const right = await flickAt(2.4, 195, 640, 0.3);
 assert.ok(right.vx > 20, `aimed right, it goes right (${right.vx.toFixed(0)})`);
 await pocket();
+// A stroke up the screen too slow to throw drops the ball back with a thud, and the first two in a round say how.
+const duds = await page.evaluate(() => {
+  const out = [];
+  for (let k = 0; k < 3; k++) {
+    const s = [];
+    for (let i = 0; i <= 12; i++) s.push({ t: 5000 + k * 2000 + i * 100, x: 195, y: 640 - i * 18 }); // 216 px in 1.2 s
+    const n = __sounds.length, b = hoops.flick(s);
+    out.push([b, __sounds.slice(n).some(x => x[0] === 'thud'), hoops.pops.filter(p => p.text === 'Flick it up!').length]);
+  }
+  return out;
+});
+assert.deepEqual(duds, [[null, true, 1], [null, true, 2], [null, true, 2]]);
 assert.equal(await flickAt(0.2), null, 'too gentle');
 assert.equal(await flickAt(2.4, 195, 640, 3), null, 'sideways');
 
