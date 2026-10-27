@@ -98,6 +98,7 @@ let zoom = 0;                // 0: the whole machine; 1: pushed in on the board 
 const pops = [];
 let flash = null;
 const lights = { mode: 'idle', t: 0 };
+const TROUGH_POP = 26;       // how far up the board (cm) a ball in the trough shows what it scored
 
 function newGame(daily = false) {
   const card = daily ? cardFor(dayKey()) : null;
@@ -150,11 +151,20 @@ function scored() {
   const v = ball.value;
   const w = worth(v);
   if (!ball.hole) {
-    // a hole already rang its bell and showed its number as the ball dropped in
+    // a hole already rang its bell and showed its number as the ball dropped in. One in the trough rises from the
+    // lower board on its side, clear of the 10s printed along the bottom edge and of the numbers down the middle
+    const side = (ball.x < 0 ? -1 : 1) * Math.max(0.4, Math.min(0.6, Math.abs(ball.x) / phys.BOARD.half)) * phys.BOARD.half;
     const at = ball.why === 'short'
       ? { x: ball.x, y: phys.ground(LANE.foul + 30) + 8, z: LANE.foul + 30 }
-      : { x: ball.x, y: phys.BOARD.y0 + 4, z: phys.JUMP.z1 + 8 };
-    pops.push({ text: v ? '+' + w.points : 'No jump', sub: w.sub, subColor: w.subColor, ...at, age: 0, big: false });
+      : phys.fromBoard(side, TROUGH_POP, 4);
+    let { sub, subColor } = w;
+    if (ball.why === 'trough') {
+      // and says why, when it's plain: it flew past the 50 (or into the net), or never got as far as the 20
+      const [twenty, fifty] = [20, 50].map(v => phys.RINGS.find(r => r.value === v));
+      const why = ball.net || ball.top > fifty.s + fifty.r ? 'too hard' : ball.top < twenty.s - twenty.r ? 'a bit soft' : null;
+      if (why) { sub = sub ? `${sub}, ${why}` : why; subColor = w.sub ? subColor : null; }
+    }
+    pops.push({ text: v ? '+' + w.points : 'No jump', sub, subColor, ...at, age: 0, big: false });
     sound.score(v);
     lights.mode = 'score'; lights.t = 0;
   }

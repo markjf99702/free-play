@@ -13,6 +13,20 @@ test('a straight roll climbs the rings as it gets firmer, then sails over into t
   }
 });
 
+test('a ball in the trough knows how far up the board it got: past the 50 when rolled too hard, short of the 20 when soft', () => {
+  const fifty = RINGS.find(r => r.value === 50), twenty = RINGS.find(r => r.value === 20);
+  const hard = simulate(0, 450, 0, still);
+  assert.equal(hard.why, 'trough');
+  assert.ok(hard.top > fifty.s + fifty.r, `a hard roll got to ${hard.top.toFixed(1)} up the board, past the 50`);
+  assert.equal(hard.net, true, 'and into the net');
+  const soft = simulate(0, 220, 0, still);
+  assert.equal(soft.why, 'trough');
+  assert.ok(soft.top < twenty.s - twenty.r, `a soft one got to ${soft.top.toFixed(1)}, short of the 20`);
+  assert.equal(soft.net, false);
+  const fair = simulate(0, 280, 0, still);
+  assert.ok(fair.top > twenty.s - twenty.r && fair.top < fifty.s + fifty.r && !fair.net, 'a fair one in between');
+});
+
 test('a roll too gentle to clear the jump rolls back for nothing', () => {
   const b = simulate(0, 150, 0, still);
   assert.equal(b.value, 0);

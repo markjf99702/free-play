@@ -88,6 +88,7 @@ export function newBall(x = 0) {
     value: null, hole: null, why: '',
     contact: null, // the surface normal it touched last step, for rolling
     still: 0, nudges: 0, onBoard: false,
+    top: -Infinity, net: false, // how far up the board it got (s, in the air over it or on it), and whether it hit the net
     spin: { x: 0, y: 0, z: 0, w: 1 }, // how it has turned, for drawing
   };
 }
@@ -142,6 +143,7 @@ function step(b, hits, random) {
   const ox = b.x, oy = b.y, oz = b.z;
   b.x += b.vx * h; b.y += b.vy * h; b.z += b.vz * h;
   b.contact = null;
+  if (b.z > JUMP.z1) b.top = Math.max(b.top, toBoard(b.x, b.y, b.z).s);
 
   // the lane and the jump
   if (b.z <= JUMP.z1) {
@@ -270,6 +272,7 @@ function push(b, N, depth, kind, e, hits) {
 
 // The net hung behind the board: it soaks up a ball rolled too hard, which drops onto the top of the board.
 function net(b, depth, hits) {
+  b.net = true;
   b.z -= depth;
   if (b.vz > 0) {
     if (b.vz > 20) hits.push({ kind: 'net', speed: b.vz, x: b.x, y: b.y, z: b.z });
