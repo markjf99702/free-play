@@ -1,11 +1,12 @@
 // Plays Tilt, on the Free Play floor, in Chromium through the real page:  node test/tilt.e2e.mjs  (needs Playwright)
 // Checks a link's preview says what the title card says, and that the cards say how to play and what a table pays,
 // starts a game, launches with the Launch button, says how to flip until the first flip (in a visit's first game
-// only), flips with touches on each half of the screen, nudges with Space as How to play says, pauses, drains every
-// ball, checks the high score survives a reload, that a link to a table that isn't there opens the first, plays a game
-// of Space and one of Haunted House (down to its basement and back) from the table picker, ends a game from the menu
-// as its last ball counts its bonus (it's saved once), dates a high score in the player's own time zone, fits the
-// backbox's longest messages on a 320 px phone, shows them one after another when they come together, keeps the Launch
+// only), flips with touches on each half of the screen and with each of the keys, nudges with ↑ and with Space and
+// launches with ↓ as How to play says, pauses, drains every ball, checks the high score survives a reload, that a link
+// to a table that isn't there opens the first, plays a game of Space and one of Haunted House (down to its basement and
+// back, and its tickets) from the table picker, ends a game from the menu as its last ball counts its bonus (it's saved
+// once), dates a high score in the player's own time zone, fits the backbox's longest messages on a 320 px phone, shows
+// the end card's buttons on a short one, shows messages one after another when they come together, keeps the Launch
 // button out of an iPhone's home indicator and off the right flipper on a small table, follows the title card's links
 // from the keyboard, plays on over saved data it didn't write and in a window with no room for the table, covers the
 // page with its message when JavaScript is off, checks the screen slides between a table's floors, and loads once more
@@ -103,6 +104,34 @@ assert.ok(p.left && !p.right, 'lifting one finger drops only that flipper');
 await touch('touchEnd', [{ x: 60, y: 600, id: 2 }]);
 assert.ok(!(await peek()).left);
 
+// The keyboard, as How to play says: Z, the left Shift and ← work the left flipper, / , the right Shift and → the
+// right one, each up while the key's down. ↑ nudges.
+for (const [key, side] of [['KeyZ', 'left'], ['ShiftLeft', 'left'], ['ArrowLeft', 'left'], ['Slash', 'right'], ['ShiftRight', 'right'], ['ArrowRight', 'right']]) {
+  await page.keyboard.down(key);
+  p = await peek();
+  assert.deepEqual([p.left, p.right], [side === 'left', side === 'right'], `${key} down`);
+  await page.keyboard.up(key);
+  p = await peek();
+  assert.deepEqual([p.left, p.right], [false, false], `${key} up`);
+}
+await page.evaluate(() => { const g = window.tilt.game; g.state = 'live'; g.tiltMeter = 0; });
+await page.keyboard.press('ArrowUp');
+assert.ok(await page.evaluate(() => window.tilt.game.tiltMeter > 0.5), '↑ did not nudge');
+// With the next ball in the shooter lane, a tap of ↓ hardly pulls the plunger and the ball stays put; held, ↓ pulls it
+// back, and letting go sends the ball up the lane.
+await page.evaluate(() => { const g = window.tilt.game, b = g.world.balls[0]; g.settings.ballSave = 0; g.saveUntil = 0; b.x = 243; b.y = 980; b.vx = 0; b.vy = 300; g.state = 'live'; });
+await page.waitForFunction(() => { const g = window.tilt.game; return g.ballNo === 2 && g.state === 'lane' && g.ballInLane(); }, null, { timeout: 15000 });
+await page.keyboard.press('ArrowDown');
+await page.waitForTimeout(300);
+const tapped = await page.evaluate(() => ({ pull: window.tilt.game.table.plunger.pull, state: window.tilt.game.state }));
+assert.deepEqual(tapped, { pull: 0, state: 'lane' }, 'a tap of ↓ launched the ball');
+await page.keyboard.down('ArrowDown');
+await page.waitForTimeout(600);
+await page.keyboard.up('ArrowDown');
+const held = await page.evaluate(() => window.tilt.game.table.plunger.pull);
+assert.ok(held > 0.3, `↓ held for 0.6 s pulled the plunger ${held.toFixed(2)} of the way`);
+await page.waitForFunction(() => window.tilt.game.state === 'live', null, { timeout: 5000 });
+
 // With the ball in play, Space nudges (it launches only while a ball waits in the shooter lane), as How to play says.
 await page.evaluate(() => { const g = window.tilt.game; g.state = 'live'; g.tiltMeter = 0; });
 await page.keyboard.press('Space');
@@ -196,6 +225,7 @@ assert.match(await page.textContent('#howTo'), /the stairs back up/);
 assert.equal(await page.textContent('#rate'), await rateLine(page));
 assert.notEqual(await rateLine(page), 'A ticket for every 10,000 points.', 'the hard table pays what the others do');
 assert.equal(new URL(page.url()).searchParams.get('table'), 'haunted');
+const beforeHaunted = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
 await page.keyboard.press('Enter');
 await page.waitForSelector('#launch:not([hidden])');
 await touch('touchStart', [{ x: lb.x + lb.width / 2, y: lb.y + lb.height / 2, id: 1 }]);
@@ -216,6 +246,11 @@ for (let i = 0; i < 3; i++) {
 }
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await page.evaluate(() => window.tilt.store.hauntedScores.length), 1, 'Haunted House keeps its own scores');
+// It pays a ticket for every 5,000 points, into the pocket and out of the slot.
+const haunted = Number((await page.textContent('#final')).replace(/,/g, '')), hauntedPaid = Math.floor(haunted / 5000);
+assert.ok(hauntedPaid > 0, `a game of ${haunted} on Haunted House paid nothing`);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), beforeHaunted + hauntedPaid, 'Haunted House pays a ticket for every 5,000 points');
+await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === n, hauntedPaid.toLocaleString('en-US'), { timeout: 8000 });
 assert.equal(await page.evaluate(() => JSON.stringify(window.tilt.store.scores)), classicScores, "Classic's scores are left alone");
 await page.goto(base + '?table=classic');
 await page.waitForFunction(() => window.tilt);
