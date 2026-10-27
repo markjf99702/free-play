@@ -78,3 +78,39 @@ test('the trophy has a place on the shelf', () => {
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(TROPHIES[0].id, 'trophy-highrise');
 });
+
+// How hard it is, pinned: Mark played it and signed it off. A player who presses with about 35 ms of spread (and 5 ms
+// late) picks the spot that keeps the most windows, waits for the row to get there, and presses in the middle of the
+// moment it's there. Seeded, so it's the same 3,000 games every run. Today about 83% of them reach floor 11 and about
+// 24% top out; a change to the speed, the widths or the start that moves either by 10 points shows up here.
+test('how hard it is: a steady player reaches floor 11 about 83% of the time and tops out about 24%', () => {
+  const seeded = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const random = seeded(3908), spread = seeded(124);
+  const gauss = () => Math.sqrt(-2 * Math.log(spread() + 1e-12)) * Math.cos(2 * Math.PI * spread());
+  const GAMES = 3000;
+  let minor = 0, top = 0;
+  for (let game = 0; game < GAMES; game++) {
+    const t = createTower({ random });
+    for (;;) {
+      // the spot that keeps the most windows lit
+      const below = t.rows[t.rows.length - 1];
+      let target = 0, most = -1;
+      for (let p = 0; p <= COLS - t.width; p++) {
+        let kept = 0;
+        for (let c = p; c < p + t.width; c++) if (!below || below.includes(c)) kept++;
+        if (kept > most) { most = kept; target = p; }
+      }
+      // the first time the row gets there after a moment to look, and the press, aimed at the middle of its stay
+      const step = stepMs(t.floor);
+      let k = Math.ceil(400 / step);
+      while (t.moverAt(k * step) !== target) k++;
+      const r = t.place(t.moverAt(k * step + step / 2 + 5 + gauss() * 35));
+      if (r.over || r.top) break;
+    }
+    if (t.built >= MINOR) minor++;
+    if (t.built >= FLOORS) top++;
+  }
+  const pct = n => Math.round(n / GAMES * 1000) / 10;
+  assert.ok(pct(minor) >= 73 && pct(minor) <= 93, `reached floor 11 in ${pct(minor)}% of games`);
+  assert.ok(pct(top) >= 14 && pct(top) <= 34, `topped out in ${pct(top)}% of games`);
+});
