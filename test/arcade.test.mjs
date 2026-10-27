@@ -63,6 +63,50 @@ test('a wallet someone has meddled with reads as something sensible', () => {
   }
 });
 
+test("a bad number from a machine doesn't touch the pocket", () => {
+  kept.clear();
+  wallet.pay(214);
+  const was = kept.get('free-play.wallet');
+  for (const bad of [NaN, undefined, null, -3, 0, 0.6, Infinity, -Infinity, 'lots', '', {}, []]) {
+    wallet.pay(bad);
+    assert.equal(kept.get('free-play.wallet'), was, `pay(${String(bad)}) wrote nothing`);
+    wallet.merge(bad);
+    assert.equal(kept.get('free-play.wallet'), was, `merge(${String(bad)}) wrote nothing`);
+  }
+  wallet.pay('7');
+  assert.deepEqual(wallet.read(), { tickets: 221, prizes: {} }, 'a number written as text still counts');
+  wallet.merge(0, { duck: 1, junk: 'x', none: 0 });
+  assert.deepEqual(wallet.read(), { tickets: 221, prizes: { duck: 1 } }, 'carried prizes count in without any tickets');
+});
+
+test("a prize with no name, or no price, isn't traded, given or taken back", () => {
+  kept.clear();
+  wallet.pay(50);
+  const was = kept.get('free-play.wallet');
+  for (const bad of [{}, null, undefined, { id: '' }, { id: 3, cost: 5 }, { cost: 5 }]) {
+    assert.equal(wallet.give(bad), null, `give(${JSON.stringify(bad)})`);
+    assert.equal(wallet.buy(bad), null, `buy(${JSON.stringify(bad)})`);
+    assert.equal(wallet.refund(bad), null, `refund(${JSON.stringify(bad)})`);
+  }
+  for (const cost of [undefined, NaN, Infinity, -5, '5']) assert.equal(wallet.buy({ id: 'lollipop', cost }), null, `buy at a cost of ${String(cost)}`);
+  assert.equal(kept.get('free-play.wallet'), was, 'nothing was written');
+  wallet.give({ id: 'lollipop' });
+  assert.equal(wallet.refund({ id: 'lollipop' }), null, 'nothing taken back without a price');
+  assert.deepEqual(wallet.read(), { tickets: 50, prizes: { lollipop: 1 } });
+});
+
+test('counts saved as text read as numbers, and stay numbers', () => {
+  kept.set('free-play.wallet', '{"tickets":"50","prizes":{"lollipop":"2","duck":2.7,"kite":0,"bear":-1,"dice":"x","disc":null}}');
+  assert.deepEqual(wallet.read(), { tickets: 50, prizes: { lollipop: 2, duck: 2 } });
+  wallet.buy(PRIZES.find(p => p.id === 'lollipop'));
+  assert.deepEqual(JSON.parse(kept.get('free-play.wallet')), { tickets: 45, prizes: { lollipop: 3, duck: 2 } }, "a '2' and one more is 3, not '21'");
+  kept.set('free-play.wallet', '{"tickets":"50","prizes":{"plush-frog":"2"}}');
+  wallet.give(PLUSH.find(p => p.kind === 'frog'));
+  assert.deepEqual(wallet.read(), { tickets: 50, prizes: { 'plush-frog': 3 } });
+  wallet.pay(5);
+  assert.equal(wallet.read().tickets, 55, 'the 50 kept as text are added to, not written over');
+});
+
 test('the prize counter and the tables pay-outs', () => {
   const ids = new Set(PRIZES.map(p => p.id));
   assert.equal(ids.size, PRIZES.length, 'prize ids are unique');
