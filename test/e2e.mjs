@@ -183,6 +183,62 @@ assert.ok(await page.isHidden('.fp-sheet'));
 assert.equal(await page.textContent('#tix'), String(have - 15));
 assert.match(await page.textContent('#shelf'), /🎈/, 'the balloon is on the shelf');
 
+// A double tap at the counter buys one, not two; two taps a second apart buy two.
+const pocket = async w => { await page.evaluate(w => localStorage.setItem('free-play.wallet', JSON.stringify(w)), w); await page.reload(); };
+const stored = () => page.evaluate(() => localStorage.getItem('free-play.wallet'));
+const tapPrize = async n => {
+  const box = await page.locator('.fp-prize').nth(n).boundingBox();
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+};
+await pocket({ tickets: 10, prizes: {} });
+await page.click('#trade');
+await tapPrize(0);
+await page.waitForTimeout(120);
+await tapPrize(0);
+await page.waitForTimeout(300);
+assert.deepEqual(JSON.parse(await stored()), { tickets: 5, prizes: { lollipop: 1 } }, 'a double tap on the lollipop bought it once');
+assert.match(await page.textContent('.fp-toast'), /^You got a lollipop\. ?Undo$/);
+await page.waitForTimeout(1000);
+await tapPrize(0);
+await page.waitForTimeout(300);
+assert.deepEqual(JSON.parse(await stored()), { tickets: 0, prizes: { lollipop: 2 } }, 'a second tap a second later buys another');
+assert.match(await page.textContent('.fp-toast'), /^You got a lollipop\. That's 2 on your shelf\./);
+await page.click('.fp-x');
+
+// A trade can be undone, and leaves the pocket as it was. The Undo button is a thumb's height, and on the keyboard
+// it comes straight after the prizes.
+await pocket({ tickets: 120, prizes: { duck: 1, 'plush-frog': 2 } });
+const was = await stored();
+await page.click('#trade');
+await tapPrize(1);
+const undoBox = await page.locator('.fp-undo').boundingBox();
+assert.ok(undoBox.height >= 44, `the Undo button is ${undoBox.height}px tall`);
+const clear = await page.evaluate(() => {
+  const s = document.querySelector('.fp-sheet-in');
+  s.scrollTop = s.scrollHeight;
+  const tiles = [...document.querySelectorAll('.fp-prize')].map(e => e.getBoundingClientRect().bottom);
+  return document.querySelector('.fp-toast').getBoundingClientRect().top - Math.max(...tiles);
+});
+assert.ok(clear > 0, `scrolled to the end, the toast is clear of the bottom row (${clear}px)`);
+await page.waitForTimeout(800);
+await page.click('.fp-undo');
+assert.equal(await stored(), was, 'the pocket is as it was before the trade');
+assert.match(await page.textContent('.fp-toast'), /^Traded back\. Your 10 tickets are back in your pocket\.$/);
+assert.equal(await page.textContent('.fp-bal b'), '120');
+await page.waitForTimeout(800);
+await page.focus('.fp-prize >> nth=0');
+await page.keyboard.press('Enter');
+assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'lollipop', 'the keyboard stays on the prize');
+await page.focus('.fp-prize >> nth=15');
+await page.keyboard.press('Tab');
+assert.equal(await page.evaluate(() => document.activeElement.className), 'fp-undo', 'Tab from the last prize reaches Undo');
+await page.waitForTimeout(800);
+await page.keyboard.press('Enter');
+assert.equal(await stored(), was, 'undone from the keyboard too');
+assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'lollipop', 'and the keyboard goes back to the prize');
+await page.click('.fp-x');
+assert.equal(await page.textContent('#tix'), '120');
+
 // Every file the pages loaded is kept for offline.
 const shell = [...(await readFile(join(root, 'sw.js'), 'utf8')).match(/SHELL = \[([^\]]*)\]/)[1].matchAll(/'([^']*)'/g)].map(m => m[1]);
 assert.deepEqual([...loaded].filter(f => f !== 'sw.js' && !shell.includes(f)), [], 'files the pages load but sw.js does not keep');

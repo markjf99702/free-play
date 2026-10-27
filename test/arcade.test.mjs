@@ -24,6 +24,28 @@ test('every machine pays into one wallet, and the counter spends from it', () =>
   assert.deepEqual(wallet.read(), { tickets: 88, prizes: { lollipop: 3, duck: 1 } }, 'carried saves add to what is there');
 });
 
+test("a trade taken back puts its tickets back and takes it off the shelf, and only what's there", () => {
+  kept.clear();
+  const events = [];
+  globalThis.dispatchEvent = e => { events.push(e.type); return true; };
+  const lolly = PRIZES.find(p => p.id === 'lollipop'), duck = PRIZES.find(p => p.id === 'duck');
+  wallet.pay(90);
+  wallet.buy(lolly); wallet.buy(lolly); wallet.buy(duck);
+  assert.deepEqual(wallet.read(), { tickets: 5, prizes: { lollipop: 2, duck: 1 } });
+  events.length = 0;
+  assert.deepEqual(wallet.refund(lolly), { tickets: 10, prizes: { lollipop: 1, duck: 1 } });
+  assert.deepEqual(events, ['free-play:wallet'], 'the pockets on the page hear about it');
+  wallet.refund(duck);
+  assert.deepEqual(wallet.read(), { tickets: 85, prizes: { lollipop: 1 } }, 'the last one off the shelf takes its place with it');
+  wallet.refund(lolly);
+  assert.deepEqual(wallet.read(), { tickets: 90, prizes: {} }, 'back to what there was before the trades');
+  events.length = 0;
+  assert.equal(wallet.refund(lolly), null, 'nothing on the shelf, nothing to take back');
+  assert.deepEqual(wallet.read(), { tickets: 90, prizes: {} }, 'and no tickets out of thin air');
+  assert.deepEqual(events, [], 'and nothing written');
+  globalThis.dispatchEvent = () => true;
+});
+
 test('a plush from the claw goes straight on the shelf, and costs nothing', () => {
   kept.clear();
   wallet.pay(12);

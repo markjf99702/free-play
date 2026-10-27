@@ -2,11 +2,15 @@
 // The counter builds itself the first time it opens, so a page only needs shared/arcade.css and a button.
 
 import { PRIZES, SHELF } from './prizes.js';
-import { read, buy } from './wallet.js';
+import { read, buy, refund } from './wallet.js';
 
 export const TICKET = '<svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg>';
 
 let sheet = null, opts = {}, lastFocus = null;
+// A second tap this soon after a trade is the same tap twice (a double tap, or a finger that bounced), whichever prize
+// it lands on: the grid is drawn again after a trade, and a new row on the shelf can move it down under the finger.
+const SAME_TAP = 700;
+let lastTrade = -Infinity;
 
 function build() {
   sheet = document.createElement('section');
@@ -25,6 +29,7 @@ function build() {
       <div class="fp-shelf"></div>
       <h3>Trade your tickets</h3>
       <div class="fp-grid"></div>
+      <div class="fp-foot"></div>
     </div>`;
   document.body.append(sheet);
   sheet.querySelector('.fp-x').addEventListener('click', closeCounter);
@@ -53,6 +58,8 @@ function render() {
     shelf.append(s);
   }
   const grid = sheet.querySelector('.fp-grid');
+  // the grid is drawn afresh, so a prize picked with the keyboard keeps the focus
+  const had = grid.contains(document.activeElement) ? document.activeElement.dataset.id : null;
   grid.replaceChildren();
   for (const p of PRIZES) {
     const b = document.createElement('button');
@@ -63,16 +70,35 @@ function render() {
     b.querySelector('.n').textContent = p.name;
     b.querySelector('.c').append(String(p.cost));
     b.setAttribute('aria-label', `${p.name}, ${p.cost} tickets`);
+    b.dataset.id = p.id;
     b.addEventListener('click', () => trade(p));
     grid.append(b);
+    if (p.id === had) b.focus({ preventScroll: true });
   }
 }
 
 function trade(p) {
+  if (performance.now() - lastTrade < SAME_TAP) return;
   const have = read().tickets;
-  if (!buy(p)) return toast(`You need ${p.cost - have} more tickets for that.`);
+  const w = buy(p);
+  if (!w) return toast(`You need ${p.cost - have} more tickets for that.`);
+  lastTrade = performance.now();
   opts.onBuy?.(p);
-  toast(`You got ${p.say}.`);
+  const n = w.prizes[p.id];
+  // Only the latest trade can be undone, and only once: its Undo goes when the toast does, or the next one comes.
+  const undo = () => {
+    if (performance.now() - lastTrade < SAME_TAP) return; // the second tap of a double tap, landing where the toast came up
+    if (toastUndo !== undo) return;
+    toastUndo = null;
+    lastTrade = performance.now(); // and a double tap on Undo doesn't trade whatever is under it once it's gone
+    const focused = toastEl.contains(document.activeElement);
+    toast(refund(p) ? `Traded back. Your ${p.cost.toLocaleString('en-US')} tickets are back in your pocket.` : `There's no ${p.name.toLowerCase()} on your shelf to trade back.`);
+    if (!counterOpen()) return;
+    render();
+    // the Undo button has gone: the keyboard goes back to the prize
+    if (focused) sheet.querySelector(`.fp-prize[data-id="${p.id}"]`)?.focus({ preventScroll: true });
+  };
+  toast(`You got ${p.say}.${n > 1 ? ` That's ${n} on your shelf.` : ''}`, { undo });
   render();
 }
 
@@ -82,24 +108,51 @@ export function openCounter(o = {}) {
   opts = o;
   lastFocus = document.activeElement;
   render();
+  // the toast moves into the counter while it's open: at its foot, clear of the prizes, and inside the dialog
+  sheet.querySelector('.fp-foot').append(toastBox());
   sheet.hidden = false;
   sheet.querySelector('.fp-x').focus({ preventScroll: true });
 }
 export function closeCounter() {
   if (!sheet || sheet.hidden) return;
   sheet.hidden = true;
+  // a trade can only be undone at the counter
+  if (toastUndo) { toastUndo = null; toastEl.hidden = true; }
+  document.body.append(toastBox());
   lastFocus?.focus?.({ preventScroll: true });
   opts.onClose?.();
 }
 export const counterOpen = () => !!sheet && !sheet.hidden;
 
-let toastEl = null, toastTimer = 0;
-export function toast(text) {
-  if (!toastEl) { toastEl = document.createElement('p'); toastEl.className = 'fp-toast'; toastEl.setAttribute('role', 'status'); document.body.append(toastEl); }
-  toastEl.textContent = text;
-  toastEl.hidden = false;
+// A line at the foot of the screen (or of the counter, while it's open) for a moment. With undo, it carries an Undo
+// button for a few seconds longer.
+let toastEl = null, toastTimer = 0, toastUndo = null;
+function toastBox() {
+  if (!toastEl) {
+    toastEl = document.createElement('p');
+    toastEl.className = 'fp-toast';
+    toastEl.setAttribute('role', 'status');
+    toastEl.hidden = true;
+    document.body.append(toastEl);
+  }
+  return toastEl;
+}
+export function toast(text, { undo } = {}) {
+  const el = toastBox();
+  el.textContent = text;
+  toastUndo = undo || null;
+  el.classList.toggle('undoable', !!undo);
+  if (undo) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fp-undo';
+    b.textContent = 'Undo';
+    b.addEventListener('click', undo);
+    el.append(' ', b);
+  }
+  el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2400);
+  toastTimer = setTimeout(() => { el.hidden = true; toastUndo = null; }, undo ? 5000 : 2400);
 }
 
 // The tickets coming out of the machine's slot at the end of a game: the count climbs and the strip grows.

@@ -36,6 +36,18 @@ export function buy(prize) {
   return write(w);
 }
 
+// A trade taken back at the counter (its Undo): the prize's tickets back in the pocket, and one fewer on the shelf.
+// null when there isn't one on the shelf to take back.
+export function refund(prize) {
+  const w = read();
+  const n = Number(w.prizes[prize.id]) || 0;
+  if (!(n > 0)) return null;
+  w.tickets += prize.cost;
+  if (n > 1) w.prizes[prize.id] = n - 1;
+  else delete w.prizes[prize.id];
+  return write(w);
+}
+
 // A prize won outright, on a machine that pays in prizes rather than tickets (Clutch's plush).
 export function give(prize) {
   const w = read();

@@ -96,6 +96,7 @@ await page.click('.fp-prize >> nth=0');
 assert.match(await page.textContent('.fp-toast'), /You got a lollipop/);
 assert.match(await page.textContent('.fp-shelf'), /🍭/);
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), stored.tickets - 5);
+await page.waitForTimeout(800); // (a tap right after a trade is taken for a double tap, and ignored)
 await page.click('.fp-prize >> nth=15');
 assert.match(await page.textContent('.fp-toast'), /more tickets/, 'a prize you can’t afford says how many more you need');
 await page.click('.fp-x');
