@@ -107,6 +107,25 @@ test("a prize with no name, or no price, isn't traded, given or taken back", () 
   assert.deepEqual(wallet.read(), { tickets: 50, prizes: { lollipop: 1 } });
 });
 
+test("whatever else is kept in the pocket stays there through every trade", () => {
+  // a newer copy of the arcade might keep more in the pocket; this one leaves it as it is
+  const more = { goal: 'unicorn', earned: 12000, log: [{ at: 1, n: 5 }] };
+  kept.set('free-play.wallet', JSON.stringify({ tickets: 500, prizes: { duck: 1 }, ...more }));
+  const lolly = PRIZES.find(p => p.id === 'lollipop');
+  const steps = {
+    pay: () => wallet.pay(10), buy: () => wallet.buy(lolly), refund: () => wallet.refund(lolly),
+    give: () => wallet.give(PLUSH[0]), merge: () => wallet.merge(3, { duck: 1 }),
+  };
+  for (const [name, step] of Object.entries(steps)) {
+    const was = kept.get('free-play.wallet');
+    assert.ok(step(), name);
+    assert.notEqual(kept.get('free-play.wallet'), was, `${name} wrote the pocket`);
+    const saved = JSON.parse(kept.get('free-play.wallet'));
+    for (const [k, v] of Object.entries(more)) assert.deepEqual(saved[k], v, `${k} survived ${name}`);
+  }
+  assert.deepEqual(wallet.read(), { ...more, tickets: 513, prizes: { duck: 2, [PLUSH[0].id]: 1 } });
+});
+
 test('counts saved as text read as numbers, and stay numbers', () => {
   kept.set('free-play.wallet', '{"tickets":"50","prizes":{"lollipop":"2","duck":2.7,"kite":0,"bear":-1,"dice":"x","disc":null,"unicorn":1e999}}');
   assert.deepEqual(wallet.read(), { tickets: 50, prizes: { lollipop: 2, duck: 2 } });

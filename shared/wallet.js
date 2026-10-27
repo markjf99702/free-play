@@ -20,7 +20,10 @@ export function read() {
   if (ok && w.prizes && typeof w.prizes === 'object' && !Array.isArray(w.prizes)) {
     for (const [id, n] of Object.entries(w.prizes)) if (whole(n) > 0) prizes[id] = whole(n);
   }
-  return { tickets: Number.isFinite(tickets) ? Math.max(0, tickets) : 0, prizes };
+  // anything else kept in the pocket (by a newer copy of the arcade) rides along untouched, so writing it back loses nothing
+  const rest = {};
+  if (ok) for (const [k, v] of Object.entries(w)) if (k !== 'tickets' && k !== 'prizes') rest[k] = v;
+  return { ...rest, tickets: Number.isFinite(tickets) ? Math.max(0, tickets) : 0, prizes };
 }
 
 function write(w) {
