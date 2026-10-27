@@ -24,6 +24,16 @@ const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, permissions: ['clipboard-read', 'clipboard-write'] });
+// The machine's own loop sound (its motor, or the rumble of the ball), as the page makes it, so the test can listen.
+await ctx.addInitScript(() => {
+  window.__loops = [];
+  const make = AudioContext.prototype.createGain;
+  AudioContext.prototype.createGain = function () {
+    const g = make.call(this);
+    if (/startHum|startRumble/.test(new Error().stack)) window.__loops.push(g);
+    return g;
+  };
+});
 const page = await ctx.newPage();
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
@@ -39,6 +49,8 @@ const hide = gone => page.evaluate(gone => {
   if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
   document.dispatchEvent(new Event('visibilitychange'));
 }, gone);
+// What the sound is doing: the audio running or asleep, and how loud the loop is.
+const audio = () => page.evaluate(() => ({ state: window.__loops[0]?.context.state, loop: window.__loops[0]?.gain.value }));
 const ballOnScreen = () => page.evaluate(() => { const b = rollUp.ball; const s = rollUp.scene.project({ x: b.x, y: b.y, z: b.z }); return { x: s.x, y: s.y }; });
 
 // The title card, then a game.
@@ -171,13 +183,24 @@ await page.waitForTimeout(500);
 await page.keyboard.up('Space');
 assert.equal(await mode(), 'roll', 'Space should roll the ball');
 
+// The menu, opened mid-roll, hushes the rumble of the ball on the lane.
+await page.waitForFunction(() => window.__loops[0]?.gain.value > 0.05, null, { timeout: 3000 });
+await page.keyboard.press('Escape');
+await page.waitForTimeout(500);
+assert.ok((await audio()).loop < 0.01, `the ball rumbles on behind the menu (${(await audio()).loop})`);
+await page.click('#resume');
+
 // Leaving the page mid-game opens the menu, so the ball waits there for the player to come back.
 await hide(true);
 assert.ok(await page.isVisible('#menu'), 'leaving the page mid-game did not open the menu');
+// and the sound sleeps until the page is back
+await page.waitForFunction(() => window.__loops[0].context.state === 'suspended', null, { timeout: 2000 });
+assert.equal((await audio()).loop, 0);
 const away = await page.evaluate(() => JSON.stringify(rollUp.ball));
 await page.waitForTimeout(300);
 assert.equal(await page.evaluate(() => JSON.stringify(rollUp.ball)), away, 'the ball rolls on behind the menu');
 await hide(false);
+await page.waitForFunction(() => window.__loops[0].context.state === 'running', null, { timeout: 2000 });
 await page.click('#resume');
 
 // The menu pauses, and comes back.

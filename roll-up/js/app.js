@@ -358,7 +358,7 @@ function toggleMenu(open = $('menu').hidden) {
   if (!$('title').hidden || !$('over').hidden) return; // a card is up: it has its own buttons
   $('menu').hidden = !open;
   paused = open;
-  if (open) { drag = null; charge = null; if (mode === 'drag') settle(); $('resume').focus({ preventScroll: true }); }
+  if (open) { drag = null; charge = null; if (mode === 'drag') settle(); sound.rolling(0); $('resume').focus({ preventScroll: true }); }
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
@@ -381,6 +381,7 @@ soundLabel();
 function openPrizes() {
   if (mode === 'drag') settle();
   paused = true;
+  sound.rolling(0); // a ball held mid-roll goes quiet
   openCounter({
     onBuy: () => sound.buy(),
     onClose: () => { paused = !$('menu').hidden; hud(); },

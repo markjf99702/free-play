@@ -24,6 +24,16 @@ const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+// The machine's own loop sound (its motor, or the rumble of the ball), as the page makes it, so the test can listen.
+await ctx.addInitScript(() => {
+  window.__loops = [];
+  const make = AudioContext.prototype.createGain;
+  AudioContext.prototype.createGain = function () {
+    const g = make.call(this);
+    if (/startHum|startRumble/.test(new Error().stack)) window.__loops.push(g);
+    return g;
+  };
+});
 const page = await ctx.newPage();
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
@@ -40,6 +50,8 @@ const hide = gone => page.evaluate(gone => {
   if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
   document.dispatchEvent(new Event('visibilitychange'));
 }, gone);
+// What the sound is doing: the audio running or asleep, and how loud the loop is.
+const audio = () => page.evaluate(() => ({ state: window.__loops[0]?.context.state, loop: window.__loops[0]?.gain.value }));
 // The claw home again. Any go can win (even one that only brushes the heap), so a win card that comes up is put away,
 // without moving the mouse off the button.
 async function ready() {
@@ -159,6 +171,25 @@ const shelf = await page.textContent('.fp-shelf');
 assert.match(shelf, /[🐻🐥🐸👻🐧👽🌟]/u, 'the plush is on the shelf in the counter');
 await page.click('.fp-x');
 assert.ok(await page.isHidden('.fp-sheet'));
+
+// Leaving the page with the motor running hushes it, and the sound sleeps until the page is back.
+await page.click('#menuBtn');
+await page.waitForSelector('#menu:not([hidden])', { timeout: 3000 });
+await page.click('#sound');
+assert.equal(await page.evaluate(() => clutch.saved.sound), true);
+await page.click('#resume');
+await ready();
+await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+await page.mouse.down();
+await page.waitForFunction(() => clutch.state === 'move' && window.__loops[0]?.gain.value > 0.03, null, { timeout: 3000 });
+await hide(true);
+await page.waitForFunction(() => window.__loops[0].context.state === 'suspended', null, { timeout: 2000 });
+assert.equal((await audio()).loop, 0, 'the motor hums on with the page out of sight');
+await hide(false);
+await page.mouse.up();
+await page.waitForFunction(() => window.__loops[0].context.state === 'running', null, { timeout: 2000 });
+await page.click('#resume');
+await ready();
 
 // A wide screen: the cabinet in the middle, its control deck standing beside it, nothing sideways.
 await page.setViewportSize({ width: 1280, height: 860 });

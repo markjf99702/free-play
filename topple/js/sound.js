@@ -23,6 +23,23 @@ export function setEnabled(on) {
   if (out) out.gain.setTargetAtTime(on ? 0.8 : 0, ac.currentTime, 0.02);
 }
 
+// Out of sight (another tab or app, the phone locked, or off to the floor) the page gets no frames to turn the
+// pusher's motor down by, so it would carry on as it was: hush it, and let the sound sleep until the page is back.
+let woke = false; // the sound was running when the page went
+function asleep() {
+  if (!ac) return;
+  if (hum) { hum.g.gain.cancelScheduledValues(ac.currentTime); hum.g.gain.value = 0; }
+  if (ac.state === 'running') { woke = true; ac.suspend().catch(() => {}); }
+}
+function awake() {
+  if (!ac || !woke) return;
+  woke = false;
+  if (enabled) ac.resume().catch(() => {});
+}
+document.addEventListener('visibilitychange', () => (document.hidden ? asleep() : awake()));
+addEventListener('pagehide', asleep);
+addEventListener('pageshow', awake);
+
 let noiseBuf = null;
 function noise() {
   if (!noiseBuf) {
