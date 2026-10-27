@@ -104,6 +104,13 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await tickets(), t1 + 11);
 assert.match(await page.textContent('#overT'), /Eleven floors\. So close\./);
 
+// Highrise open in a second tab too, from before the next game.
+const other = await ctx.newPage();
+other.on('pageerror', e => problems.push('second tab: ' + e.message));
+await other.goto(base + 'highrise/');
+await other.waitForFunction(() => window.highrise);
+const gamesBefore = await page.evaluate(() => highrise.saved.games);
+
 // All fifteen: the trophy and 200 more.
 const t2 = await tickets();
 await page.click('#again');
@@ -117,6 +124,17 @@ assert.equal(await tickets(), t2 + 215);
 const shelf = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes);
 assert.equal(shelf['trophy-highrise'], 1, 'the trophy is on the shelf');
 assert.deepEqual(await page.evaluate(() => [highrise.saved.best, highrise.saved.tops]), [15, 1]);
+
+// The second tab plays a short game after that: it adds to the save as it is now, not as it was when it opened.
+await other.evaluate(() => highrise.start());
+for (let i = 0; i < 2; i++) { await other.waitForFunction(() => highrise.ready, null, { timeout: 5000 }); await other.evaluate(() => highrise.stopAt(3)); }
+await other.waitForFunction(() => highrise.ready, null, { timeout: 5000 });
+await other.evaluate(() => highrise.stopAt(0));
+await other.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+const kept = await other.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')));
+assert.deepEqual([kept.best, kept.tops, kept.games], [15, 1, gamesBefore + 2], 'the top-out in the other tab is kept, and both games count');
+assert.equal(await other.textContent('#overBest'), 'Highest: floor 15');
+await other.close();
 
 // A wide screen: the tower in the middle, its controls standing beside it, nothing sideways.
 await page.setViewportSize({ width: 1280, height: 860 });

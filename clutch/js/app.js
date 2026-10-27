@@ -21,7 +21,11 @@ function load() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch { /* none yet, or storage is off */ }
   s = s && typeof s === 'object' ? s : {};
-  return { goes: 0, sound: true, ...s, won: s.won && typeof s.won === 'object' ? { ...s.won } : {} };
+  // (numbers checked, so a hand-edited or broken one can't stop the page or turn a count into text)
+  const count = v => (Number.isFinite(+v) ? +v : 0);
+  const won = {};
+  if (s.won && typeof s.won === 'object') for (const [kind, n] of Object.entries(s.won)) won[kind] = count(n);
+  return { sound: true, ...s, goes: count(s.goes), won };
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the claw still works */ }
@@ -211,6 +215,17 @@ $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 addEventListener('free-play:wallet', () => hud());
 addEventListener('pageshow', () => hud()); // back from the floor, where tickets may have been spent
+
+// Clutch open in another tab, or this page brought back by Back as it was: look at the save again, so a go here adds
+// to what's there now instead of writing an old copy over it.
+function reread() {
+  Object.assign(saved, load());
+  sound.setEnabled(saved.sound);
+  soundLabel();
+  hud();
+}
+addEventListener('storage', e => { if (e.key === KEY) reread(); });
+addEventListener('pageshow', e => { if (e.persisted) reread(); });
 
 // ---------- every frame ----------
 let last = performance.now(), owed = 0;

@@ -9,7 +9,7 @@ import { SHELF } from '../shared/prizes.js';
 import { dayKey } from '../roll-up/js/daily.js';
 
 const $ = id => document.getElementById(id);
-const fmt = n => Number(n).toLocaleString('en-US');
+const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
 const readSave = key => {
   try { const v = JSON.parse(localStorage.getItem(key)); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
 };
@@ -17,7 +17,7 @@ const readSave = key => {
 function machines() {
   // Roll Up: today's card first, since it changes every day; then the best game.
   const ru = readSave('free-play.roll-up');
-  const today = ru.daily && ru.daily.key === dayKey() ? ru.daily : null;
+  const today = ru.daily && ru.daily.key === dayKey() && Array.isArray(ru.daily.balls) ? ru.daily : null;
   const card = today
     ? `Today's card: ${fmt(today.score)}, ${today.balls.filter(b => b.hit).length} of 9 calls.`
     : "Today's card is ready: nine called shots.";

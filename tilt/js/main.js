@@ -55,6 +55,17 @@ function showTickets() { $('tixT').textContent = fmt(wallet.read().tickets); }
 addEventListener('free-play:wallet', showTickets);
 addEventListener('pageshow', showTickets); // back from the floor, where tickets may have been spent
 
+// Tilt open in another tab, or this page brought back by Back as it was: look at the save again, so a game ending here
+// goes into the top five as it is now instead of writing an old list over it.
+function reread() {
+  Object.assign(store, load());
+  setSound(store.sound !== false);
+  soundLabel();
+  showBest();
+}
+addEventListener('storage', e => { if (e.key === KEY) reread(); });
+addEventListener('pageshow', e => { if (e.persisted) reread(); });
+
 // ---------- layout ----------
 function resize() {
   const st = $('stage'), r = st.getBoundingClientRect();

@@ -27,8 +27,12 @@ const saved = load();
 function load() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch { /* none yet, or storage is off */ }
-  return { best: 0, games: 0, sound: true, ...(s && typeof s === 'object' ? s : {}) };
+  s = { best: 0, games: 0, sound: true, ...(s && typeof s === 'object' ? s : {}) };
+  for (const k of ['best', 'games']) s[k] = Number.isFinite(+s[k]) ? +s[k] : 0; // a hand-edited or broken number
+  return s;
 }
+// Today's card, if it's been played: a card saved without its balls doesn't count.
+const playedToday = () => { const d = saved.daily; return d && d.key === dayKey() && Array.isArray(d.balls) ? d : null; };
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the game still plays */ }
 }
@@ -327,7 +331,7 @@ $('again').addEventListener('click', () => start());
 
 // Today's card: play it once a day; after that the button shows how it went.
 function dailyButton() {
-  const d = saved.daily, done = d && d.key === dayKey();
+  const d = playedToday(), done = !!d;
   $('daily').classList.toggle('done', !!done);
   $('daily').textContent = done ? `Today: ${d.score}` : "Today's card";
   $('dailyHow').textContent = done
@@ -336,15 +340,15 @@ function dailyButton() {
 }
 $('daily').addEventListener('click', () => {
   sound.unlock();
-  const d = saved.daily;
-  if (d && d.key === dayKey()) showOver(d, false);
+  const d = playedToday();
+  if (d) showOver(d, false);
   else start(true);
 });
 dailyButton();
 
 $('share').addEventListener('click', async () => {
   const d = saved.daily;
-  if (!d) return;
+  if (!d || !Array.isArray(d.balls)) return;
   const text = shareLine(d.key, d.score, d.balls.map(b => b.hit));
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
     try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
@@ -385,6 +389,18 @@ $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 addEventListener('free-play:wallet', hud);
 addEventListener('pageshow', hud); // back from the floor, where tickets may have been spent
+
+// Roll Up open in another tab, or this page brought back by Back as it was: look at the save again, so a game ending
+// here adds to what's there now (today's card among it) instead of writing an old copy over it.
+function reread() {
+  Object.assign(saved, load());
+  sound.setEnabled(saved.sound);
+  soundLabel();
+  dailyButton();
+  titleBest();
+}
+addEventListener('storage', e => { if (e.key === KEY) reread(); });
+addEventListener('pageshow', e => { if (e.persisted) reread(); });
 
 // ---------- every frame ----------
 let last = performance.now();
@@ -434,7 +450,8 @@ function update(dt) {
 }
 
 hud();
-$('titleBest').textContent = saved.best ? `Best: ${saved.best}` : '';
+function titleBest() { $('titleBest').textContent = saved.best ? `Best: ${saved.best}` : ''; }
+titleBest();
 requestAnimationFrame(tick);
 
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {

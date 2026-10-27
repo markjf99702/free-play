@@ -21,7 +21,9 @@ const saved = load();
 function load() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch { /* none yet, or storage is off */ }
-  return { best: 0, games: 0, tops: 0, sound: true, ...(s && typeof s === 'object' ? s : {}) };
+  s = { best: 0, games: 0, tops: 0, sound: true, ...(s && typeof s === 'object' ? s : {}) };
+  for (const k of ['best', 'games', 'tops']) s[k] = Number.isFinite(+s[k]) ? +s[k] : 0; // a hand-edited or broken number
+  return s;
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the tower still builds */ }
@@ -207,6 +209,17 @@ $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 addEventListener('free-play:wallet', hud);
 addEventListener('pageshow', hud); // back from the floor, where tickets may have been spent
+
+// Highrise open in another tab, or this page brought back by Back as it was: look at the save again, so a game ending
+// here adds to what's there now instead of writing an old copy over it.
+function reread() {
+  Object.assign(saved, load());
+  sound.setEnabled(saved.sound);
+  soundLabel();
+  hud();
+}
+addEventListener('storage', e => { if (e.key === KEY) reread(); });
+addEventListener('pageshow', e => { if (e.persisted) reread(); });
 
 // ---------- every frame ----------
 let last = performance.now();

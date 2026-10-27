@@ -26,7 +26,9 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch { /* none yet, or storage is off */ }
   s = s && typeof s === 'object' ? s : {};
   const cup = s.cup && Number.isInteger(s.cup.left) && s.cup.left > 0 && s.cup.left <= CUP ? { left: s.cup.left, won: Math.max(0, Math.floor(s.cup.won) || 0) } : null;
-  return { best: 0, cups: 0, sound: true, ...s, cup };
+  s = { best: 0, cups: 0, sound: true, ...s, cup };
+  for (const k of ['best', 'cups', 'prizes']) if (k in s) s[k] = Number.isFinite(+s[k]) ? +s[k] : 0; // a hand-edited or broken number
+  return s;
 }
 function save() {
   saved.field = machine.save();
@@ -249,6 +251,17 @@ $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 addEventListener('free-play:wallet', () => hud());
 addEventListener('pageshow', () => hud()); // back from the floor, where tickets may have been spent
+
+// Topple open in another tab, or this page brought back by Back as it was: look at the save again, so a cup ending here
+// adds to what's there now instead of writing an old copy over it. The deck and the cup are this page's own.
+function reread() {
+  Object.assign(saved, { ...load(), field: saved.field, cup: saved.cup });
+  sound.setEnabled(saved.sound);
+  soundLabel();
+  hud();
+}
+addEventListener('storage', e => { if (e.key === KEY) reread(); });
+addEventListener('pageshow', e => { if (e.persisted) reread(); });
 // the coins stay where they are for next time
 addEventListener('pagehide', save);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });

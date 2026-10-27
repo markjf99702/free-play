@@ -239,6 +239,28 @@ assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'loll
 await page.click('.fp-x');
 assert.equal(await page.textContent('#tix'), '120');
 
+// Saves with an odd value in them still open: a best of null (what a NaN is saved as), and today's card saved
+// without its balls. (The saves there were are put back after.)
+const ODD = ['free-play.popgun', 'free-play.bonkers', 'free-play.hoops', 'free-play.roll-up'];
+const saves = await page.evaluate(keys => keys.map(k => localStorage.getItem(k)), ODD);
+const day = new Date(), today = [day.getFullYear(), day.getMonth() + 1, day.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+await page.evaluate(([keys, today]) => {
+  for (const k of keys) localStorage.setItem(k, JSON.stringify({ best: null, rounds: 3 }));
+  localStorage.setItem('free-play.roll-up', JSON.stringify({ best: 120, games: 4, daily: { key: today, score: 5 } }));
+}, [ODD, today]);
+for (const [path, name] of [['popgun/', 'popgun'], ['bonkers/', 'bonkers'], ['hoops/', 'hoops']]) {
+  await page.goto(base + path);
+  await page.waitForFunction(name => !!window[name], name, { timeout: 5000 });
+  assert.equal(await page.textContent('#titleBest'), 'Best: 0.', `${name} opens with a best of null`);
+}
+await page.goto(base + 'roll-up/');
+await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
+assert.equal(await page.textContent('#daily'), "Today's card", "a card with no balls isn't today's played card");
+await page.goto(base);
+await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
+assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready: nine called shots. Best 120.");
+await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [ODD, saves]);
+
 // Every file the pages loaded is kept for offline.
 const shell = [...(await readFile(join(root, 'sw.js'), 'utf8')).match(/SHELL = \[([^\]]*)\]/)[1].matchAll(/'([^']*)'/g)].map(m => m[1]);
 assert.deepEqual([...loaded].filter(f => f !== 'sw.js' && !shell.includes(f)), [], 'files the pages load but sw.js does not keep');
