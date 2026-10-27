@@ -25,7 +25,8 @@ function load() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch { /* none yet, or storage is off */ }
   s = s && typeof s === 'object' ? s : {};
-  const cup = s.cup && Number.isInteger(s.cup.left) && s.cup.left > 0 && s.cup.left <= CUP ? { left: s.cup.left, won: Math.max(0, Math.floor(s.cup.won) || 0) } : null;
+  // a cup still being played, or one whose last coin went down just before leaving (finished when it comes back)
+  const cup = s.cup && Number.isInteger(s.cup.left) && s.cup.left >= 0 && s.cup.left <= CUP ? { left: s.cup.left, won: Math.max(0, Math.floor(s.cup.won) || 0) } : null;
   s = { best: 0, cups: 0, sound: true, ...s, cup };
   for (const k of ['best', 'cups', 'prizes']) if (k in s) s[k] = Number.isFinite(+s[k]) ? +s[k] : 0; // a hand-edited or broken number
   return s;
@@ -70,6 +71,9 @@ if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), documen
 
 // ---------- the cup, and dropping coins ----------
 let cup = saved.cup;     // { left, won }: the coins still in it and the tickets this cup has won, or null between cups
+// The cup just finished, while its card is up: coins that still go over count for it, on the card and towards the
+// best cup, until Another cup. { won, before: the best cup before it, first: whether it was the first cup }
+let done = null;
 let aim = DECK.W / 2;    // where the chute is, mm across
 let paused = false, timeScale = 1, lastDrop = 0, lastFall = 0, ended = false;
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
@@ -146,6 +150,7 @@ function happened() {
       const n = f.kind === 'gold' ? GOLD : 1;
       wallet.pay(n);
       if (cup) cup.won += n;
+      else if (done) lateCoins(n);
       sound.won(f.kind === 'gold');
       // coins going over together add up in one pop, rather than a row of +1s on top of each other
       const near = pops.find(p => p.n && p.t < 0.4 && Math.abs(p.x - f.x) < 75);
@@ -163,7 +168,8 @@ function restockSoon() {
 
 function say(text) { $('live').textContent = text; }
 
-// The cup's empty once the last coin's down and the pile has gone quiet (or long enough has passed).
+// The cup's empty once the last coin's down and the pile has gone quiet (or long enough has passed). The shelf may
+// still push a few more over after that: they count for the cup too, on its card (see lateCoins).
 function checkEnd(now) {
   if (!cup || cup.left > 0 || ended) return;
   const quiet = now - Math.max(lastDrop, lastFall);
@@ -175,25 +181,33 @@ let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
 function endCup() {
   ended = true;
-  const won = cup.won;
-  const first = !saved.cups;
+  done = { won: cup.won, before: saved.best || 0, first: !saved.cups };
   saved.cups = (saved.cups || 0) + 1;
-  const isBest = won > (saved.best || 0) && !first;
-  if (won > (saved.best || 0)) saved.best = won;
   cup = null;
-  save();
-  $('overT').textContent = `${CUP} coins, ${won} ${won === 1 ? 'ticket' : 'tickets'}`;
-  $('overBest').textContent = isBest ? 'A new best cup.' : `Best cup: ${saved.best} tickets`;
+  showDone();
   $('over').hidden = false;
   feeding();
-  feeding = feed($('payout'), won, { tick: () => sound.ticket() });
+  feeding = feed($('payout'), done.won, { tick: () => sound.ticket() });
   $('again').focus({ preventScroll: true });
+}
+function lateCoins(n) {
+  done.won += n;
+  showDone();
+  feeding();
+  feeding = feed($('payout'), done.won, { fresh: false });
+}
+function showDone() {
+  const { won, before, first } = done;
+  if (won > (saved.best || 0)) saved.best = won;
+  save();
+  $('overT').textContent = `${CUP} coins, ${won} ${won === 1 ? 'ticket' : 'tickets'}`;
+  $('overBest').textContent = won > before && !first ? 'A new best cup.' : `Best cup: ${saved.best} tickets`;
   hud();
 }
 
 // ---------- the scoreboard ----------
 function hud(bump = false) {
-  $('won').textContent = cup ? cup.won : 0;
+  $('won').textContent = cup ? cup.won : done ? done.won : 0;
   $('tix').textContent = wallet.read().tickets;
   const left = cup ? cup.left : 0;
   $('left').textContent = left;
@@ -202,7 +216,7 @@ function hud(bump = false) {
   $('drop').disabled = !left;
   if (bump) { const b = $('won'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
   $('titleBest').textContent = saved.cups ? `Best cup: ${saved.best} tickets.` : '';
-  $('play').textContent = cup ? 'Carry on' : 'Play';
+  $('play').textContent = cup && cup.left > 0 ? 'Carry on' : 'Play';
 }
 
 // ---------- cards ----------
@@ -211,6 +225,7 @@ function start() {
   $('title').hidden = true;
   $('over').hidden = true;
   feeding();
+  done = null;
   if (!cup) { cup = { left: CUP, won: 0 }; ended = false; }
   hud();
   save();
@@ -288,6 +303,9 @@ function tick(now) {
 }
 
 hud();
+// Back to a cup whose last coin went down just before leaving: it's finished, so its card comes up instead of the
+// title card (and whatever the pile still pushes over counts for it).
+if (cup && cup.left === 0) { $('title').hidden = true; endCup(); }
 requestAnimationFrame(tick);
 
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {

@@ -41,6 +41,8 @@ const reloaded = () => page.waitForFunction(() => topple.machine.ready);
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
 assert.equal(await page.textContent('#play'), 'Play');
 await page.click('#play');
+// (what the pocket had as the cup began: everything the cup pushes over goes on top)
+const atStart = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets - topple.cup.won);
 assert.ok(await page.isHidden('#title'));
 assert.equal(await left(), 20);
 assert.equal(await page.textContent('#left'), '20');
@@ -115,6 +117,18 @@ const won = Number((await page.textContent('#overT')).match(/(\d+) tickets?$/)[1
 assert.ok(won >= mid);
 assert.ok(await tickets() >= won, 'the tickets are in the wallet');
 assert.equal(await page.evaluate(() => topple.saved.cups), 1);
+// Coins the pile still pushes over while the card is up count for the cup: one nudged over the edge now, and any the
+// shelf pushes. Once the deck is quiet, the card says what the pocket got. (Read together, in case one more goes over
+// while the test looks.)
+await page.evaluate(() => { const c = topple.machine.pieces.find(p => p.layer === 'deck' && p.kind === 'coin'); window.Matter.Body.setPosition(c, { x: 150, y: 252 }); });
+await page.waitForFunction(n => Number(document.getElementById('overT').textContent.match(/(\d+) tickets?$/)[1]) > n, won, { timeout: 5000 });
+await page.waitForTimeout(3000);
+const [pocket, card, scoreboard, best] = await page.evaluate(() => [JSON.parse(localStorage.getItem('free-play.wallet')).tickets,
+  Number(document.getElementById('overT').textContent.match(/(\d+) tickets?$/)[1]), document.getElementById('won').textContent, topple.saved.best]);
+assert.equal(pocket - atStart, card, 'the card counts every ticket the cup paid');
+assert.equal(scoreboard, String(card), "the scoreboard keeps the cup's figure while its card is up");
+assert.equal(best, card, 'and the best cup is all of it');
+await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), card, { timeout: 5000 });
 await page.click('#again');
 assert.equal(await left(), 20, 'another cup');
 
