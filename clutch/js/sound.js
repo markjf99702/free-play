@@ -135,6 +135,12 @@ export function slip() {
   burst('lowpass', 500, 0.7, 0.25, 0.12, 0.32);
 }
 
+// A go that came back with nothing: a quiet falling two-note.
+export function nothing() {
+  if (!ac || !enabled) return;
+  tone('triangle', 659, 659, 0.09, 0.22); tone('triangle', 494, 494, 0.09, 0.36, 0.17);
+}
+
 // Won: the plush thumps down the chute and into the door, and the machine plays its little tune.
 export function won(rare) {
   if (!ac || !enabled) return;

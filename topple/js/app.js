@@ -26,8 +26,10 @@ function load() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch { /* none yet, or storage is off */ }
   s = s && typeof s === 'object' ? s : {};
-  // a cup still being played, or one whose last coin went down just before leaving (finished when it comes back)
-  const cup = s.cup && Number.isInteger(s.cup.left) && s.cup.left >= 0 && s.cup.left <= CUP ? { left: s.cup.left, won: Math.max(0, Math.floor(s.cup.won) || 0) } : null;
+  // a cup still being played, or one whose last coin went down just before leaving (finished when it comes back), with
+  // the prizes it's pushed off (a cup saved before it kept them has none)
+  const prizes = Array.isArray(s.cup?.prizes) ? s.cup.prizes.filter(k => TRINKETS.some(t => t.kind === k)) : [];
+  const cup = s.cup && Number.isInteger(s.cup.left) && s.cup.left >= 0 && s.cup.left <= CUP ? { left: s.cup.left, won: Math.max(0, Math.floor(s.cup.won) || 0), prizes } : null;
   s = { best: 0, cups: 0, sound: true, ...s, cup };
   for (const k of ['best', 'cups', 'prizes']) if (k in s) s[k] = Number.isFinite(+s[k]) ? +s[k] : 0; // a hand-edited or broken number
   return s;
@@ -77,9 +79,9 @@ layout();
 if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), document.fonts.load('600 15px Figtree')]).then(() => draw.repaint()).catch(() => {});
 
 // ---------- the cup, and dropping coins ----------
-let cup = saved.cup;     // { left, won }: the coins still in it and the tickets this cup has won, or null between cups
+let cup = saved.cup;     // { left, won, prizes }: the coins still in it, the tickets and the prizes (kinds) this cup has won, or null between cups
 // The cup just finished, while its card is up: coins that still go over count for it, on the card and towards the
-// best cup, until Another cup. { won, before: the best cup before it, first: whether it was the first cup }
+// best cup, until Another cup. { won, prizes, before: the best cup before it, first: whether it was the first cup }
 let done = null;
 let aim = DECK.W / 2;    // where the chute is, mm across
 let paused = false, timeScale = 1, lastDrop = 0, lastFall = 0, ended = false;
@@ -139,7 +141,7 @@ function happened() {
   for (const f of machine.takeFalls()) {
     lastFall = performance.now();
     if (f.edge === 'side') {
-      if (f.kind === 'prize') { toast(`The ${trinket(f.prize).name.toLowerCase()} went down the side. There'll be another one on in a moment.`); restockSoon(); }
+      if (f.kind === 'prize') { sound.gone(); toast(`The ${trinket(f.prize).name.toLowerCase()} went down the side. There'll be another one on in a moment.`); restockSoon(); }
       else sound.lost();
       continue;
     }
@@ -147,6 +149,9 @@ function happened() {
       const t = trinket(f.prize);
       wallet.give(t);
       saved.prizes = (saved.prizes || 0) + 1;
+      // the cup's card says so too (once it's up, a prize the pile still pushes over goes on it as well)
+      if (cup) cup.prizes.push(f.prize);
+      else if (done) { done.prizes.push(f.prize); showDone(); }
       sound.prize();
       toast(`You won ${t.say}! It's on your shelf.`);
       say(`You won ${t.say}.`);
@@ -170,7 +175,11 @@ function happened() {
 let restockTimer = 0;
 function restockSoon() {
   clearTimeout(restockTimer);
-  restockTimer = setTimeout(() => machine.restock(nextPrize()), 1500);
+  restockTimer = setTimeout(() => {
+    const had = machine.pieces.some(p => p.kind === 'prize');
+    machine.restock(nextPrize());
+    if (!had && machine.pieces.some(p => p.kind === 'prize')) { sound.restock(); say('Another prize is on the shelf.'); }
+  }, 1500);
 }
 
 function say(text) { $('live').textContent = text; }
@@ -188,7 +197,7 @@ let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
 function endCup() {
   ended = true;
-  done = { won: cup.won, before: saved.best || 0, first: !saved.cups };
+  done = { won: cup.won, prizes: cup.prizes, before: saved.best || 0, first: !saved.cups };
   saved.cups = (saved.cups || 0) + 1;
   cup = null;
   showDone();
@@ -209,9 +218,27 @@ function showDone() {
   if (won > (saved.best || 0)) saved.best = won;
   save();
   $('overT').textContent = `${CUP} coins, ${fmt(won)} ${won === 1 ? 'ticket' : 'tickets'}`;
+  wonPrizes(done.prizes);
   bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${fmt(before)} ${before === 1 ? 'ticket' : 'tickets'}.`], `Best cup: ${fmt(saved.best)} tickets`);
   hud();
 }
+// The prizes a cup pushed off, under its card's heading: 'And a toy car and a lucky keyring for your shelf.'
+const NUMBER = ['', 'a', 'two', 'three', 'four', 'five', 'six'];
+const plural = name => name + (/(ch|sh|s|x)$/.test(name) ? 'es' : 's');
+function wonPrizes(kinds) {
+  const el = $('overPrize');
+  el.hidden = !kinds.length;
+  if (!kinds.length) return;
+  const counts = new Map();
+  for (const k of kinds) counts.set(k, (counts.get(k) || 0) + 1);
+  const said = [...counts].map(([k, n]) => (n === 1 ? trinket(k).say : `${NUMBER[n] || n} ${plural(trinket(k).name.toLowerCase())}`));
+  const list = said.length > 1 ? `${said.slice(0, -1).join(', ')} and ${said.at(-1)}` : said[0];
+  const pics = document.createElement('span');
+  pics.className = 'e'; pics.setAttribute('aria-hidden', 'true');
+  pics.textContent = kinds.map(k => trinket(k).emoji).join('');
+  el.replaceChildren(`And ${list} for your shelf.`, pics);
+}
+
 // A new best cup rings out once its tickets are out (or a late coin makes it one), and the sign's bulbs blaze: once a cup.
 function cheer() {
   if (!done || done.cheered || !newBest()) return;
@@ -241,7 +268,7 @@ function start() {
   $('over').hidden = true;
   feeding();
   done = null;
-  if (!cup) { cup = { left: CUP, won: 0 }; ended = false; }
+  if (!cup) { cup = { left: CUP, won: 0, prizes: [] }; ended = false; }
   hud();
   save();
 }

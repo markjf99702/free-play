@@ -132,6 +132,10 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .lede { margin: 0 0 8px; font-weight: 600; text-wrap: balance; }
 .how { margin: 0 0 14px; font-size: 14px; color: var(--ink2); }
 .best { margin: 12px 0 0; font-size: 13px; color: var(--ink3); min-height: 1em; }
+/* the prizes a cup pushed off, under its card's heading */
+.won-prize { margin: -4px 0 10px; font-weight: 600; color: var(--ink); text-wrap: balance; }
+.won-prize[hidden] { display: none; }
+.won-prize .e { margin-left: 8px; font: 24px/1 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; vertical-align: -3px; letter-spacing: 2px; }
 .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .col { display: grid; gap: 8px; margin-bottom: 14px; }
 .big, .plain {

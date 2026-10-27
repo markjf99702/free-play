@@ -217,6 +217,37 @@ await page.goto(base);
 assert.match(await page.textContent('#clutchStat'), new RegExp(`^${n} plush won`));
 assert.match(await page.textContent('#shelf'), /[🐻🐥🐸👻🐧👽🌟]/u);
 
+// Back at the claw. (The machine's report of a go is held back here, to make the goes the test needs.)
+await page.goto(base + 'clutch/');
+await page.click('#play');
+await page.evaluate(() => {
+  clutch.speed = 4;
+  const m = clutch.machine, take = m.take, takeWon = m.takeWon;
+  window.__hold = { slips: true, wins: true, extra: [], won: [] };
+  m.take = () => { const e = take().filter(e => !(__hold.slips && e === 'slip')); return [...e, ...__hold.extra.splice(0)]; };
+  m.takeWon = () => { const w = takeWon(); return [...(__hold.wins ? [] : w), ...__hold.won.splice(0)]; };
+  // what's read out, as it changes
+  window.__said = [];
+  const live = document.getElementById('live');
+  new MutationObserver(() => __said.push(live.textContent)).observe(live, { childList: true, characterData: true, subtree: true });
+});
+// A go that comes back with nothing caught and nothing slipped says so.
+await page.evaluate(() => clutch.go(320));
+await page.waitForFunction(() => clutch.state === 'move');
+await page.waitForFunction(() => clutch.state === 'ready', null, { timeout: 30000 });
+await page.waitForFunction(() => document.getElementById('live').textContent === 'Nothing that time.', null, { timeout: 1000 });
+// The same words twice are read out twice: the line is cleared before each.
+await page.evaluate(() => { __said.length = 0; __hold.extra.push('slip'); });
+await page.waitForFunction(() => document.getElementById('live').textContent === 'It slipped.', null, { timeout: 2000 });
+await page.evaluate(() => __hold.extra.push('slip'));
+await page.waitForFunction(() => __said.filter(t => t === 'It slipped.').length === 2, null, { timeout: 2000 });
+assert.deepEqual(await page.evaluate(() => __said), ['', 'It slipped.', '', 'It slipped.']);
+// Three plush out of the door at once: the card says three.
+await page.evaluate(() => { __hold.won.push({ kind: 'frog', tone: 0.1 }, { kind: 'bear', tone: 0.5 }, { kind: 'ghost', tone: 0.2 }); __hold.extra.push('ready'); });
+await page.waitForSelector('#win:not([hidden])', { timeout: 3000 });
+assert.equal(await page.textContent('#winT'), 'You got a plush frog, a plush bear and a plush ghost.');
+assert.equal(await page.textContent('#winHow'), "Three at once! They're on your shelf now, with your prizes.");
+
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
 server.close();

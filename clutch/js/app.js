@@ -116,18 +116,26 @@ addEventListener('keyup', e => { if (HOLD_KEYS.includes(e.key)) release(); });
 
 // ---------- a go ----------
 let door = null, glow = 0;
+let go = null;           // the go under way, once the claw drops: { slipped }
 const wins = [];
 function happened() {
+  let ready = false;
   for (const e of machine.take()) {
     if (e === 'start') armed = false;
-    else if (e === 'drop') { aim = null; saved.goes++; save(); } // a go once the claw drops: a tap isn't one
+    else if (e === 'drop') { aim = null; saved.goes++; save(); go = { slipped: false }; } // a go once the claw drops: a tap isn't one
     else if (e === 'short') { aim = null; nudge(); }
     else if (e === 'close') sound.close();
     else if (e === 'release') sound.open();
-    else if (e === 'slip') { sound.slip(); say('It slipped.'); }
-    else if (e === 'ready' && wins.length) showWin();
+    else if (e === 'slip') { sound.slip(); say('It slipped.'); if (go) go.slipped = true; }
+    else if (e === 'ready') ready = true;
   }
   for (const w of machine.takeWon()) won(w);
+  // the claw's home: what came out of the door, or (nothing caught, nothing slipped) a word that nothing did
+  if (ready) {
+    if (wins.length) showWin();
+    else if (go && !go.slipped) { sound.nothing(); say('Nothing that time.'); }
+    go = null;
+  }
 }
 
 function won(w) {
@@ -162,7 +170,7 @@ function showWin() {
   $('winT').textContent = `You got ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]}.`;
   $('winHow').textContent = got.some(w => w.kind === 'star')
     ? "The lucky star! They don't come along often. It's on your shelf now."
-    : got.length > 1 ? "Two at once! They're on your shelf now, with your prizes." : "It's on your shelf now, with your prizes.";
+    : got.length > 1 ? `${['', '', 'Two', 'Three', 'Four', 'Five'][got.length] || got.length} at once! They're on your shelf now, with your prizes.` : "It's on your shelf now, with your prizes.";
   const art = $('winArt'), r = Math.min(2, devicePixelRatio || 1);
   art.width = 220 * r; art.height = 170 * r;
   const c = art.getContext('2d');
@@ -182,7 +190,14 @@ function closeWin() {
 $('more').addEventListener('click', closeWin);
 $('winShelf').addEventListener('click', () => { closeWin(); openPrizes(); });
 
-function say(text) { $('live').textContent = text; }
+// What's read out: cleared first, and the words put back a moment later, so the same words again ('It slipped.') are
+// read again.
+let saying = 0;
+function say(text) {
+  $('live').textContent = '';
+  clearTimeout(saying);
+  saying = setTimeout(() => { $('live').textContent = text; }, 60);
+}
 
 // ---------- the scoreboard ----------
 function hud(bump = false) {

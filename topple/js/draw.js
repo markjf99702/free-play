@@ -8,6 +8,7 @@ import { DECK, PUSHER, COIN, CHUTE, POCKETS, PRIZE } from './machine.js';
 const WALL_TOP = 168;                         // how high the back and side walls go, mm
 const POCKET = { y: 96, r: 13 };              // the bonus pockets along the back wall
 const RAIL = 148;                             // the chute's rail
+const SIGN = POCKET.y - 33;                   // the back wall's sign, under the pockets (the chute rides over them)
 // The camera: above and in front of the machine, looking down at the middle of the deck.
 const EYE = { x: DECK.W / 2, y: 470, z: 480 }, AT = { y: 0, z: 118 };
 const F = (() => { const dy = AT.y - EYE.y, dz = AT.z - EYE.z, n = Math.hypot(dy, dz); return { y: dy / n, z: dz / n }; })();
@@ -123,13 +124,13 @@ export function createDraw(canvas) {
       c.beginPath(); c.moveTo(sun.x, sun.y); c.lineTo(sun.x + Math.cos(a0) * L, sun.y + Math.sin(a0) * L); c.lineTo(sun.x + Math.cos(a1) * L, sun.y + Math.sin(a1) * L); c.fill();
     }
     c.restore();
-    // the pockets, dark (their lights are lit each frame), and a label over them
+    // the pockets, dark (their lights are lit each frame), and a sign under them
     for (let i = 0; i < POCKETS; i++) {
       const p = at(((i + 0.5) / POCKETS) * DECK.W, POCKET.y, 0);
       c.fillStyle = C.chrome; c.beginPath(); c.ellipse(p.x, p.y, (POCKET.r + 3) * p.s, (POCKET.r + 3) * p.s, 0, 0, Math.PI * 2); c.fill();
       c.fillStyle = '#04090c'; c.beginPath(); c.ellipse(p.x, p.y, POCKET.r * p.s, POCKET.r * p.s, 0, 0, Math.PI * 2); c.fill();
     }
-    const lab = at(DECK.W / 2, POCKET.y + 26, 0);
+    const lab = at(DECK.W / 2, SIGN, 0);
     c.font = `400 ${11 * lab.s}px Bungee, Impact, sans-serif`; c.fillStyle = 'rgba(251, 238, 210, .55)';
     c.fillText('DROP ONE IN THE LIT POCKET', lab.x, lab.y);
     quad(c, [[0, RAIL - 3, 4], [DECK.W, RAIL - 3, 4], [DECK.W, RAIL + 3, 4], [0, RAIL + 3, 4]]);
@@ -320,5 +321,18 @@ export function createDraw(canvas) {
     for (let j = 0; j <= n; j++) { bulb(r.x + inset + j * step, r.y + inset - 1); bulb(r.x + inset + j * step, r.y + r.h - inset + 1); }
   }
 
-  return { resize, repaint, frame, cabinet, railX, at };
+  // Where the back wall's sign is, and the chute's carriage (with a coin in it) at an aim, on the page: for the tests.
+  function sign() {
+    const lab = at(DECK.W / 2, SIGN, 0);
+    ctx.font = `400 ${11 * lab.s}px Bungee, Impact, sans-serif`;
+    const w = ctx.measureText('DROP ONE IN THE LIT POCKET').width, h = 11 * lab.s;
+    return { x: lab.x - w / 2, y: lab.y - h / 2, w, h };
+  }
+  function chute(aim) {
+    const ch = at(aim, RAIL, 6), coin = at(aim, RAIL + 4 + COIN.r, 6);
+    const top = Math.min(ch.y - 9 * ch.s, coin.y);
+    return { x: ch.x - 17 * ch.s, y: top, w: 34 * ch.s, h: ch.y + 15 * ch.s - top };
+  }
+
+  return { resize, repaint, frame, cabinet, railX, at, sign, chute };
 }

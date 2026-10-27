@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { TRINKETS } from '../shared/prizes.js';
 
 const require = createRequire(import.meta.url);
 let pw;
@@ -96,6 +97,16 @@ assert.match(await page.textContent('.fp-toast'), /^You won a/);
 const shelf = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes);
 assert.equal(shelf['trinket-' + prize], 1, 'the prize is on the arcade\'s shelf');
 await page.waitForFunction(() => topple.machine.pieces.some(p => p.kind === 'prize'), null, { timeout: 5000 });
+await page.waitForFunction(() => document.getElementById('live').textContent === 'Another prize is on the shelf.', null, { timeout: 1000 });
+assert.deepEqual(await page.evaluate(() => topple.cup.prizes), [prize], 'the cup keeps the prize it won, for its card');
+
+// The back wall's sign sits under the pockets, where the chute's carriage never covers it, wherever it's aimed.
+const wall = await page.evaluate(() => {
+  const s = topple.draw.sign(), hit = [];
+  for (let x = 12; x <= 288; x += 4) { const c = topple.draw.chute(x); if (c.x < s.x + s.w && s.x < c.x + c.w && c.y < s.y + s.h && s.y < c.y + c.h) hit.push(x); }
+  return hit;
+});
+assert.deepEqual(wall, [], 'the chute covers the sign at these aims');
 
 // Every coin over the front edge is a ticket, paid as it goes over.
 await page.evaluate(() => { topple.speed = 4; });
@@ -115,6 +126,7 @@ await page.evaluate(() => document.fonts.ready);
 assert.equal(await page.textContent('#play'), 'Carry on');
 assert.equal(await left(), 3);
 assert.ok(Math.abs(await page.evaluate(() => topple.machine.pieces.length) - pieces) <= 4, 'the coins on the deck came back');
+assert.deepEqual(await page.evaluate(() => topple.cup.prizes), [prize], 'and so did the prize the cup won');
 await page.click('#play');
 
 // The menu stops the shelf where it is.
@@ -147,6 +159,10 @@ assert.ok(won >= mid);
 assert.ok(await tickets() >= won, 'the tickets are in the wallet');
 assert.equal(await page.evaluate(() => topple.saved.cups), 3);
 assert.deepEqual(await bestLine(), { text: 'A new best cup! The old one was 1 ticket.', big: true, size: '18px' });
+// the prize it pushed off mid-cup is on its card too
+const trinket = TRINKETS.find(t => t.kind === prize);
+assert.equal(await page.textContent('#overPrize'), `And ${trinket.say} for your shelf.${trinket.emoji}`);
+assert.ok(await page.isVisible('#overPrize'));
 await page.waitForFunction(() => topple.glow > 0, null, { timeout: 4000 }); // the sign's bulbs blaze for it, once the tickets are out
 // Coins the pile still pushes over while the card is up count for the cup: one nudged over the edge now, and any the
 // shelf pushes. Once the deck is quiet, the card says what the pocket got. (Read together, in case one more goes over
@@ -162,6 +178,11 @@ assert.equal(best, card, 'and the best cup is all of it');
 await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), card, { timeout: 5000 });
 await page.click('#again');
 assert.equal(await left(), 20, 'another cup');
+assert.deepEqual(await page.evaluate(() => topple.cup.prizes), [], 'with no prizes yet');
+// A prize pushed off the side goes to the house, and isn't the cup's.
+await page.evaluate(() => { const p = topple.machine.pieces.find(p => p.kind === 'prize'); window.Matter.Body.setPosition(p, { x: -8, y: 215 }); });
+await page.waitForFunction(() => /went down the side/.test(document.querySelector('.fp-toast')?.textContent || ''), null, { timeout: 5000 });
+assert.deepEqual(await page.evaluate(() => topple.cup.prizes), [], 'a prize down the side is not won');
 
 // Leaving the page hushes the pusher's motor, and the sound sleeps until the page is back.
 await page.click('#menuBtn');

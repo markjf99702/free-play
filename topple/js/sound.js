@@ -133,6 +133,18 @@ export function lost() {
   if (!ac || !enabled) return;
   tone('sine', 420, 180, 0.05, 0.25);
 }
+// A prize down the side, card and all: a lower, heavier thud than a coin's.
+export function gone() {
+  if (!ac || !enabled) return;
+  tone('sine', 220, 70, 0.3, 0.32);
+  tone('triangle', 660, 330, 0.22, 0.2);
+  burst('bandpass', 1000, 1.2, 0.6, 0.05);
+}
+// The attendant putting a new prize on the shelf: a small bell.
+export function restock() {
+  if (!ac || !enabled) return;
+  bell(1568, 0, 0.065); bell(2093, 0.1, 0.05);
+}
 
 // The lights chasing along the pockets, and stopping on one.
 export function chase() {
