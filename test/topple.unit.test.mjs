@@ -145,6 +145,38 @@ test('what the machine keeps between visits brings every piece back where it was
   }
 });
 
+test('a deck kept without a prize gets one back straight away', () => {
+  // (left in the moment after a prize went over, before the attendant put the next one on)
+  const a = createMachine(Matter, { random: seeded(11), prizes: ['robot'] });
+  run(a, 1);
+  const kept = JSON.parse(JSON.stringify({ ...a.save(), prize: null }));
+  const b = createMachine(Matter, { random: seeded(12), field: kept, prizes: ['car'] });
+  assert.deepEqual(b.pieces.filter(p => p.kind === 'prize').map(p => p.prize), ['car'], 'a prize sits on the deck');
+  assert.equal(b.pieces.length, a.pieces.length, 'and the coins came back as they were');
+  const c = createMachine(Matter, { random: seeded(13), field: a.save(), prizes: ['car'] });
+  assert.deepEqual(c.pieces.filter(p => p.kind === 'prize').map(p => p.prize), ['robot'], "a kept prize isn't joined by another");
+});
+
+test('coins still coming down when the deck is kept come back on the shelf', () => {
+  const m = createMachine(Matter, { random: seeded(6) });
+  let n = 0;
+  while (m.lights.state !== 'open' && n++ < 60 * 20) m.step();
+  assert.equal(m.lights.state, 'open');
+  m.drop((m.lights.at + 0.5) * DECK.W / POCKETS);
+  assert.ok(m.take().includes('bonus'));
+  m.step(); m.step();
+  assert.ok(m.showering && m.dropping.length === 1, 'the coin is on its way down, and the shower still to come');
+  const coins = m.pieces.filter(p => p.kind !== 'prize'), gold = coins.filter(p => p.kind === 'gold').length;
+  const kept = JSON.parse(JSON.stringify(m.save()));
+  assert.equal(kept.coins.length, coins.length + 1 + 8, 'the coin in the chute and the eight in the shower are kept');
+  const golds = kept.coins.filter(c => c[3] === 1).length;
+  assert.ok(golds >= gold && golds <= gold + 1, 'a gold one in the shower stays gold');
+  const back = createMachine(Matter, { random: seeded(14), field: kept });
+  assert.equal(back.pieces.filter(p => p.kind !== 'prize').length, kept.coins.length, 'and they all come back');
+  const underChute = back.pieces.filter(p => p.layer === 'shelf' && Math.abs(p.position.y - 14) < 0.5).length;
+  assert.ok(underChute >= 9, 'on the shelf, under the chute');
+});
+
 test('a prize is only put on when the last one has gone', () => {
   const m = createMachine(Matter, { random: seeded(9), prizes: ['watch'] });
   m.restock('gem');

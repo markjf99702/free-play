@@ -124,7 +124,11 @@ export function createMachine(Matter, { random = Math.random, field = null, priz
     && c[1] > 0 && c[1] <= DECK.D && c[0] >= -2 && c[0] <= DECK.W + 2 && (c[1] > DECK.D - DECK.gutter - COIN.r || (c[0] > 0 && c[0] < DECK.W));
   const usable = f => f && Array.isArray(f.coins) && f.coins.length < 400 && f.coins.filter(inPlay).length > 40
     && (!f.prize || (typeof f.prize.id === 'string' && [f.prize.x, f.prize.z].every(Number.isFinite)));
-  if (usable(field)) restore(field); else stock();
+  if (usable(field)) {
+    restore(field);
+    // a deck kept in the moment after its prize went over, before the attendant put the next one on, gets one now
+    if (!pieces.some(p => p.kind === 'prize')) restock(prizes[0]);
+  } else stock();
 
   // ---------- a step ----------
   function tick(live = true) {
@@ -217,13 +221,15 @@ export function createMachine(Matter, { random = Math.random, field = null, priz
     addPrize(id, 60 + random() * (DECK.W - 120), 24, 'shelf', (random() - 0.5) * 0.6);
   }
 
-  // What to keep between visits: every piece on the shelf and the deck, and where the pusher is.
+  // What to keep between visits: every piece on the shelf and the deck, and where the pusher is. Coins still on their
+  // way down from the chute, and a shower still to come, are kept as landed on the shelf under the chute.
   function save() {
     const r = n => Math.round(n * 10) / 10;
     const prize = pieces.find(p => p.kind === 'prize');
+    const coming = [...dropping, ...shower].map(d => [r(d.x), CHUTE.z, 1, d.kind === 'gold' ? 1 : 0]);
     return {
       clock: r(clock % PUSHER.period),
-      coins: pieces.filter(p => p.kind !== 'prize').map(p => [r(p.position.x), r(p.position.y), p.layer === 'shelf' ? 1 : 0, p.kind === 'gold' ? 1 : 0]),
+      coins: [...pieces.filter(p => p.kind !== 'prize').map(p => [r(p.position.x), r(p.position.y), p.layer === 'shelf' ? 1 : 0, p.kind === 'gold' ? 1 : 0]), ...coming],
       prize: prize ? { id: prize.prize, x: r(prize.position.x), z: r(prize.position.y), layer: prize.layer === 'shelf' ? 1 : 0, angle: r(prize.angle) } : null,
     };
   }
