@@ -35,6 +35,8 @@ await ctx.addInitScript(() => {
   };
 });
 const page = await ctx.newPage();
+// The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
+const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
@@ -135,15 +137,17 @@ assert.equal(await page.evaluate(() => topple.machine.lip), away, 'the shelf run
 await hide(false);
 await page.click('#resume');
 
-// The last coins, and the cup's done once the pile goes quiet: the card says what it paid.
-await page.evaluate(() => { topple.speed = 4; });
+// The last coins, and the cup's done once the pile goes quiet: the card says what it paid. (After cups with a best of 1.)
+await page.evaluate(() => { topple.speed = 4; Object.assign(topple.saved, { best: 1, cups: 2 }); });
 while (await left() > 0) { await reloaded(); await page.evaluate(() => topple.drop(150)); }
 assert.ok(await page.isDisabled('#drop'), 'an empty cup has nothing to drop');
 await page.waitForFunction(() => !document.getElementById('over').hidden, null, { timeout: 20000 });
 const won = Number((await page.textContent('#overT')).match(/(\d+) tickets?$/)[1]);
 assert.ok(won >= mid);
 assert.ok(await tickets() >= won, 'the tickets are in the wallet');
-assert.equal(await page.evaluate(() => topple.saved.cups), 1);
+assert.equal(await page.evaluate(() => topple.saved.cups), 3);
+assert.deepEqual(await bestLine(), { text: 'A new best cup! The old one was 1 ticket.', big: true, size: '18px' });
+await page.waitForFunction(() => topple.glow > 0, null, { timeout: 4000 }); // the sign's bulbs blaze for it, once the tickets are out
 // Coins the pile still pushes over while the card is up count for the cup: one nudged over the edge now, and any the
 // shelf pushes. Once the deck is quiet, the card says what the pocket got. (Read together, in case one more goes over
 // while the test looks.)

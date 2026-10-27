@@ -184,8 +184,10 @@ export function toast(text, { undo } = {}) {
 }
 
 // The tickets coming out of the machine's slot at the end of a game: the count climbs and the strip grows.
-// `box` is a .fp-payout element; tick() is the page's click for each batch. Returns a function that stops it.
-export function feed(box, n, { tick, fresh = true } = {}) {
+// `box` is a .fp-payout element; tick() is the page's click for each batch. onDone() comes once the last ticket is
+// out (straight away when it isn't a fresh payout), for the page's cheer. Returns a function that stops it (with no
+// onDone).
+export function feed(box, n, { tick, fresh = true, onDone } = {}) {
   const strip = box.querySelector('.fp-strip'), count = box.querySelector('.fp-won b'), word = box.querySelector('.fp-won span');
   word.textContent = n === 1 ? 'ticket' : 'tickets';
   const show = k => {
@@ -193,7 +195,7 @@ export function feed(box, n, { tick, fresh = true } = {}) {
     strip.style.height = Math.min(k, 7) * 22 + (k ? 4 : 0) + 'px';
     strip.style.backgroundPositionY = k * 22 + 'px';
   };
-  if (!fresh) { show(n); return () => {}; }
+  if (!fresh) { show(n); onDone?.(); return () => {}; }
   let k = 0, timer = 0;
   show(0);
   const step = () => {
@@ -201,9 +203,21 @@ export function feed(box, n, { tick, fresh = true } = {}) {
     show(k);
     tick?.();
     if (k < n) timer = setTimeout(step, 55);
+    else onDone?.();
   };
   timer = setTimeout(step, 500);
   return () => clearTimeout(timer);
+}
+
+// The best line under the dispenser. A new best ([headline, what it beat]) is said big and in gold, the old best
+// under it; anything else is the plain line.
+export function bestLine(el, news, plain) {
+  el.classList.toggle('fp-best', !!news);
+  if (!news) { el.textContent = plain; return; }
+  const head = document.createElement('b'), was = document.createElement('span');
+  head.textContent = news[0];
+  was.textContent = news[1];
+  el.replaceChildren(head, ' ', was);
 }
 
 // The markup for a payout, for a page to put in its game-over card.

@@ -105,6 +105,12 @@ export function over() {
   [523, 659, 784, 1047].forEach((f, i) => bell(f, i * 0.11, 0.2));
 }
 
+// A new best, once the tickets are out: four tin bells, climbing.
+export function best() {
+  if (!ac || !enabled) return;
+  [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, i * 0.13, i === 3 ? 0.22 : 0.18, i === 3 ? 1.2 : 0.7));
+}
+
 export function ticket() {
   if (!ac || !enabled) return;
   burst('highpass', 3500, 0.7, 0.16, 0.018);

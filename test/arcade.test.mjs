@@ -161,3 +161,33 @@ test('the prize counter and the tables pay-outs', () => {
   for (const p of PRIZES) assert.match(p.say, /^(a|an) /, `${p.name} is handed over as "a …"`);
   for (const [id, t] of Object.entries(TABLES)) assert.ok(t.perTicket > 0, `Tilt's ${id} table says what a ticket costs`);
 });
+
+// A .fp-payout box as feed() sees it: the strip, the count and its word.
+function payoutBox() {
+  const strip = { style: {} }, count = { textContent: '' }, word = { textContent: '' };
+  return { strip, count, word, querySelector: s => ({ '.fp-strip': strip, '.fp-won b': count, '.fp-won span': word })[s] };
+}
+
+test("the dispenser says when the last ticket is out, and not when it's stopped", async t => {
+  const { feed } = await import('../shared/counter.js');
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const run = ms => { for (let i = 0; i < ms; i += 5) t.mock.timers.tick(5); }; // (a timer set by a timer waits for the next tick)
+  const box = payoutBox();
+  let done = 0, ticks = 0;
+  feed(box, 120, { tick: () => ticks++, onDone: () => done++ });
+  run(500 + 55 * 10);
+  assert.equal(done, 0, 'not while the strip is still feeding');
+  run(5000);
+  assert.equal(done, 1, 'once, when the last ticket is out');
+  assert.equal(box.count.textContent, '120');
+  assert.equal(ticks, 40, 'in batches, a click each');
+  // stopped part-way (another round started): no cheer for it
+  const stop = feed(payoutBox(), 120, { onDone: () => done++ });
+  run(700);
+  stop();
+  run(5000);
+  assert.equal(done, 1, 'a stopped strip has no onDone');
+  // a payout shown again, not fed (today's card played earlier, or late coins): all out at once
+  feed(payoutBox(), 7, { fresh: false, onDone: () => done++ });
+  assert.equal(done, 2);
+});

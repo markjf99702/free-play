@@ -25,6 +25,8 @@ const base = `http://localhost:${server.address().port}/`;
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const page = await ctx.newPage();
+// The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
+const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
@@ -113,7 +115,8 @@ assert.equal(await page.evaluate(() => popgun.gallery.rows[0].targets[0].x), awa
 await hide(false);
 await page.click('#resume');
 
-// The rest of the corks, and the round's over: a ticket for every 20 points.
+// The rest of the corks, and the round's over: a ticket for every 20 points. (After rounds with a best of 40.)
+await page.evaluate(() => Object.assign(popgun.saved, { best: 40, rounds: 2 }));
 const t0 = await tickets();
 await page.evaluate(() => { popgun.speed = 3; });
 while (!(await page.evaluate(() => popgun.gallery.over))) {
@@ -135,6 +138,10 @@ assert.ok(score > 100, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.equal(await tickets(), t0 + Math.floor(score / 20));
 assert.equal(await page.evaluate(() => popgun.saved.best), score);
+// a new best, said big and in gold, and the sign's bulbs blaze for it once the tickets are out
+assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 40.', big: true, size: '18px' });
+await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), Math.floor(score / 20), { timeout: 8000 });
+await page.waitForFunction(() => popgun.glow > 0, null, { timeout: 1000 });
 await page.click('#again');
 assert.equal(await corks(), 20, 'another round, another twenty corks');
 assert.equal(await page.textContent('#score'), '0');

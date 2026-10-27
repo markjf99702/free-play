@@ -35,6 +35,8 @@ await ctx.addInitScript(() => {
   };
 });
 const page = await ctx.newPage();
+// The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
+const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
@@ -103,8 +105,8 @@ const first = await page.evaluate(() => rollUp.score);
 assert.ok([0, 10, 20, 30, 40, 50, 100].includes(first), `the first ball scored ${first}`);
 assert.match(await page.textContent('#live'), /points/, 'the score is read out');
 
-// The other eight, quickly.
-await page.evaluate(() => { rollUp.speed = 6; });
+// The other eight, quickly. (After games with a best of 50.)
+await page.evaluate(() => { rollUp.speed = 6; Object.assign(rollUp.saved, { best: 50, games: 3 }); });
 for (let i = 0; i < 8; i++) {
   await page.waitForFunction(() => rollUp.mode === 'aim', null, { timeout: 15000 });
   await page.evaluate(() => rollUp.roll(0, 305, 0));
@@ -131,6 +133,7 @@ assert.equal(stored.tickets, Math.floor(score / 10), "a ticket for every 10 poin
 assert.equal(stored.best, score);
 await page.waitForFunction(t => document.querySelector('.fp-won b').textContent === String(t), stored.tickets, { timeout: 8000 });
 assert.ok(await page.evaluate(() => document.querySelector('.fp-strip').offsetHeight > 20), 'the tickets feed out of the slot');
+assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 50.', big: true, size: '18px' });
 
 // The prize counter: buy the cheapest thing, and it goes on the shelf.
 await page.click('#overPrizes');

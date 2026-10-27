@@ -54,6 +54,8 @@ const busy = () => page.evaluate(async () => {
   Storage.prototype.getItem = get;
   return { reads, muts };
 });
+// The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
+const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const HOLES = [50, 150, 250, 350, 450];
 // The hole a mole is up in right now (a bare-headed one, unless any will do), waiting for one if need be.
 const upHole = (any = false) => page.waitForFunction(any => {
@@ -131,6 +133,7 @@ assert.ok(score > 200, `a quick hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.equal(await tickets(), t0 + Math.floor(score / 15));
 assert.equal(await page.evaluate(() => bonkers.saved.best), score);
+assert.deepEqual(await bestLine(), { text: `Best: ${score.toLocaleString('en-US')}`, big: false, size: '13px' }, 'a first round is never a new best');
 // Behind the card the moles carry on, but the scoreboard keeps the round's score, whatever redraws it.
 await page.waitForTimeout(300);
 await page.evaluate(() => { dispatchEvent(new Event('free-play:wallet')); dispatchEvent(new Event('pageshow')); });
@@ -176,6 +179,16 @@ for (const leave of ['Escape', 'hide']) {
   assert.equal(await page.evaluate(() => bonkers.mode), 'play', 'Play again works');
   assert.deepEqual(await cards(), []);
 }
+
+// A round that beats the best from before says so, big and in gold, with the old best in it.
+await page.evaluate(() => { bonkers.saved.best = 20; bonkers.speed = 6; });
+while (!(await page.evaluate(() => bonkers.burrow.over))) {
+  await page.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
+  await page.waitForTimeout(30);
+}
+assert.ok(await page.evaluate(() => bonkers.burrow.score) > 20, 'the round beat 20');
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 20.', big: true, size: '18px' });
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

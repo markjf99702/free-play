@@ -101,6 +101,12 @@ export function top() {
   for (let i = 0; i < 6; i++) burst(3000 + i * 400, 4, 0.08, 0.3, 1 + i * 0.25);
 }
 
+// The highest yet, once the tickets are out: four bells, climbing.
+export function best() {
+  if (!ac || !enabled) return;
+  [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, i * 0.13, i === 3 ? 0.26 : 0.22));
+}
+
 export function ticket() {
   if (!ac || !enabled) return;
   burst(3500, 0.7, 0.16, 0.018);

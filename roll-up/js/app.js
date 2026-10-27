@@ -7,7 +7,7 @@ import { createScene } from './scene.js';
 import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine } from './daily.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, toast, feed, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -178,6 +178,7 @@ function gameOver() {
     saved.daily = result;
   } else {
     result.isBest = game.score > saved.best && !first;
+    result.was = saved.best;
     if (game.score > saved.best) saved.best = game.score;
   }
   save();
@@ -208,14 +209,15 @@ function showOver(r, fresh) {
     b.textContent = r.balls.map(x => (x.hit ? '★' : '☆')).join('');
     $('stars').append(b, `${hits} of 9 calls${r.streak > 1 ? ` · ${r.streak} days in a row` : ''}`);
   }
-  $('overBest').textContent = daily ? 'A new card comes at midnight.' : r.isBest ? 'A new best.' : `Best: ${fmt(saved.best)}`;
+  bestLine($('overBest'), !daily && r.isBest && ['A new best!', `Your old one was ${fmt(r.was)}.`], daily ? 'A new card comes at midnight.' : `Best: ${fmt(saved.best)}`);
   $('share').hidden = !daily;
   $('again').textContent = daily ? 'Play' : 'Roll again';
   $('over').hidden = false;
   $('title').hidden = true;
   // the tickets come out of the slot one by one, and the strip grows
   feeding();
-  feeding = feed($('payout'), r.won, { fresh, tick: () => sound.ticket() });
+  // a new best rings out once the tickets are out, not over them
+  feeding = feed($('payout'), r.won, { fresh, tick: () => sound.ticket(), onDone: () => { if (fresh && r.isBest) sound.best(); } });
   hud();
   if (fresh) $('again').focus({ preventScroll: true });
 }

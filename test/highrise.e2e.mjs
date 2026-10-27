@@ -25,6 +25,8 @@ const base = `http://localhost:${server.address().port}/`;
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const page = await ctx.newPage();
+// The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
+const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
@@ -119,6 +121,7 @@ assert.equal(await page.evaluate(() => highrise.tower.built), built + 1, 'Space 
 
 // Floor 11, taking the minor prize: 11 tickets and 25 more.
 const t0 = await tickets();
+await page.evaluate(() => Object.assign(highrise.saved, { best: 6, games: 2 })); // (after games as high as floor 6)
 await page.evaluate(() => highrise.start());
 await build(11);
 await page.waitForSelector('#choose:not([hidden])');
@@ -130,6 +133,7 @@ await page.click('#takeMinor');
 assert.ok(await page.isVisible('#over'));
 assert.equal(await tickets(), t0 + 36);
 assert.match(await page.textContent('#overT'), /minor prize/);
+assert.deepEqual(await bestLine(), { text: 'Your highest yet! The old one was floor 6.', big: true, size: '18px' });
 
 // Floor 11 again, going on, and a row that misses on floor 12: the 25 goes, the floors still pay.
 const t1 = await tickets();
@@ -142,6 +146,7 @@ await page.evaluate(() => highrise.stopAt(0));
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await tickets(), t1 + 11);
 assert.match(await page.textContent('#overT'), /Eleven floors\. So close\./);
+assert.deepEqual(await bestLine(), { text: 'Highest: floor 11', big: false, size: '13px' }, 'as high as the highest is not higher');
 
 // Highrise open in a second tab too, from before the next game.
 const other = await ctx.newPage();
@@ -159,6 +164,7 @@ await page.click('#keepGoing');
 await build(15);
 await page.waitForSelector('#over:not([hidden])', { timeout: 8000 });
 assert.equal(await page.textContent('#overT'), 'Topped out!');
+assert.deepEqual(await bestLine(), { text: 'Your highest yet! The old one was floor 11.', big: true, size: '18px' });
 assert.equal(await tickets(), t2 + 215);
 const shelf = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes);
 assert.equal(shelf['trophy-highrise'], 1, 'the trophy is on the shelf');

@@ -55,6 +55,8 @@ const busy = () => page.evaluate(async () => {
   Storage.prototype.getItem = get;
   return { reads, muts };
 });
+// The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
+const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const pocket = () => page.waitForFunction(() => !!hoops.court.pocket(), null, { timeout: 8000, polling: 16 });
 // A flick as the finger would make it: points up the screen from (x, y), `speed` cabinet-heights a second over 90ms.
 const flickAt = (speed, x = 195, y = 640, across = 0) => page.evaluate(([speed, x, y, across]) => {
@@ -140,7 +142,9 @@ assert.equal(await court('clock'), away, 'the clock runs on behind the menu');
 await hide(false);
 await page.click('#resume');
 
-// The rest of the round, quickly, aiming where the hoop will be, and its tickets: one for every 4 points.
+// The rest of the round, quickly, aiming where the hoop will be, and its tickets: one for every 4 points. (After
+// rounds with a best of 10.)
+await page.evaluate(() => Object.assign(hoops.saved, { best: 10, rounds: 2 }));
 const t0 = await tickets();
 await page.evaluate(() => { hoops.speed = 4; });
 let bonus = false;
@@ -162,6 +166,7 @@ assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')}
 assert.match(await page.textContent('#overHow'), /^\d+ baskets? from \d+ shots?/);
 assert.equal(await tickets(), t0 + Math.floor(score / 4));
 assert.equal(await page.evaluate(() => hoops.saved.best), score);
+assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 10.', big: true, size: '18px' });
 await page.click('#again');
 assert.equal(await page.textContent('#score'), '0');
 assert.ok(await court('left') > 44, 'another round, another 45 seconds');

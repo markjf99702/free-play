@@ -8,7 +8,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
-import { openCounter, counterOpen, feed, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -127,7 +127,7 @@ function endGame() {
   wallet.pay(won);
   if (top) wallet.give(TROPHIES[0]);
   saved.games++;
-  const isBest = built > saved.best && !first;
+  const old = saved.best, isBest = built > old && !first;
   if (built > saved.best) saved.best = built;
   if (top) saved.tops = (saved.tops || 0) + 1;
   save();
@@ -136,10 +136,11 @@ function endGame() {
     : tookMinor ? `A ticket for every floor, and 25 for stopping at the minor prize.`
     : built >= MINOR ? 'The 25 went with it, but every floor still pays a ticket.'
     : built ? 'A ticket for every floor.' : 'The first row has to land somewhere: try again.';
-  $('overBest').textContent = isBest ? 'Your highest yet.' : `Highest: floor ${saved.best}`;
+  bestLine($('overBest'), isBest && ['Your highest yet!', `The old one was floor ${old}.`], `Highest: floor ${saved.best}`);
   $('over').hidden = false;
   feeding();
-  feeding = feed($('payout'), won, { tick: () => sound.ticket() });
+  // the highest yet rings out once the tickets are out, not over them
+  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onDone: () => { if (isBest) sound.best(); } });
   $('again').focus({ preventScroll: true });
   hud();
 }

@@ -10,7 +10,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TRINKETS } from '../../shared/prizes.js';
-import { openCounter, counterOpen, toast, feed, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -194,22 +194,30 @@ function endCup() {
   showDone();
   $('over').hidden = false;
   feeding();
-  feeding = feed($('payout'), done.won, { tick: () => sound.ticket() });
+  feeding = feed($('payout'), done.won, { tick: () => sound.ticket(), onDone: cheer });
   $('again').focus({ preventScroll: true });
 }
 function lateCoins(n) {
   done.won += n;
   showDone();
   feeding();
-  feeding = feed($('payout'), done.won, { fresh: false });
+  feeding = feed($('payout'), done.won, { fresh: false, onDone: cheer });
 }
+const newBest = () => done.won > done.before && !done.first;
 function showDone() {
-  const { won, before, first } = done;
+  const { won, before } = done;
   if (won > (saved.best || 0)) saved.best = won;
   save();
   $('overT').textContent = `${CUP} coins, ${fmt(won)} ${won === 1 ? 'ticket' : 'tickets'}`;
-  $('overBest').textContent = won > before && !first ? 'A new best cup.' : `Best cup: ${fmt(saved.best)} tickets`;
+  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${fmt(before)} ${before === 1 ? 'ticket' : 'tickets'}.`], `Best cup: ${fmt(saved.best)} tickets`);
   hud();
+}
+// A new best cup rings out once its tickets are out (or a late coin makes it one), and the sign's bulbs blaze: once a cup.
+function cheer() {
+  if (!done || done.cheered || !newBest()) return;
+  done.cheered = true;
+  sound.best();
+  glow = 2.4;
 }
 
 // ---------- the scoreboard ----------
@@ -330,6 +338,7 @@ window.topple = {
   machine,
   get cup() { return cup; },
   get saved() { return saved; },
+  get glow() { return glow; },
   start,
   drop(x) { if (x != null) aim = clampAim(x); return dropCoin(); },
   set speed(k) { timeScale = k; },

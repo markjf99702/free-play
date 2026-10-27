@@ -138,6 +138,12 @@ export function ticket() {
   burst('highpass', 3500, 0.7, 0.18, 0.018);
 }
 
+// A new best, once the tickets are out: four bells, climbing.
+export function best() {
+  if (!ac || !enabled) return;
+  [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, i * 0.13, i === 3 ? 0.24 : 0.2));
+}
+
 export function fanfare() {
   if (!ac || !enabled) return;
   [523, 659, 784, 1047].forEach((f, i) => bell(f, i * 0.11, 0.24));

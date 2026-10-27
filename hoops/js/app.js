@@ -6,7 +6,7 @@ import { createCourt, ticketsFor, power, flickFor, FLICK, SWEET, HOOP, LAUNCH } 
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -128,17 +128,18 @@ function endRound() {
   const score = court.score, won = ticketsFor(score), first = !saved.rounds;
   wallet.pay(won);
   saved.rounds++;
-  const isBest = score > saved.best && !first;
+  const old = saved.best, isBest = score > old && !first;
   if (score > saved.best) saved.best = score;
   save();
   const n = court.baskets, swish = court.swishes;
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}`
     + (swish ? `, ${swish === n ? (n === 1 ? 'nothing but net' : 'all of them nothing but net') : `${swish} nothing but net`}` : '') + '. A ticket for every 4 points.';
-  $('overBest').textContent = isBest ? 'A new best.' : `Best: ${saved.best.toLocaleString('en-US')}`;
+  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
   $('over').hidden = false;
   feeding();
-  feeding = feed($('payout'), won, { tick: () => sound.ticket() });
+  // a new best rings out once the tickets are out, not over them
+  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onDone: () => { if (isBest) sound.best(); } });
   $('again').focus({ preventScroll: true });
   hud();
 }
