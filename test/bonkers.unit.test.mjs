@@ -99,6 +99,28 @@ test('a hard hat takes two bonks, and ten in a row are worth fifty more', () => 
   assert.ok(b2.score >= b2.bonks * POINTS.mole + runs * RUN.bonus);
 });
 
+test('a mole whose hat was knocked off, and which got away, is an ordinary 10 when it next pops up', () => {
+  for (let seed = 1; seed < 400; seed++) {
+    const b = createBurrow({ random: seeded(seed) });
+    let hatless = null, left = false;
+    while (!b.over) {
+      b.step(1 / 60); b.take();
+      if (!hatless) {
+        const m = b.moles.find(m => m.state === 'rising' && m.rise > 0.5 && m.hat);
+        if (m) { assert.ok(b.swing(HOLES[m.hole], -40).hat); hatless = m; }
+        continue;
+      }
+      if (!left) { left = ['travel', 'rest', 'sniff', 'home'].includes(hatless.state); continue; }
+      if (hatless.state === 'rising' && hatless.rise > 0.5 && !hatless.hat && !hatless.gold) {
+        const r = b.swing(HOLES[hatless.hole], -40);
+        assert.equal(r.points, 10, 'bareheaded, it is an ordinary mole');
+        return;
+      }
+    }
+  }
+  assert.fail('no hard hat got away and came back in 400 rounds');
+});
+
 test('a ticket for every 15 points', () => {
   assert.deepEqual([0, 14, 15, 340, 690].map(ticketsFor), [0, 0, 1, 22, 46]);
 });

@@ -166,7 +166,7 @@ export function createBurrow({ random = Math.random } = {}) {
         if (m.rise <= 0) {
           reserved.delete(m.hole);
           const dazed = m.state === 'falling';
-          m.hole = -1; m.gold = false;
+          m.hole = -1; m.gold = false; m.wasHat = false; // (a hard hat that got away comes back an ordinary mole)
           if (dazed) go(m, m.x < W / 2 ? 'b1' : 'b2', 'dazed');
           else setOff(m, over || random() < 0.1);
         }
