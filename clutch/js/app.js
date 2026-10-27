@@ -142,7 +142,7 @@ function showWin() {
   const names = got.map(w => plushFor(w.kind).say);
   $('winT').textContent = `You got ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]}.`;
   $('winHow').textContent = got.some(w => w.kind === 'star')
-    ? "The lucky star! There's hardly ever more than one in there. It's on your shelf now."
+    ? "The lucky star! They don't come along often. It's on your shelf now."
     : got.length > 1 ? "Two at once! They're on your shelf now, with your prizes." : "It's on your shelf now, with your prizes.";
   const art = $('winArt'), r = Math.min(2, devicePixelRatio || 1);
   art.width = 220 * r; art.height = 170 * r;

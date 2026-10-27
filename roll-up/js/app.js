@@ -336,7 +336,7 @@ function dailyButton() {
   $('daily').textContent = done ? `Today: ${fmt(d.score)}` : "Today's card";
   $('dailyHow').textContent = done
     ? `${d.balls.filter(b => b.hit).length} of 9 calls${d.streak > 1 ? `, ${d.streak} days in a row` : ''}. A new card comes at midnight.`
-    : 'Nine called shots, the same for everyone today. Hit the call for double.';
+    : 'Nine called shots, the same for everyone today. One go a day. Hit the call for double.';
 }
 $('daily').addEventListener('click', () => {
   sound.unlock();

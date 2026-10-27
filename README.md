@@ -2,7 +2,7 @@
 
 **Play it: [free-play.junkdrawer.works](https://free-play.junkdrawer.works/)**
 
-**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; Popgun, a shooting gallery; Bonkers, a whack-a-mole; or Hoops, a basketball machine. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw pays out plush, straight onto the same shelf. There's room on the floor for more machines.
+**An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; Popgun, a shooting gallery; Bonkers, a whack-a-mole; or Hoops, a basketball machine. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw and the coin pusher pay out prizes, straight onto the same shelf. There's room on the floor for more machines.
 
 <p align="center">
   <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket, and the Roll Up cabinet with its red and gold marquee, its screen showing the ring board, and a Play button" width="250">
