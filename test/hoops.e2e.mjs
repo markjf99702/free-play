@@ -214,6 +214,8 @@ await countsAlong(await tickets(), Math.floor(score / 4));
 assert.ok(score > 40, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.match(await page.textContent('#overHow'), /^\d+ baskets? from \d+ shots?/);
+await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 4));
 assert.equal(await page.evaluate(() => hoops.saved.best), score);
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 10.', big: true, size: '18px' });

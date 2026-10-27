@@ -23,11 +23,13 @@
 <body>
   <header class="backbox">
     <div class="ball" id="ballNo" aria-live="off">Ball 1</div>
-    <div class="display" id="display" aria-live="polite"><span id="score">0</span></div>
+    <div class="display" id="display"><span id="score">0</span></div>
     <button type="button" class="menu" id="menuBtn" aria-label="Menu">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
     </button>
   </header>
+
+  <p class="sr" id="live" aria-live="polite"></p>
 
   <main class="stage" id="stage">
     <canvas id="table" aria-label="The pinball table"></canvas>

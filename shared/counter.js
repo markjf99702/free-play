@@ -6,6 +6,13 @@ import { KEY, read, buy, refund } from './wallet.js';
 
 // A count as people write it: 1,234 tickets. Anything that isn't a number reads as 0.
 export const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
+// And as many tickets: '1 ticket', '12,345 tickets'.
+export const tickets = n => `${fmt(n)} ${+n === 1 ? 'ticket' : 'tickets'}`;
+// The ticket count in a machine's corner is the way to the counter, and its name says both: 'Prize counter, 214 tickets'.
+export function pocketButton(el, n) {
+  const name = `Prize counter, ${tickets(n)}`;
+  if (el.getAttribute('aria-label') !== name) el.setAttribute('aria-label', name);
+}
 
 export const TICKET = '<svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg>';
 

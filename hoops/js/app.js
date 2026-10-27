@@ -6,7 +6,7 @@ import { createCourt, ticketsFor, power, flickFor, FLICK, SWEET, HOOP, LAUNCH } 
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -67,7 +67,7 @@ let court = createCourt({ timed: false });
 let mode = 'title';            // title → play → over (behind the title, the machine shoots by itself)
 let paused = false, timeScale = 1, hold = 0, demoIn = 1;
 let endIn = 0;                 // seconds from the last ball landing to the end card, on the round's clock (it waits while paused)
-let tickets = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
+let pocketed = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
 const pops = [];
 // Words rising off the hoop: no more than two at once, the newest lowest (js/draw.js stacks them under the scoreboard).
 function pop(p) { pops.push(p); while (pops.length > 2) pops.shift(); }
@@ -76,7 +76,7 @@ const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidde
 function newRound() {
   court = createCourt();
   mode = 'play';
-  tickets = wallet.read().tickets;
+  pocketed = wallet.read().tickets;
   pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null; endIn = 0; duds = 0;
   hud();
 }
@@ -151,6 +151,7 @@ function endRound() {
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}`
     + (swish ? `, ${swish === n ? (n === 1 ? 'nothing but net' : 'all of them nothing but net') : `${swish} nothing but net`}` : '') + '. A ticket for every 4 points.';
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
+  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();
   // a new best rings out once the tickets are out, not over them
@@ -258,7 +259,9 @@ addEventListener('keyup', e => {
 const put = (id, text) => { const el = $(id); if (el.textContent !== String(text)) el.textContent = text; };
 function hud() {
   put('score', court.score.toLocaleString('en-US'));
-  put('tix', fmt(Math.max(0, tickets - toCome)));
+  const have = Math.max(0, pocketed - toCome);
+  put('tix', fmt(have));
+  pocketButton($('tixBtn'), have);
   const playing = mode === 'play';
   const worth = (playing && court.bonus ? 3 : 2) + (playing && court.fire ? 1 : 0);
   if ($('worth').textContent !== String(worth)) { $('worth').textContent = worth; if (playing) bump($('worth')); }
@@ -305,7 +308,7 @@ function openPrizes() {
 $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 // tickets won or spent here, at the counter, in another tab, or on the floor while this page was kept: read them again
-const pocket = () => { tickets = wallet.read().tickets; hud(); };
+const pocket = () => { pocketed = wallet.read().tickets; hud(); };
 addEventListener('free-play:wallet', pocket);
 addEventListener('pageshow', pocket);
 

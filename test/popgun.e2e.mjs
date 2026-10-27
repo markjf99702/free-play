@@ -161,6 +161,8 @@ const score = await page.evaluate(() => popgun.gallery.score);
 await countsAlong(await tickets(), Math.floor(score / 20));
 assert.ok(score > 100, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
+await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 20)} tickets.`, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 20)} tickets.`, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 20));
 assert.equal(await page.evaluate(() => popgun.saved.best), score);
 // a new best, said big and in gold, and the sign's bulbs blaze for it once the tickets are out

@@ -8,7 +8,7 @@ import { createDraw, drawPlush } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { PLUSH } from '../../shared/prizes.js';
-import { openCounter, counterOpen, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, pocketButton, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -202,7 +202,9 @@ function say(text) {
 // ---------- the scoreboard ----------
 function hud(bump = false) {
   $('won').textContent = fmt(total());
-  $('tix').textContent = fmt(wallet.read().tickets);
+  const have = wallet.read().tickets;
+  $('tix').textContent = fmt(have);
+  pocketButton($('tixBtn'), have);
   if (bump) { const b = $('won'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
   const n = total();
   $('titleBest').textContent = n ? `You've won ${fmt(n)} plush in ${fmt(saved.goes)} ${saved.goes === 1 ? 'go' : 'goes'}.` : '';

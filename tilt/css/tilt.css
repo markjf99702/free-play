@@ -34,6 +34,8 @@ body {
   display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; gap: 8px;
   background: linear-gradient(#0d0a08, #050403); border-bottom: 1px solid #2a1a0a;
 }
+/* said to a screen reader, and not shown */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ball { font: 12px/1.1 var(--disp); color: var(--amber); opacity: .85; letter-spacing: .04em; }
 /* The display is the screen's width less 164 px. On a phone narrower than 375 px that's too narrow for the longest
    messages (and under 340 px, for an eight-digit score), so there the type shrinks with the screen. */

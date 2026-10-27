@@ -6,7 +6,7 @@ import { createGallery, ticketsFor, CORKS, W, H } from './gallery.js';
 import { createDraw, MOON } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -135,6 +135,7 @@ function endRound() {
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   $('overHow').textContent = `${gallery.hits} hits from ${gallery.shots} corks. A ticket for every 20 points.`;
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
+  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();
   // a new best rings out once the tickets are out, not over them, and the sign's bulbs blaze for it
@@ -188,7 +189,9 @@ addEventListener('blur', () => keys.clear());
 // ---------- the scoreboard ----------
 function hud() {
   $('score').textContent = gallery.score.toLocaleString('en-US');
-  $('tix').textContent = fmt(Math.max(0, wallet.read().tickets - toCome));
+  const have = Math.max(0, wallet.read().tickets - toCome);
+  $('tix').textContent = fmt(have);
+  pocketButton($('tixBtn'), have);
   const left = mode === 'title' ? CORKS : gallery.corks;
   $('left').textContent = left;
   $('corksWord').textContent = left === 1 ? 'cork' : 'corks';

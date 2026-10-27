@@ -156,6 +156,7 @@ assert.ok(await page.isDisabled('#drop'), 'an empty cup has nothing to drop');
 await page.waitForFunction(() => !document.getElementById('over').hidden, null, { timeout: 20000 });
 const won = Number((await page.textContent('#overT')).match(/(\d+) tickets?$/)[1]);
 assert.ok(won >= mid);
+assert.equal(await page.textContent('#live'), `The cup's empty: ${won} ${won === 1 ? 'ticket' : 'tickets'}.`, 'what a screen reader hears as the cup ends');
 assert.ok(await tickets() >= won, 'the tickets are in the wallet');
 assert.equal(await page.evaluate(() => topple.saved.cups), 3);
 assert.deepEqual(await bestLine(), { text: 'A new best cup! The old one was 1 ticket.', big: true, size: '18px' });

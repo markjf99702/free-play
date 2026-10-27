@@ -127,6 +127,11 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const final = await page.textContent('#final');
 assert.ok(Number(final.replace(/,/g, '')) >= 12340, 'final score shown');
 assert.equal(await page.textContent('#overNote'), 'Number 1 on your list. ' + await rateLine(page), 'the end card does not say what the table pays');
+// A screen reader hears how the game ended, and not every change of score on the display.
+const paid = await page.evaluate(n => Math.floor(n / window.tilt.table.perTicket), Number(final.replace(/,/g, '')));
+await page.waitForFunction(() => document.getElementById('live').textContent.startsWith('Game over'), null, { timeout: 2000 });
+assert.equal(await page.textContent('#live'), `Game over: ${final}, number 1 on your list, ${paid} ${paid === 1 ? 'ticket' : 'tickets'}.`);
+assert.equal(await page.getAttribute('#display', 'aria-live'), null, 'the score display is read out at every change');
 assert.equal(await page.locator('#scores li').count(), 1);
 
 await page.reload();
@@ -337,6 +342,9 @@ assert.deepEqual(texts(shows.lock), ['Skill shot 25,000', 'Ball locked'], 'a ski
 assert.deepEqual(texts(shows.four), ['One', 'Three', 'Four']);
 assert.deepEqual(texts(shows.twice), ['Danger', 'Tilt']);
 assert.deepEqual(texts(shows.late), ['Tilt', 'Ball 2'], 'the next ball after a tilt was not announced');
+// a screen reader hears the ones that change how the ball goes on (Tilt, here), and the table is named
+assert.equal(await queue.textContent('#live'), 'Tilt.');
+assert.equal(await queue.getAttribute('#table', 'aria-label'), 'The Space pinball table');
 assert.ok(shows.late[1][1] >= 1.1, `the next ball after a tilt was announced for ${shows.late[1][1]} s, not its own 1.2 s`);
 await queue.context().close();
 

@@ -10,7 +10,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TRINKETS } from '../../shared/prizes.js';
-import { openCounter, counterOpen, toast, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, bestLine, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -201,6 +201,7 @@ function endCup() {
   saved.cups = (saved.cups || 0) + 1;
   cup = null;
   showDone();
+  say(`The cup's empty: ${tickets(done.won)}.`);
   $('over').hidden = false;
   feeding();
   feeding = feed($('payout'), done.won, { tick: () => sound.ticket(), onDone: cheer });
@@ -250,7 +251,9 @@ function cheer() {
 // ---------- the scoreboard ----------
 function hud(bump = false) {
   $('won').textContent = fmt(cup ? cup.won : done ? done.won : 0);
-  $('tix').textContent = fmt(wallet.read().tickets);
+  const have = wallet.read().tickets;
+  $('tix').textContent = fmt(have);
+  pocketButton($('tixBtn'), have);
   const left = cup ? cup.left : 0;
   $('left').textContent = left;
   $('coinsWord').textContent = left === 1 ? 'coin' : 'coins';

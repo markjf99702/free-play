@@ -7,7 +7,7 @@ import { createScene } from './scene.js';
 import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine } from './daily.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, toast, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -138,7 +138,8 @@ function scored() {
   game.thrown++;
   const left = BALLS - game.thrown;
   const extra = w.hit ? ', the called shot' : '';
-  $('live').textContent = `${w.points} points${extra}. ${game.score} so far, ${left ? left + (left === 1 ? ' ball' : ' balls') + ' left' : 'game over'}.`;
+  // (after the last ball, the end of the game says the rest: see gameOver)
+  $('live').textContent = `${w.points} points${extra}.` + (left ? ` ${fmt(game.score)} so far, ${left} ${left === 1 ? 'ball' : 'balls'} left.` : '');
   mode = 'result';
   resultT = 0;
   hud();
@@ -185,6 +186,8 @@ function gameOver() {
   }
   save();
   dailyButton();
+  const calls = game.card ? ` ${game.balls.filter(b => b.hit).length} of 9 calls.` : '';
+  $('live').textContent = `Game over: ${fmt(game.score)} points, ${tickets(won)}.${calls}${result.isBest ? ' A new best.' : ''}`;
   showOver(result, true);
   if (result.isBest) { lights.mode = 'win'; lights.t = 0; }
   sound.fanfare();
@@ -236,7 +239,9 @@ function hud() {
   $('score').textContent = fmt(Math.round(shown));
   const n = mode === 'result' || mode === 'over' ? game.thrown : game.thrown + 1;
   $('ballNo').textContent = mode === 'over' ? 'Game over' : `Ball ${Math.min(BALLS, Math.max(1, n))} of ${BALLS}`;
-  $('tix').textContent = fmt(Math.max(0, wallet.read().tickets - toCome));
+  const have = Math.max(0, wallet.read().tickets - toCome);
+  $('tix').textContent = fmt(have);
+  pocketButton($('tixBtn'), have);
   $('hint').hidden = !(mode === 'aim' && !thrownOnce);
   const ready = ['aim', 'drag', 'deal'].includes(mode);
   const call = callNow();

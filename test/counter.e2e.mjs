@@ -83,6 +83,8 @@ for (const [path, hook, tix, opener] of PAGES) {
   assert.match(await page.getAttribute('meta[property="og:image"]', 'content'), /^https:\/\/free-play\.junkdrawer\.works\/\S+\.png$/, `${where}: og:image`);
 
   assert.equal(await text(tix), '1,234', `${where}: the tickets, with a comma`);
+  // the ticket count in a machine's corner says what it is and how many, to a screen reader too
+  if (opener === '#tixBtn') assert.match(await page.locator(opener).ariaSnapshot(), /^- button "Prize counter, 1,234 tickets"/, `${where}: the ticket button's name`);
   await lollipop(where, tix, opener, 1234);
 
   if (hook === 'tilt') {
@@ -106,6 +108,12 @@ for (const [path, hook, tix, opener] of PAGES) {
   await page.click(hook === 'tilt' ? '#pausePrizes' : opener); // (Tilt's game is paused by now)
   await elsewhere(2, 4);
   assert.equal(await text('.fp-bal b'), '2', `${where}: the open counter's balance, changed in another tab`);
+  if (opener === '#tixBtn') {
+    await other.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1, prizes: { lollipop: 4 } })));
+    await page.waitForFunction(() => document.getElementById('tixBtn').getAttribute('aria-label') === 'Prize counter, 1 ticket', null, { timeout: 3000 }).catch(() => {});
+    assert.equal(await page.getAttribute('#tixBtn', 'aria-label'), 'Prize counter, 1 ticket', `${where}: the ticket button's name at 1`);
+    await elsewhere(2, 4);
+  }
   assert.equal(await page.getAttribute('.fp-shelf .fp-item', 'aria-label'), 'Lollipop, 4', `${where}: the open counter's shelf, changed in another tab`);
   assert.equal(await page.locator('.fp-prize:not(.short)').count(), 0, `${where}: with 2 tickets nothing at the counter is affordable`);
   await page.keyboard.press('Escape');

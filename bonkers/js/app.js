@@ -7,7 +7,7 @@ import { createBurrow, ticketsFor, HOLES, ROUND } from './burrow.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -67,14 +67,14 @@ let mode = 'title';            // title → play → over (behind the title, the
 let swingAt = null, paused = false, timeScale = 1;
 let endIn = 0;                 // seconds from the buzzer to the end card, on the round's clock (it waits while paused)
 let lastScore = 0;             // the round just played: behind its card, a fresh burrow's moles carry on at 0
-let tickets = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
+let pocketed = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
 const pops = [], puffs = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   burrow = createBurrow();
   mode = 'play';
-  tickets = wallet.read().tickets;
+  pocketed = wallet.read().tickets;
   pops.length = 0; puffs.length = 0; swingAt = null; endIn = 0;
   hud();
 }
@@ -141,6 +141,7 @@ function endRound() {
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   $('overHow').textContent = `${burrow.bonks} ${burrow.bonks === 1 ? 'mole' : 'moles'} bonked in ${ROUND} seconds. A ticket for every 15 points.`;
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
+  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();
   // a new best rings out once the tickets are out, not over them
@@ -181,7 +182,9 @@ addEventListener('keydown', e => {
 const put = (id, text) => { const el = $(id); if (el.textContent !== String(text)) el.textContent = text; };
 function hud() {
   put('score', (mode === 'over' ? lastScore : burrow.score).toLocaleString('en-US'));
-  put('tix', fmt(Math.max(0, tickets - toCome)));
+  const have = Math.max(0, pocketed - toCome);
+  put('tix', fmt(have));
+  pocketButton($('tixBtn'), have);
   const left = mode === 'play' ? Math.ceil(burrow.left) : mode === 'title' ? ROUND : 0;
   put('left', left);
   put('clockWord', left === 1 ? 'second' : 'seconds');
@@ -226,7 +229,7 @@ function openPrizes() {
 $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 // tickets won or spent here, at the counter, in another tab, or on the floor while this page was kept: read them again
-const pocket = () => { tickets = wallet.read().tickets; hud(); };
+const pocket = () => { pocketed = wallet.read().tickets; hud(); };
 addEventListener('free-play:wallet', pocket);
 addEventListener('pageshow', pocket);
 

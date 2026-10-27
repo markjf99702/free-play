@@ -9,7 +9,7 @@ import { NORMAL } from './settings.js';
 import { play, unlock, setSound } from './sound.js';
 import { TABLES } from './tables.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, PAYOUT } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, tickets, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.tilt'; // what was 'tilt.v1' at tilt.junkdrawer.works; ../shared/carry.js brings it over
@@ -109,6 +109,7 @@ function useTable(id) {
   skin = Object.keys(table.skins).includes(store.skin) ? table.skins[store.skin] : Object.values(table.skins)[0];
   renderer.setTable(table);
   renderer.setSkin(skin);
+  $('table').setAttribute('aria-label', `The ${table.name} pinball table`);
   game = new table.Game({ ...NORMAL }, out);
   game.start('attract');
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', skin.theme);
@@ -292,6 +293,7 @@ function gameOver(g) {
   $('final').textContent = fmt(score);
   const placed = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
   $('overNote').textContent = [placed, rate(table)].filter(Boolean).join(' ');
+  const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won)}.`;
   $('scores').innerHTML = '';
   store[table.scoresKey].forEach(s => {
     const li = document.createElement('li');
@@ -299,7 +301,7 @@ function gameOver(g) {
     li.innerHTML = `<span>${fmt(+s.score)}</span> <small>${typeof s.date === 'string' ? s.date.slice(5).replace('-', '/') : ''}</small>`;
     $('scores').appendChild(li);
   });
-  setTimeout(() => { $('over').hidden = false; $('againBtn').focus(); }, 900);
+  setTimeout(() => { $('over').hidden = false; $('againBtn').focus(); speak(heard); }, 900);
   setTimeout(() => { if (!$('over').hidden && game.mode === 'over') game.start('attract'); }, 1600);
 }
 
@@ -310,10 +312,20 @@ function gameOver(g) {
 // Each is { text, secs, at }, `at` being when it went up, in clock milliseconds (0 until it does).
 function say(text, secs) {
   if (game.mode !== 'play') return; // the demo behind the title card runs without them
+  if (HEARD.includes(text)) speak(text + '.');
   const newest = msgs[msgs.length - 1];
   if (newest?.text === text) { newest.secs = secs; if (newest === msgs[0]) newest.at = 0; return; }
   msgs.push({ text, secs, at: 0 });
   if (msgs.length > 3) msgs.splice(1, 1);
+}
+// A screen reader hears the messages that change how the ball goes on (the score, which changes all the time, it can
+// read off the display when it wants it), and the end of the game. Cleared first, so the same one twice is heard twice.
+const HEARD = ['Ball saved', 'Extra ball', 'Shoot again', 'Danger', 'Tilt'];
+let speaking = 0;
+function speak(text) {
+  $('live').textContent = '';
+  clearTimeout(speaking);
+  speaking = setTimeout(() => { $('live').textContent = text; }, 60);
 }
 // The message up at clock time `now` ('' for none), taking each one down when its time is up. The next one then goes
 // up for all of its own time, even when it came after the one up had already had its second.

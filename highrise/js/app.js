@@ -8,7 +8,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
-import { openCounter, counterOpen, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -191,7 +191,9 @@ addEventListener('keydown', e => {
 // ---------- the scoreboard ----------
 function hud() {
   $('floorNo').textContent = mode === 'title' ? '1' : Math.min(FLOORS, mode === 'play' ? tower.floor : tower.built || 1);
-  $('tix').textContent = fmt(Math.max(0, wallet.read().tickets - toCome));
+  const have = Math.max(0, wallet.read().tickets - toCome);
+  $('tix').textContent = fmt(have);
+  pocketButton($('tixBtn'), have);
   $('titleBest').textContent = saved.games ? `Highest: floor ${saved.best}.${saved.tops ? ` Topped out ${saved.tops === 1 ? 'once' : saved.tops === 2 ? 'twice' : `${saved.tops} times`}.` : ''}` : '';
 }
 

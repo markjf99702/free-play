@@ -146,6 +146,7 @@ assert.equal(stored.best, score);
 await page.waitForFunction(t => document.querySelector('.fp-won b').textContent === String(t), stored.tickets, { timeout: 8000 });
 assert.ok(await page.evaluate(() => document.querySelector('.fp-strip').offsetHeight > 20), 'the tickets feed out of the slot');
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 50.', big: true, size: '18px' });
+assert.equal(await page.textContent('#live'), `Game over: ${score.toLocaleString('en-US')} points, ${Math.floor(score / 10)} tickets. A new best.`, 'what a screen reader hears at the end of the game');
 
 // The prize counter: buy the cheapest thing, and it goes on the shelf.
 await page.click('#overPrizes');

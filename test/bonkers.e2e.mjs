@@ -158,6 +158,8 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await countsAlong(await tickets(), Math.floor(score / 15));
 assert.ok(score > 200, `a quick hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
+await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.`, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.`, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 15));
 assert.equal(await page.evaluate(() => bonkers.saved.best), score);
 assert.deepEqual(await bestLine(), { text: `Best: ${score.toLocaleString('en-US')}`, big: false, size: '13px' }, 'a first round is never a new best');
