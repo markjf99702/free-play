@@ -38,6 +38,7 @@ const deck = $('deck');
 function layout() {
   const side = innerWidth > innerHeight * 1.05;
   deck.classList.toggle('side', side);
+  if (side) deck.classList.remove('narrow', 'narrower');
   const hud = document.querySelector('.hud').getBoundingClientRect();
   const top = Math.max(hud.bottom + 2, 54);
   deck.style.width = side ? '170px' : '';
@@ -49,6 +50,9 @@ function layout() {
     Object.assign(deck.style, { left: `${cab.left + cab.width + 18}px`, top: `${(cab.top + cab.bottom) / 2 - deck.offsetHeight / 2}px` });
   } else {
     Object.assign(deck.style, { left: `${cab.left + cab.width * 0.02}px`, width: `${cab.width * 0.96}px`, top: `${cab.bottom - 2}px` });
+    // On a short phone the cabinet is narrower, and the deck with it: its hint gets smaller, then goes (see the CSS).
+    deck.classList.toggle('narrow', deck.offsetWidth < 290);
+    deck.classList.toggle('narrower', deck.offsetWidth < 220);
   }
 }
 addEventListener('resize', layout);

@@ -67,6 +67,10 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .deck.side { flex-direction: column; justify-content: center; height: auto; padding: 22px 16px; border-radius: 22px; gap: 14px; }
 .say { flex: 1; max-width: 8em; font: 400 12px/1.25 var(--disp); letter-spacing: .04em; text-transform: uppercase; color: var(--ink); text-align: center; opacity: .85; }
 .deck.side .say { flex: none; }
+/* On a short phone the cabinet is narrower, and the deck under it (js/app.js marks it): under 290 px the hint is
+   smaller, and no more lines than the deck has room for, and under 220 px it goes, as the title card says it too. */
+.deck.narrow .say { font-size: 10px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+.deck.narrower .say { display: none; }
 /* the cup of coins: a paper cup with coins showing over the rim */
 .cup { flex: 1; max-width: 8em; display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 13px var(--body); color: var(--ink2); }
 .cup b { font: 400 20px var(--disp); color: var(--gold); }

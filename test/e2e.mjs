@@ -363,6 +363,34 @@ for (const [path, name] of Object.entries(OFFLINE)) {
 }
 await ctx.setOffline(false);
 
+// On a shorter phone each machine's cabinet is narrower, and the control deck under it: everything on the deck stays
+// on it, a hint shows whole or not at all, and the points-a-basket label on Hoops' deck stays on one line.
+const decks = await browser.newContext({ deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+const dp = await decks.newPage();
+dp.on('pageerror', e => problems.push(e.message));
+for (const [width, height] of [[390, 844], [390, 664], [360, 640], [375, 548], [360, 560]]) {
+  await dp.setViewportSize({ width, height });
+  for (const name of ['clutch', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops']) {
+    await dp.goto(base + name + '/');
+    await dp.waitForFunction(name => !!window[name], name, { timeout: 10000 });
+    await dp.evaluate(() => document.fonts.ready);
+    const off = await dp.evaluate(() => {
+      const deck = document.getElementById('deck'), d = deck.getBoundingClientRect(), off = [];
+      const name = el => `${el.className || el.tagName.toLowerCase()} "${el.textContent.trim().replace(/\s+/g, ' ').slice(0, 24)}"`;
+      for (const el of deck.querySelectorAll('*')) {
+        const r = el.getBoundingClientRect();
+        if (r.width && (r.left < d.left - 1 || r.right > d.right + 1 || r.top < d.top - 1 || r.bottom > d.bottom + 1)) off.push('off the deck: ' + name(el));
+      }
+      for (const say of deck.querySelectorAll('.say')) if (say.offsetWidth && say.scrollHeight > say.clientHeight + 1) off.push('cut short: ' + name(say));
+      const label = deck.querySelector('.worth span');
+      if (label && label.offsetHeight > 1.6 * parseFloat(getComputedStyle(label).fontSize)) off.push('on two lines: ' + name(label));
+      return off;
+    });
+    assert.deepEqual(off, [], `${name}'s deck at ${width} x ${height}`);
+  }
+}
+await decks.close();
+
 // A page saved as a single file (how a machine is tried out before it joins the floor) says so with data-single on
 // <html>: it hides every link back to the floor, which isn't there, and keeps no offline copy. Tilt leaves its address
 // alone too, as the copy may be inside someone else's page.
