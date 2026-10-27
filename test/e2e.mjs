@@ -20,7 +20,11 @@ let pw;
 try { pw = require('playwright'); } catch { pw = require(join(execSync('npm root -g').toString().trim(), 'playwright')); }
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
+// With `down` set, the server's gone: it drops every connection it's offered. (The browser's offline switch alone
+// doesn't stop a service worker's own requests in this Chromium, so it can't show what the offline copy holds.)
+let down = false;
 const server = createServer(async (req, res) => {
+  if (down) { req.socket.destroy(); return; }
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path.endsWith('/')) path += 'index.html';
   let body;
@@ -39,6 +43,10 @@ page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
 page.on('requestfailed', r => problems.push('failed: ' + r.url()));
 page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the site: ' + r.url()); else loaded.add(new URL(r.url()).pathname.slice(1) || './'); });
 const tickets = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+// Waits for ok() to come true, for up to ms, or fails saying what didn't happen.
+const until = async (ok, ms, what) => {
+  for (const end = Date.now() + ms; !(await ok());) { assert.ok(Date.now() < end, what); await new Promise(r => setTimeout(r, 100)); }
+};
 
 await page.goto(base);
 await page.evaluate(() => document.fonts.ready);
@@ -466,15 +474,33 @@ for (const r of rows) assert.ok(Math.max(...r) - Math.min(...r) <= 1, `Play butt
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 await page.setViewportSize({ width: 390, height: 844 });
 
-// Offline: the floor and every machine open again.
-await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 }).catch(() => {});
-await ctx.setOffline(true);
+// Offline: someone who has been to the floor once, and nowhere else, loses the connection. Once the offline copy
+// holds every file, the server goes down and the browser goes offline (so the pages see it), and the floor, every
+// machine and Tilt's Haunted House open from the copy, with all their fonts and pictures.
 const OFFLINE = { '': 'freePlay', 'roll-up/': 'rollUp', 'tilt/': 'tilt', 'clutch/': 'clutch', 'topple/': 'topple', 'highrise/': 'highrise', 'popgun/': 'popgun', 'bonkers/': 'bonkers', 'hoops/': 'hoops' };
-for (const [path, name] of Object.entries(OFFLINE)) {
-  await page.goto(base + path);
-  assert.ok(await page.evaluate(name => !!window[name], name), `${path || 'the floor'} did not open offline`);
+const away = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+const ap = await away.newPage();
+ap.on('pageerror', e => problems.push(e.message));
+await ap.goto(base);
+await ap.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 15000 });
+await until(() => ap.evaluate(async shell => (await Promise.all(shell.map(f => caches.match(f)))).every(Boolean), shell), 20000, 'the offline copy never held every file');
+down = true;
+await away.setOffline(true);
+for (const [path, name] of [...Object.entries(OFFLINE), ['tilt/?table=haunted', 'tilt']]) {
+  const called = path || 'the floor';
+  await ap.goto(base + path).catch(e => assert.fail(`${called} did not open offline: ${e.message.split('\n')[0]}`));
+  await ap.waitForFunction(name => !!window[name], name, { timeout: 10000 }).catch(() => assert.fail(`${called} opened offline, but not its game`));
+  const [faces, pictures] = await ap.evaluate(async () => {
+    await document.fonts.ready;
+    return [[...document.fonts].filter(f => f.status === 'error').map(f => f.family), [...document.images].filter(i => !i.complete || !i.naturalWidth).map(i => i.src)];
+  });
+  assert.deepEqual(faces, [], `${called}'s fonts didn't load offline`);
+  assert.deepEqual(pictures, [], `${called}'s pictures didn't load offline`);
 }
-await ctx.setOffline(false);
+assert.equal(await ap.evaluate(() => window.tilt.table.name), 'Haunted House', "Tilt's link to a table opened another offline");
+await away.setOffline(false);
+down = false;
+await away.close();
 
 // On a computer each machine's title card says how to play it on the keyboard, in its menu's words (Tilt, in its pause
 // card's); on a phone, which has no keys, it doesn't. The menu says the same on a computer; on a phone it says how to
@@ -682,9 +708,6 @@ const ghBase = `http://localhost:${pages.address().port}/`;
 const ghCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const gp = await ghCtx.newPage();
 gp.on('pageerror', e => problems.push(e.message));
-const until = async (ok, ms, what) => {
-  for (const end = Date.now() + ms; !(await ok());) { assert.ok(Date.now() < end, what); await new Promise(r => setTimeout(r, 100)); }
-};
 await gp.goto(ghBase);
 await gp.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 15000 });
 const copy = await gp.evaluate(async () => (await caches.keys()).join());

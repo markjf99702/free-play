@@ -24,7 +24,11 @@ let pw;
 try { pw = require('playwright'); } catch { pw = require(join(execSync('npm root -g').toString().trim(), 'playwright')); }
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
+// With `down` set, the server's gone: it drops every connection it's offered. (The browser's offline switch alone
+// doesn't stop a service worker's own requests in this Chromium, so it can't show what the offline copy holds.)
+let down = false;
 const server = createServer(async (req, res) => {
+  if (down) { req.socket.destroy(); return; }
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path.endsWith('/')) path += 'index.html';
   let body;
@@ -552,12 +556,14 @@ assert.deepEqual(outlines, [[50], [150]], 'the outlines of the floor that is not
 // Fits a phone: nothing scrolls sideways.
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the page scrolls sideways on a phone');
 
-// Works offline once it has been opened.
-await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 }).catch(() => {});
+// Works offline once it has been opened: with the server down and the browser offline, it opens from the offline copy.
+await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 10000 });
+down = true;
 await ctx.setOffline(true);
 await page.reload();
-assert.ok(await page.title(), 'the page did not load offline');
+await page.waitForFunction(() => typeof window.tilt === 'object', null, { timeout: 10000 }).catch(() => assert.fail('the game did not start offline'));
 await ctx.setOffline(false);
+down = false;
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();
