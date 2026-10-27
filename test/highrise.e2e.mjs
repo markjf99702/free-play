@@ -59,8 +59,15 @@ const first = await page.evaluate(() => highrise.tower.rows[0]);
 assert.equal(first.length, 3, 'the ground floor lands whole, wherever it stops');
 assert.equal(await page.textContent('#floorNo'), '2');
 
-// Space sets the next one down.
-await ready();
+// Space sets the next one down. It lands where the row is, so wait until the row is over the ground floor by two
+// windows: one more step along (153 ms on floor 2) can't then take it off the edge, however slow the machine.
+await page.waitForFunction(() => {
+  const { tower, shown } = highrise;
+  if (!highrise.ready) return false;
+  let over = 0;
+  for (let c = shown; c < shown + tower.width; c++) if (tower.rows[0].includes(c)) over++;
+  return over >= Math.min(2, tower.width);
+}, null, { timeout: 5000 });
 await page.keyboard.press(' ');
 assert.equal(await page.evaluate(() => highrise.tower.built), 2);
 
