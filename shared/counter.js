@@ -22,7 +22,7 @@ function build() {
   sheet.setAttribute('role', 'dialog');
   sheet.setAttribute('aria-modal', 'true');
   sheet.setAttribute('aria-labelledby', 'fp-counter-h');
-  sheet.innerHTML = `<div class="fp-sheet-in">
+  sheet.innerHTML = `<div class="fp-sheet-in" tabindex="-1">
       <div class="fp-head">
         <h2 id="fp-counter-h">Prize counter</h2>
         <span class="fp-bal">${TICKET}<b></b> tickets</span>
@@ -37,7 +37,34 @@ function build() {
   document.body.append(sheet);
   sheet.querySelector('.fp-x').addEventListener('click', closeCounter);
   sheet.addEventListener('click', e => { if (e.target === sheet) closeCounter(); });
-  sheet.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closeCounter(); } });
+}
+
+// While the counter is open it has the keyboard to itself. Escape closes it wherever the focus is (a tap on a blank
+// part of the sheet puts it on the sheet), before the page's own keys hear it, and Tab goes round the counter's
+// buttons and no further.
+function keys(e) {
+  if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); closeCounter(); return; }
+  if (e.key !== 'Tab') return;
+  const stops = [...sheet.querySelectorAll('button')].filter(b => !b.disabled && b.getClientRects().length);
+  if (!stops.length) return;
+  const at = stops.indexOf(document.activeElement), to = e.shiftKey ? (at <= 0 ? stops.length - 1 : -1) : (at < 0 || at === stops.length - 1 ? 0 : -1);
+  if (to < 0) return;
+  e.preventDefault();
+  stops[to].focus();
+}
+
+// Everything else on the page sits behind the open counter: out of reach of Tab, a tap and a screen reader (inert), and
+// held still (fp-held on <html>, and fp-bar when it has a scroll bar that takes room), so a wheel or a flick over the
+// backdrop doesn't scroll it. What was inert already stays as it was when the counter closes.
+let held = [];
+function hold(on) {
+  for (const el of held) el.inert = false;
+  held = on ? [...document.body.children].filter(el => el !== sheet && !el.inert) : [];
+  for (const el of held) el.inert = true;
+  const root = document.documentElement;
+  root.classList.toggle('fp-bar', on && innerWidth > root.clientWidth);
+  root.classList.toggle('fp-held', on);
+  document[on ? 'addEventListener' : 'removeEventListener']('keydown', keys, true);
 }
 
 function render() {
@@ -125,17 +152,20 @@ function trade(p) {
 // opts.onBuy(prize): a page's sound for a trade. opts.onClose(): back to the game.
 export function openCounter(o = {}) {
   if (!sheet) build();
+  if (counterOpen()) return;
   opts = o;
   lastFocus = document.activeElement;
   render();
   // the toast moves into the counter while it's open: at its foot, clear of the prizes, and inside the dialog
   sheet.querySelector('.fp-foot').append(toastBox());
   sheet.hidden = false;
+  hold(true);
   sheet.querySelector('.fp-x').focus({ preventScroll: true });
 }
 export function closeCounter() {
-  if (!sheet || sheet.hidden) return;
+  if (!counterOpen()) return;
   sheet.hidden = true;
+  hold(false);
   // a trade can only be undone at the counter
   if (toastUndo) { toastUndo = null; toastEl.hidden = true; }
   document.body.append(toastBox());

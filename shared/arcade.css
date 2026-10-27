@@ -24,6 +24,10 @@
   display: flex; justify-content: center; align-items: flex-end; font: 16px/1.45 var(--fp-body); color: var(--fp-ink);
 }
 .fp-sheet[hidden] { display: none; }
+/* The page behind an open counter holds still. Where its scroll bar takes room (a computer's), the room is kept, so the
+   page doesn't jump sideways as the bar goes. */
+.fp-held { overflow: hidden; }
+.fp-held.fp-bar { scrollbar-gutter: stable; }
 .fp-sheet-in {
   width: min(560px, 100vw); max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px)); overflow: auto; overscroll-behavior: contain;
   background: var(--fp-booth); border: 1px solid var(--fp-line); border-bottom: 0; border-radius: 22px 22px 0 0;
@@ -78,6 +82,7 @@
 .fp-prize.short .c { color: var(--fp-ink3); }
 .fp-prize:not(.short):active { background: rgba(251, 238, 210, .14); }
 .fp-sheet button:focus-visible { outline: 2px solid var(--fp-gold); outline-offset: 3px; }
+.fp-sheet-in:focus { outline: none; } /* a tap on a blank part of the sheet keeps the focus in it, unmarked */
 
 .fp-toast {
   position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; margin: 0;

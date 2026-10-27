@@ -1,7 +1,8 @@
 // The prize counter on every page on the floor, in Chromium through the real pages:  node test/counter.e2e.mjs
 // (needs Playwright). On the floor and on each machine: the arcade's tickets with their commas, the counter opened
 // from the ticket count, a lollipop traded for, and Escape closing the counter and nothing else; and each page's link
-// preview pointing at that page. (test/e2e.mjs walks the floor in depth, and each machine's own test plays it.)
+// preview pointing at that page. On a computer, the keyboard kept in the counter and the page held still behind it.
+// (test/e2e.mjs walks the floor in depth, and each machine's own test plays it.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -133,6 +134,44 @@ for (const [width, height] of [[360, 640], [390, 844]]) {
     assert.ok(head.bal.right <= head.sheet.right && head.x.right <= head.sheet.right, `${at}: off the side`);
     await page.keyboard.press('Escape');
   }
+}
+await page.setViewportSize({ width: 390, height: 844 });
+
+// On a computer, on the floor and on a machine: opened from the keyboard, the counter keeps it. Tab goes round its
+// buttons and never to the page behind; a click on a blank part of it, then Escape, still closes it; and the keyboard
+// is back on the button that opened it. A mouse wheel over the backdrop beside it leaves the page where it was.
+await page.setViewportSize({ width: 1280, height: 800 });
+const inSheet = () => page.evaluate(() => !!document.activeElement?.closest('.fp-sheet'));
+for (const [path, hook, opener] of [['', 'freePlay', '#purse'], ['hoops/', 'hoops', '#tixBtn']]) {
+  const where = path || 'the floor';
+  await page.goto(base + path);
+  await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 12345, prizes: { lollipop: 3, duck: 1, 'plush-frog': 2 } })));
+  await page.reload();
+  await page.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
+  await page.focus(opener);
+  await page.keyboard.press('Enter');
+  assert.ok(await page.isVisible('.fp-sheet'), `${where}: Enter opens the counter`);
+  const outside = [];
+  for (let i = 1; i <= 20; i++) { await page.keyboard.press('Tab'); if (!(await inSheet())) outside.push(i); }
+  assert.deepEqual(outside, [], `${where}: Tabs that left the counter`);
+  assert.equal(await focused(), 'fp-x', `${where}: Tab from the last prize goes round to Close`);
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'unicorn', `${where}: Shift+Tab from Close goes round to the last prize`);
+  const shelf = await page.locator('.fp-shelf').boundingBox();
+  await page.mouse.click(shelf.x + shelf.width - 12, shelf.y + 12);
+  await page.keyboard.press('Escape');
+  assert.ok(await page.isHidden('.fp-sheet'), `${where}: Escape after a click on the shelf closes the counter`);
+  assert.equal(await focused(), opener.slice(1), `${where}: the keyboard is back on ${opener}`);
+  assert.equal(await page.evaluate(() => document.querySelectorAll('body > [inert]').length), 0, `${where}: the page is left inert`);
+  if (!path) await page.evaluate(() => scrollTo(0, 600));
+  const y = await page.evaluate(() => scrollY);
+  await page.evaluate(sel => document.querySelector(sel).click(), opener); // (where it is, without scrolling to it)
+  await page.mouse.move(40, 400);
+  for (let i = 0; i < 10; i++) { await page.mouse.wheel(0, 400); await page.waitForTimeout(40); }
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => scrollY), y, `${where}: a wheel over the backdrop scrolled the page behind the counter`);
+  await page.click('.fp-x');
+  assert.equal(await page.evaluate(() => scrollY), y, `${where}: closing the counter moved the page`);
 }
 await page.setViewportSize({ width: 390, height: 844 });
 
