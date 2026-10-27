@@ -276,6 +276,19 @@ for (const [kinds, rows] of [[0, 0], [3, 1], [10, 2], [SHELF.length, 4]]) {
   }
 }
 
+// A tap on a prize on the shelf says what it is, on the floor and in the counter.
+await pocket({ tickets: 50, prizes: { 'plush-frog': 3, 'plush-alien': 1 } });
+assert.deepEqual(await page.locator('#shelf button').evaluateAll(els => els.map(e => e.getAttribute('aria-label'))), ['Plush frog, 3', 'Plush alien']);
+await page.tap('#shelf button >> nth=0');
+assert.equal(await page.textContent('.fp-toast'), 'Plush frog. You have 3.');
+await page.tap('#shelf button >> nth=1');
+assert.equal(await page.textContent('.fp-toast'), 'Plush alien.');
+await page.click('#trade');
+await page.tap('.fp-shelf button >> nth=1');
+assert.equal(await page.textContent('.fp-toast'), 'Plush alien.');
+assert.ok(await page.isVisible('.fp-sheet .fp-toast'), 'in the counter, the name comes up at its foot');
+await page.click('.fp-x');
+
 // Saves with an odd value in them still open: a best of null (what a NaN is saved as), and today's card saved
 // without its balls. (The saves there were are put back after.)
 const ODD = ['free-play.popgun', 'free-play.bonkers', 'free-play.hoops', 'free-play.roll-up'];

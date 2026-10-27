@@ -57,7 +57,13 @@
 }
 .fp-shelf.empty { background: rgba(251, 238, 210, .04); }
 .fp-shelf .fp-empty { font-size: 14px; line-height: 1.45; color: var(--fp-ink3); align-self: center; }
-.fp-shelf span { position: relative; }
+/* a prize on a shelf, the counter's or the floor's: just its emoji, and a tap names it */
+.fp-item {
+  position: relative; margin: 0; padding: 0; border: 0; border-radius: 8px; background: none; color: inherit;
+  font: inherit; line-height: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease;
+}
+.fp-item:active { transform: scale(.9); }
 .fp-shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--fp-body); color: var(--fp-ink); background: var(--fp-red); border-radius: 999px; padding: 1px 5px; }
 .fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
 .fp-prize {
@@ -103,4 +109,4 @@
 .fp-won { display: flex; flex-direction: column; align-items: flex-start; margin: 14px 0 0; font: 600 16px/1.3 var(--fp-body); color: var(--fp-ink2); }
 .fp-won b { font: 400 44px/1 var(--fp-disp); color: var(--fp-gold); text-shadow: 0 0 14px rgba(255, 170, 60, .5); }
 
-@media (prefers-reduced-motion: reduce) { .fp-strip { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .fp-strip { animation: none; } .fp-item { transition: none; } }

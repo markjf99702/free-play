@@ -154,7 +154,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .shelf.empty { background: rgba(251, 238, 210, .04); }
 .shelf .empty { font-size: 14px; line-height: 1.45; color: var(--ink3); align-self: center; }
-.shelf span { position: relative; }
 .shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--body); background: #c23a2e; border-radius: 999px; padding: 1px 5px; }
 .trade {
   min-height: 48px; padding: 0 26px; border-radius: 999px; border: 1px solid rgba(255, 211, 106, .55);

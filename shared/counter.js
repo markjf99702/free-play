@@ -53,14 +53,7 @@ function render() {
     e.textContent = w.tickets ? 'Nothing yet. Pick something below.' : 'Nothing yet. Win tickets on any machine, then trade them here.';
     shelf.append(e);
   }
-  for (const p of owned) {
-    const s = document.createElement('span');
-    s.textContent = p.emoji; s.title = p.name;
-    s.setAttribute('role', 'img');
-    s.setAttribute('aria-label', w.prizes[p.id] > 1 ? `${fmt(w.prizes[p.id])} × ${p.name}` : p.name);
-    if (w.prizes[p.id] > 1) { const n = document.createElement('sub'); n.textContent = fmt(w.prizes[p.id]); s.append(n); }
-    shelf.append(s);
-  }
+  for (const p of owned) shelf.append(shelfItem(p, w.prizes[p.id]));
   const grid = sheet.querySelector('.fp-grid');
   // the grid is drawn afresh, so a prize picked with the keyboard keeps the focus
   const had = grid.contains(document.activeElement) ? document.activeElement.dataset.id : null;
@@ -79,6 +72,29 @@ function render() {
     grid.append(b);
     if (p.id === had) b.focus({ preventScroll: true });
   }
+}
+
+// A prize on a shelf, the floor's or the counter's: its emoji, with a badge for how many there are. A phone has no
+// hover to show a name, so a tap says what it is. (Not straight after a trade: a double tap on a prize whose second
+// tap lands on a new row of the shelf is still the one tap, and leaves the trade's Undo where it is.)
+export function shelfItem(p, n) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'fp-item';
+  b.textContent = p.emoji;
+  b.title = p.name;
+  b.setAttribute('aria-label', n > 1 ? `${p.name}, ${fmt(n)}` : p.name);
+  if (n > 1) {
+    const c = document.createElement('sub');
+    c.textContent = fmt(n);
+    c.setAttribute('aria-hidden', 'true');
+    b.append(c);
+  }
+  b.addEventListener('click', () => {
+    if (performance.now() - lastTrade < SAME_TAP) return;
+    toast(n > 1 ? `${p.name}. You have ${fmt(n)}.` : `${p.name}.`);
+  });
+  return b;
 }
 
 function trade(p) {

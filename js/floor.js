@@ -4,7 +4,7 @@
 // (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
-import { openCounter, fmt } from '../shared/counter.js';
+import { openCounter, shelfItem, fmt } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
 import { dayKey } from '../roll-up/js/daily.js';
 
@@ -80,14 +80,7 @@ function pocket() {
     e.textContent = 'Nothing on your shelf yet.';
     shelf.append(e);
   }
-  for (const p of owned) {
-    const s = document.createElement('span');
-    s.textContent = p.emoji; s.title = p.name;
-    s.setAttribute('role', 'img');
-    s.setAttribute('aria-label', w.prizes[p.id] > 1 ? `${w.prizes[p.id]} × ${p.name}` : p.name);
-    if (w.prizes[p.id] > 1) { const n = document.createElement('sub'); n.textContent = w.prizes[p.id]; s.append(n); }
-    shelf.append(s);
-  }
+  for (const p of owned) shelf.append(shelfItem(p, w.prizes[p.id]));
 }
 
 const counter = () => openCounter({ onClose: pocket });
