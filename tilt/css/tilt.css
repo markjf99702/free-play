@@ -30,7 +30,7 @@ body {
 /* ---- the backbox: ball number, score display, menu ---- */
 .backbox {
   position: fixed; left: 0; right: 0; top: 0; height: var(--hud);
-  padding: env(safe-area-inset-top, 0px) 10px 0;
+  padding: env(safe-area-inset-top, 0px) max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px));
   display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; gap: 8px;
   background: linear-gradient(#0d0a08, #050403); border-bottom: 1px solid #2a1a0a;
 }

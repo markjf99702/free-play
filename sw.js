@@ -13,8 +13,8 @@ const SHELL = [
   'css/floor.css', 'js/floor.js', 'floor/bonkers.jpg', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/hoops.jpg',
   'floor/popgun.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
   // shared
-  'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/matter.min.js', 'shared/prizes.js',
-  'shared/wallet.js',
+  'shared/arcade.css', 'shared/carry.js', 'shared/counter.js', 'shared/insets.js', 'shared/matter.min.js',
+  'shared/prizes.js', 'shared/wallet.js',
   'fonts/bungee-outline.woff2', 'fonts/bungee.woff2', 'fonts/figtree.woff2',
   // Roll Up
   'roll-up/css/app.css', 'roll-up/index.html', 'roll-up/js/app.js', 'roll-up/js/daily.js', 'roll-up/js/physics.js',

@@ -9,6 +9,7 @@ import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
 import { openCounter, counterOpen, feed, PAYOUT, fmt } from '../../shared/counter.js';
+import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.highrise';
@@ -43,9 +44,11 @@ function layout() {
   const hud = document.querySelector('.hud').getBoundingClientRect();
   const top = Math.max(hud.bottom + 2, 54);
   deck.style.width = side ? '170px' : '';
+  // Clear of an iPhone's home indicator, and of its notch on its side (see ../../shared/insets.js).
+  const safe = insets();
   draw.resize(innerWidth, innerHeight, Math.min(2, devicePixelRatio || 1), side
-    ? { top, bottom: 8, right: 190 }
-    : { top, bottom: deck.offsetHeight });
+    ? { top, bottom: 8 + safe.bottom, right: 190 + safe.right }
+    : { top, bottom: deck.offsetHeight + safe.bottom });
   const cab = draw.cabinet();
   if (side) {
     Object.assign(deck.style, { left: `${cab.left + cab.width + 18}px`, top: `${(cab.top + cab.bottom) / 2 - deck.offsetHeight / 2}px` });

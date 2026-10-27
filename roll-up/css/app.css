@@ -34,7 +34,7 @@ svg { width: 1.3em; height: .9em; flex: none; }
 /* ---------- the scoreboard ---------- */
 .hud {
   position: fixed; left: 0; right: 0; top: 0; z-index: 2; pointer-events: none;
-  padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) 0 max(14px, env(safe-area-inset-left, 0px));
   display: flex; justify-content: space-between; align-items: flex-start;
 }
 .hud .score { line-height: 1; }

@@ -8,6 +8,7 @@ import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine } from './daily.js';
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, toast, feed, PAYOUT, fmt } from '../../shared/counter.js';
+import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.roll-up';
@@ -41,15 +42,11 @@ sound.setEnabled(saved.sound);
 // ---------- the scene ----------
 const canvas = $('stage');
 const scene = createScene(canvas);
-const probe = document.createElement('div');
-probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
-document.body.append(probe);
 function layout() {
-  const cs = getComputedStyle(probe);
   const hud = document.querySelector('.hud').getBoundingClientRect();
   scene.resize(innerWidth, innerHeight, Math.min(2, devicePixelRatio || 1), {
     top: Math.max(hud.bottom + 4, 56),
-    bottom: parseFloat(cs.paddingBottom) + 4,
+    bottom: insets().bottom + 4, // clear of an iPhone's home indicator
   });
 }
 addEventListener('resize', layout);

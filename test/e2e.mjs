@@ -1,8 +1,9 @@
 // Walks round the Free Play floor in Chromium through the real pages:  node test/e2e.mjs  (needs Playwright)
 // In from the floor to each machine and back, with the tickets each one pays adding up in the one wallet, the prize
 // counter from the floor, every file the pages load kept for offline, Chrome offering to install it, all of it
-// opening again offline, each machine's control deck on a shorter phone, and a new release's offline copy made whole
-// from the server. (Each machine's own browser test, test/<machine>.e2e.mjs, plays it in depth.)
+// opening again offline, each machine's control deck on a shorter phone and clear of an iPhone's home indicator and
+// notch, and a new release's offline copy made whole from the server. (Each machine's own browser test,
+// test/<machine>.e2e.mjs, plays it in depth.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -392,6 +393,30 @@ for (const [width, height] of [[390, 844], [390, 664], [360, 640], [375, 548], [
   }
 }
 await decks.close();
+
+// Added to an iPhone's home screen, a page runs under the notch and the home indicator. Each machine keeps its cabinet
+// and control deck above the indicator's strip (the bottom 34 px), and on its side keeps its score and buttons clear
+// of the notch and the rounded corners (47 px in from each side).
+const notch = await browser.newContext({ deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+const np = await notch.newPage();
+np.on('pageerror', e => problems.push(e.message));
+const npc = await notch.newCDPSession(np);
+for (const [width, height, insets] of [[390, 844, { top: 47, bottom: 34, left: 0, right: 0 }], [844, 390, { top: 0, bottom: 21, left: 47, right: 47 }]]) {
+  await np.setViewportSize({ width, height });
+  await npc.send('Emulation.setSafeAreaInsetsOverride', { insets });
+  for (const name of ['rollUp', 'tilt', 'clutch', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops']) {
+    await np.goto(base + (name === 'rollUp' ? 'roll-up' : name) + '/');
+    await np.waitForFunction(name => !!window[name], name, { timeout: 10000 });
+    const at = await np.evaluate(() => {
+      const box = sel => document.querySelector(sel)?.getBoundingClientRect();
+      const hud = document.querySelector('.hud, .backbox'), kids = [...hud.children].map(k => k.getBoundingClientRect()).filter(r => r.width);
+      return { deck: box('#deck')?.bottom, left: Math.min(...kids.map(r => r.left)), right: Math.max(...kids.map(r => r.right)) };
+    });
+    if (at.deck && width < height) assert.ok(at.deck <= height - insets.bottom, `${name}'s deck comes down to ${Math.round(height - at.deck)} px from the bottom, in the home indicator's strip`);
+    assert.ok(at.left >= insets.left && at.right <= width - insets.right, `${name}'s score and buttons run from ${Math.round(at.left)} to ${Math.round(at.right)} px, under the notch or a corner`);
+  }
+}
+await notch.close();
 
 // A page saved as a single file (how a machine is tried out before it joins the floor) says so with data-single on
 // <html>: it hides every link back to the floor, which isn't there, and keeps no offline copy. Tilt leaves its address
