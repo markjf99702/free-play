@@ -80,6 +80,7 @@ assert.equal(await mode(), 'title');
 await page.click('#play');
 assert.equal(await mode(), 'aim');
 assert.ok(await page.isVisible('#hint'), 'a first-timer is told how to roll');
+assert.equal(await page.textContent('#hint'), 'Drag the ball, flick it up the lane');
 
 // A slow drag isn't a throw: the ball goes back behind the line, moved across to where the finger left it.
 let at = await ballOnScreen();
@@ -209,9 +210,12 @@ await page.click('#daily');
 assert.ok(await page.isVisible('#over'), 'today’s result shows again');
 assert.equal(await mode(), 'title', 'and no new game starts');
 
-// The keyboard: Enter to play, hold Space to wind up, let go to roll.
+// The keyboard: Enter to play, hold Space to wind up, let go to roll. Once a key's been pressed, the first ball's hint
+// says how on a keyboard.
 await page.keyboard.press('Enter');
 assert.equal(await mode(), 'aim');
+assert.ok(await page.isVisible('#hint'));
+assert.equal(await page.textContent('#hint'), '← → move, hold Space to roll');
 await page.keyboard.press('ArrowLeft');
 await page.keyboard.down('Space');
 await page.waitForTimeout(500);
@@ -248,6 +252,20 @@ await page.click('#menuBtn');
 await page.click('#restart');
 assert.deepEqual([await mode(), await page.evaluate(() => rollUp.thrown)], ['aim', 0]);
 assert.ok(await page.isHidden('#menu') && await page.isHidden('#title') && await page.isHidden('#over'));
+
+// The wind-up meter turns red where a straight roll from the middle of the lane sails over the rings into the 10, and
+// a faint tick marks the 50: rolled from the tick it drops in the 50, and from just into the red it goes over.
+const marks = await page.evaluate(() => rollUp.meterMarks());
+assert.ok(marks.red > 0.35 && marks.red < 0.7 && marks.tick > 0.2 && marks.tick < marks.red, `the meter's marks: ${JSON.stringify(marks)}`);
+await page.evaluate(() => { rollUp.speed = 6; });
+for (const [k, ring] of [[marks.tick, 50], [marks.red + 0.03, 10]]) {
+  await page.evaluate(() => rollUp.start());
+  await page.waitForFunction(() => rollUp.mode === 'aim');
+  await page.evaluate(k => rollUp.roll(0, rollUp.keyRoll(k), 0), k);
+  await page.waitForFunction(() => rollUp.thrown === 1, null, { timeout: 15000 });
+  assert.equal(await page.evaluate(() => rollUp.game.balls[0].value), ring, `a straight roll from ${k.toFixed(3)} on the meter`);
+}
+await page.evaluate(() => { rollUp.speed = 1; });
 
 // Fits a phone: nothing scrolls sideways.
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the page scrolls sideways on a phone');

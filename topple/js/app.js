@@ -113,10 +113,12 @@ canvas.addEventListener('pointercancel', e => { if (e.pointerId === finger) fing
 const clampAim = x => Math.max(12, Math.min(DECK.W - 12, x));
 $('drop').addEventListener('click', () => dropCoin());
 
-// The keyboard: arrows move the chute while they're held, Space drops.
+// The keyboard: arrows move the chute while they're held, Space drops. Once a key's been pressed, the deck says so.
 const keys = new Set();
+let keyed = false;
 addEventListener('keydown', e => {
   if (counterOpen()) return; // the counter takes its own keys
+  if (!keyed && ['ArrowLeft', 'ArrowRight', 'ArrowDown', ' ', 'Enter'].includes(e.key)) { keyed = true; document.querySelector('.deck .say').textContent = '← → aim, Space drops'; }
   if (e.key === 'Escape') { toggleMenu(); return; }
   if (e.target.closest && e.target.closest('button, a') && (e.key === ' ' || e.key === 'Enter')) return;
   if (!$('title').hidden && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); start(); return; }

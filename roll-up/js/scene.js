@@ -459,7 +459,7 @@ export function createScene(canvas) {
     trayBalls(view.tray, view.trayGold);
     const b = view.ball;
     if (b && b.state !== 'done' && !b.hidden) drawBall(b);
-    if (view.charge != null && b) chargeMeter(b, view.charge);
+    if (view.charge != null && b) chargeMeter(b, view.charge, view.meter);
     for (const p of view.pops) pop(p);
   }
 
@@ -635,10 +635,16 @@ export function createScene(canvas) {
     );
   }
 
-  function chargeMeter(b, k) {
+  // The keyboard's wind-up meter by the ball: red from where a straight roll sails over the rings, and a faint tick at
+  // the 50 (marks: { red, tick }, from the app, which knows how the meter turns into a roll).
+  function chargeMeter(b, k, marks = { red: 0.78, tick: null }) {
     const s = P(V(b.x + R * 2.2, b.y, b.z)), h = s.k * 22, w = Math.max(5, s.k * 2.2);
     ctx.fillStyle = 'rgba(16,12,34,.7)'; ctx.fillRect(s.x, s.y - h, w, h);
-    ctx.fillStyle = k > 0.78 ? '#ff6a4d' : COL.gold; ctx.fillRect(s.x, s.y - h * k, w, h * k);
+    ctx.fillStyle = k >= marks.red ? '#ff6a4d' : COL.gold; ctx.fillRect(s.x, s.y - h * k, w, h * k);
+    if (marks.tick != null) {
+      ctx.fillStyle = 'rgba(251,238,210,.6)';
+      ctx.fillRect(s.x - w * 0.5, s.y - h * marks.tick - 0.75, w * 2, 1.5);
+    }
     ctx.strokeStyle = COL.cream; ctx.lineWidth = 1; ctx.strokeRect(s.x, s.y - h, w, h);
   }
 

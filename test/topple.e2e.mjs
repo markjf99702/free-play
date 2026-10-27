@@ -84,11 +84,13 @@ await reloaded();
 await page.evaluate(() => { document.getElementById('drop').click(); document.getElementById('drop').click(); });
 assert.equal(await left(), 18, 'two presses straight after each other drop one coin');
 
-// The keyboard: arrows move the chute, Space drops.
+// The keyboard: arrows move the chute, Space drops. Once a key's been pressed, the deck says how on a keyboard.
 await reloaded();
+assert.equal(await page.textContent('.deck .say'), 'Touch the glass to aim');
 await page.keyboard.down('ArrowLeft'); await page.waitForTimeout(300); await page.keyboard.up('ArrowLeft');
 await page.keyboard.press(' ');
 assert.equal(await left(), 17);
+assert.equal(await page.textContent('.deck .say'), '← → aim, Space drops');
 
 // A prize nudged over the edge goes on the shelf, and the attendant puts another one on.
 const prize = await page.evaluate(() => { const p = topple.machine.pieces.find(p => p.kind === 'prize'); window.Matter.Body.setPosition(p, { x: 150, y: 252 }); return p.prize; });

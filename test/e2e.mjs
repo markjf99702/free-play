@@ -430,6 +430,26 @@ for (const [path, name] of Object.entries(OFFLINE)) {
 }
 await ctx.setOffline(false);
 
+// On a computer each machine's title card says how to play it on the keyboard, in its menu's words (Tilt, in its pause
+// card's); on a phone, which has no keys, it doesn't.
+for (const [opts, shown] of [[{ viewport: { width: 1280, height: 800 } }, true], [{ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, false]]) {
+  const kc = await browser.newContext({ ...opts, serviceWorkers: 'block' });
+  const kp = await kc.newPage();
+  kp.on('pageerror', e => problems.push(e.message));
+  for (const [path, name] of Object.entries(OFFLINE).slice(1)) {
+    await kp.goto(base + path);
+    await kp.waitForFunction(name => !!window[name], name, { timeout: 10000 });
+    const [line, seen, menu] = await kp.evaluate(() => {
+      const keys = document.querySelector('#title .keys');
+      const menu = [...document.querySelectorAll('#menu .how, #pause .keys')].find(p => /keyboard/.test(p.textContent));
+      return [keys?.textContent, !!keys?.getClientRects().length, menu?.textContent];
+    });
+    assert.ok(line && line === menu, `${name}'s title card's keyboard line "${line}" isn't its menu's "${menu}"`);
+    assert.equal(seen, shown, `${name}'s keyboard line ${shown ? "isn't" : 'is'} shown ${shown ? 'on a computer' : 'on a phone'}`);
+  }
+  await kc.close();
+}
+
 // On a shorter phone each machine's cabinet is narrower, and the control deck under it: everything on the deck stays
 // on it, a hint shows whole or not at all, and the points-a-basket label on Hoops' deck stays on one line.
 const decks = await browser.newContext({ deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });

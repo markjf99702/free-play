@@ -17,6 +17,10 @@
 }
 
 .fp-tix { width: 1.3em; height: .9em; flex: none; vertical-align: -.08em; }
+/* A machine's keyboard line on its title card: shown on a computer (a pointer that can hover), not on a phone. */
+.keys { display: none; }
+@media (hover: hover) and (pointer: fine) { .keys { display: block; } }
+
 /* said to a screen reader, and not shown */
 .fp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 

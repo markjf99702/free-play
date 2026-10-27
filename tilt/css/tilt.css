@@ -104,6 +104,7 @@ h2 { margin: 0; font: 30px/1.1 var(--disp); color: var(--amber); }
 /* the controls, on the title card and the pause card (How to play has the rest) */
 .ctl { margin: 0 0 16px; color: var(--ink2); font-size: 14px; }
 #pause .ctl { margin: 8px 0 16px; }
+#title .ctl.keys, #pause .ctl.keys { margin-top: -10px; } /* the keyboard's line, on a computer, under the touch one */
 /* The table picker: a radio button for each table, drawn as a tile; the one in the machine is lit. */
 .tables { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 0 0 14px; padding: 0; border: 0; min-width: 0; }
 .tables legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

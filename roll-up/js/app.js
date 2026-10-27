@@ -23,6 +23,31 @@ const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 // and the hardest flick tops out a little past the 50, into the 10.
 const FLICK = { window: 90, min: 70, top: 420, ease: 480, aim: 0.85, maxAngle: 0.32 };
 const power = speed => FLICK.top * (1 - Math.exp(-speed / FLICK.ease));
+// On a keyboard, Space held winds a meter up and down, and letting go rolls the ball straight up the lane, from 190 cm/s
+// with the meter empty to 510 full.
+const keyRoll = k => 190 + k * 320;
+// Where the meter's marks go, worked out once by rolling straight up the middle of the lane in the physics at a run of
+// points on the meter (with its bounces' random held at a half, so it comes out the same every time). The meter turns
+// red from the first roll that sails over the rings into the 10, and a faint tick marks the middle of the run of rolls
+// just under that which drop in the 50. Nothing sails over: it never turns red.
+let marks = null;
+function meterMarks() {
+  if (marks) return marks;
+  const fixed = () => 0.5, lands = k => phys.simulate(0, keyRoll(k), 0, fixed).value;
+  let fifty = [], under = 0, over = null;
+  for (let i = 15; i <= 50 && over == null; i++) {
+    const k = i / 50, v = lands(k);
+    if (v === 10) over = k;
+    else {
+      if (v === 50) fifty = fifty.length && fifty.at(-1) < k - 0.03 ? [k] : [...fifty, k];
+      under = k;
+    }
+  }
+  if (over != null) for (let j = 0; j < 5; j++) { const m = (under + over) / 2; if (lands(m) === 10) over = m; else under = m; }
+  marks = { red: over ?? 2, tick: fifty.length ? (fifty[0] + fifty.at(-1)) / 2 : null };
+  return marks;
+}
+(globalThis.requestIdleCallback || setTimeout)(meterMarks);
 
 // ---------- what's kept between visits ----------
 // Roll Up's own: the best score, games played, today's card and the sound. Tickets and prizes are the arcade's.
@@ -243,6 +268,8 @@ function hud() {
   $('tix').textContent = fmt(have);
   pocketButton($('tixBtn'), have);
   $('hint').hidden = !(mode === 'aim' && !thrownOnce);
+  const hint = keyed ? '← → move, hold Space to roll' : 'Drag the ball, flick it up the lane';
+  if ($('hint').textContent !== hint) $('hint').textContent = hint;
   const ready = ['aim', 'drag', 'deal'].includes(mode);
   const call = callNow();
   $('callNote').hidden = !(ready && call);
@@ -321,7 +348,11 @@ function settle(foul = false) {
 
 // The keyboard: arrows move the ball, Space winds up and lets go.
 const chargeLevel = () => { const p = ((performance.now() - charge.t0) / 1500) % 2; return p < 1 ? p : 2 - p; };
+// Once a key's been pressed, the first ball's hint says how to roll on a keyboard.
+const KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', ' ', 'Enter'];
+let keyed = false;
 addEventListener('keydown', e => {
+  if (KEYS.includes(e.key) && !counterOpen() && !keyed) { keyed = true; hud(); }
   if (e.target.closest && e.target.closest('button, a') && (e.key === ' ' || e.key === 'Enter')) return;
   if (counterOpen()) return; // the counter takes its own keys
   if (e.key === 'Escape') { toggleMenu(); return; }
@@ -343,7 +374,7 @@ addEventListener('keyup', e => {
   if (!charge || (e.key !== ' ' && e.key !== 'ArrowUp')) return;
   const k = chargeLevel();
   charge = null;
-  if (mode === 'aim') throwBall(0, 190 + k * 320);
+  if (mode === 'aim') throwBall(0, keyRoll(k));
 });
 
 // ---------- cards ----------
@@ -448,7 +479,7 @@ function tick(now) {
   scene.frame({
     ball, tray: trayCount(), trayGold: trayGold(), call: callNow(), pops, flash, lights, now, zoom: zoom * zoom * (3 - 2 * zoom),
     foul: foulAt && now - foulAt < 1200 ? (now - foulAt) / 1000 : null,
-    charge: charge && mode === 'aim' ? chargeLevel() : null,
+    charge: charge && mode === 'aim' ? chargeLevel() : null, meter: charge ? meterMarks() : null,
   });
   requestAnimationFrame(tick);
 }
@@ -515,4 +546,6 @@ window.rollUp = {
   },
   set speed(k) { timeScale = k; },
   scene,
+  meterMarks,
+  keyRoll,
 };
