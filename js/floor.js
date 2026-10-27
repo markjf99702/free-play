@@ -89,6 +89,9 @@ $('purse').addEventListener('click', counter);
 addEventListener('free-play:wallet', pocket);
 // coming back from a machine (the browser may keep this page as it was): look again
 addEventListener('pageshow', () => { pocket(); machines(); });
+// a machine played in another tab or window: its cabinet says so without a reload (the pocket hears about it from
+// ../shared/counter.js, as a free-play:wallet)
+addEventListener('storage', e => { if (e.key === null || e.key.startsWith('free-play.')) machines(); });
 pocket();
 machines();
 

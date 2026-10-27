@@ -126,6 +126,22 @@ test("whatever else is kept in the pocket stays there through every trade", () =
   assert.deepEqual(wallet.read(), { ...more, tickets: 513, prizes: { duck: 2, [PLUSH[0].id]: 1 } });
 });
 
+test('no page is sent with a ticket count already in it', async () => {
+  // js fills them in from the pocket: until then they're empty, never a 0 that a returning player would see
+  const { readFile } = await import('node:fs/promises');
+  for (const page of ['', 'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/', 'hoops/']) {
+    const html = await readFile(new URL(`../${page}index.html`, import.meta.url), 'utf8');
+    const counts = [...html.matchAll(/id="tixT?"[^>]*>([^<]*)</g)].map(m => m[1]);
+    assert.equal(counts.length, 1, `${page || 'the floor'} has its ticket count`);
+    assert.doesNotMatch(counts[0], /\d/, `${page || 'the floor'} is sent with ${counts[0]} tickets`);
+  }
+  // and the floor's cabinets wait for the saves too, rather than saying what a first visit would
+  const floor = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const stats = [...floor.matchAll(/class="stat" id="(\w+)">([^<]*)</g)];
+  assert.equal(stats.length, 8);
+  for (const [, id, text] of stats) assert.equal(text, '', `#${id} is sent saying "${text}"`);
+});
+
 test('counts saved as text read as numbers, and stay numbers', () => {
   kept.set('free-play.wallet', '{"tickets":"50","prizes":{"lollipop":"2","duck":2.7,"kite":0,"bear":-1,"dice":"x","disc":null,"unicorn":1e999}}');
   assert.deepEqual(wallet.read(), { tickets: 50, prizes: { lollipop: 2, duck: 2 } });

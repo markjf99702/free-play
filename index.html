@@ -25,7 +25,7 @@
   <header class="door">
     <h1 class="sign" aria-label="Free Play"><span class="free">Free</span> <span class="play">Play</span></h1>
     <p class="lede">An arcade on your phone. Every machine is set to free play. The games pay out tickets for the prize counter, and the claw and the coin pusher pay out prizes straight onto your shelf.</p>
-    <button type="button" class="purse" id="purse"><svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg><b id="tix">0</b> tickets</button>
+    <button type="button" class="purse" id="purse"><svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg><b id="tix"></b> tickets</button>
   </header>
 
   <main class="floor">
@@ -34,7 +34,7 @@
       <span class="screen"><img src="floor/roll-up.jpg" width="600" height="450" alt="Roll Up's skee-ball board: chrome rings on blue with lit 20, 30, 40 and 50 holes, 100 cups in the top corners, under a marquee of bulbs"></span>
       <span class="panel">
         <span class="what">Skee-ball. Flick the ball up the lane, over the hump and into the rings. Nine balls a game, one of them golden.</span>
-        <span class="stat" id="rollUpStat">Today's card is ready: nine called shots.</span>
+        <span class="stat" id="rollUpStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -44,7 +44,7 @@
       <span class="screen"><img src="floor/tilt.jpg" width="600" height="450" alt="A Tilt pinball table: top lanes A, B and C over the pop bumpers on a starry blue playfield"></span>
       <span class="panel">
         <span class="what">Pinball, three tables: Classic, Space with its ramp and multiball, and Haunted House, the hard one.</span>
-        <span class="stat" id="tiltStat">Three balls a game. Nudge, but not too hard.</span>
+        <span class="stat" id="tiltStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -54,7 +54,7 @@
       <span class="screen"><img src="floor/clutch.jpg" width="600" height="450" alt="Clutch's glass box: the claw lifting a plush off a heap of bears, frogs, chicks, ghosts, penguins and aliens"></span>
       <span class="panel">
         <span class="what">A claw machine full of plush. Hold the button to move the claw, let go to drop it, and keep whatever it carries to the chute.</span>
-        <span class="stat" id="clutchStat">Pays in plush, straight onto your shelf.</span>
+        <span class="stat" id="clutchStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -64,7 +64,7 @@
       <span class="screen"><img src="floor/topple.jpg" width="600" height="450" alt="Topple's deck: a heap of silver coins, two gold ones and a prize on a red card, pushed towards the front edge by a chrome shelf"></span>
       <span class="panel">
         <span class="what">A coin pusher. Drop coins on the moving shelf and push the pile over the edge: every coin that goes over is a ticket.</span>
-        <span class="stat" id="toppleStat">Twenty coins a cup, and a prize on the deck.</span>
+        <span class="stat" id="toppleStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -74,7 +74,7 @@
       <span class="screen"><img src="floor/highrise.jpg" width="600" height="450" alt="Highrise's tower against a night skyline, its lit windows stacked eight floors up, a row sliding along the next floor and a window falling off the side"></span>
       <span class="panel">
         <span class="what">A stacker. Stop each sliding row on the one below and build the tower a floor at a time: floor 11 pays a bonus, the top pays the trophy.</span>
-        <span class="stat" id="highriseStat">Fifteen floors. Every one is a ticket.</span>
+        <span class="stat" id="highriseStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -84,7 +84,7 @@
       <span class="screen"><img src="floor/popgun.jpg" width="600" height="450" alt="Popgun's booth: tin rabbits and ducks running along brass rails under a red and cream awning, a star going down, and a cork on its way"></span>
       <span class="panel">
         <span class="what">A shooting gallery. Tap to fire corks at the tin ducks, rabbits and stars running along the rails, and lead the fast ones.</span>
-        <span class="stat" id="popgunStat">Twenty corks. A ticket for every 20 points.</span>
+        <span class="stat" id="popgunStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -94,7 +94,7 @@
       <span class="screen"><img src="floor/bonkers.jpg" width="600" height="450" alt="Bonkers: a mole up out of its hole on a sunny lawn, and under it the ground in cross-section, with moles running through their tunnels and one asleep in its burrow"></span>
       <span class="panel">
         <span class="what">Whack-a-mole, with the side of the cabinet made of glass: watch the moles running through their tunnels, and bonk them as they pop up.</span>
-        <span class="stat" id="bonkersStat">Forty-five seconds. Watch them coming.</span>
+        <span class="stat" id="bonkersStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>
@@ -104,7 +104,7 @@
       <span class="screen"><img src="floor/hoops.jpg" width="600" height="450" alt="Hoops: a ball dropping through the net of a basketball hoop with the rim on fire, and SWISH! and +3 rising off the backboard"></span>
       <span class="panel">
         <span class="what">The basketball machine from the end of the row: flick the balls up at the hoop as fast as they roll back to you.</span>
-        <span class="stat" id="hoopsStat">Forty-five seconds. Then the hoop starts moving.</span>
+        <span class="stat" id="hoopsStat"></span>
         <span class="coin" aria-hidden="true">Free play</span>
         <span class="go">Play</span>
       </span>

@@ -51,7 +51,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: rgba(13, 11, 31, .7); border: 1px solid rgba(255, 211, 106, .45); font-weight: 600; color: var(--ink2);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
-.purse b { font: 400 18px var(--disp); color: var(--gold); }
+.purse b { min-width: 1ch; font: 400 18px var(--disp); color: var(--gold); } /* sent empty: js/floor.js fills it */
 
 /* ---------- the machines ---------- */
 .floor {

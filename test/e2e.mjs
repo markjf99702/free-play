@@ -339,6 +339,21 @@ await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
 assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready: nine called shots. Best 120.");
 await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [ODD, saves]);
 
+// A machine played in another tab: the floor's cabinet says so without a reload, and so does the pocket.
+const tab = await ctx.newPage();
+await tab.goto(base + 'popgun/');
+await tab.waitForFunction(() => !!window.popgun, null, { timeout: 5000 });
+const [popSave, walletSave] = await tab.evaluate(() => ['free-play.popgun', 'free-play.wallet'].map(k => localStorage.getItem(k)));
+await tab.evaluate(() => {
+  localStorage.setItem('free-play.popgun', JSON.stringify({ ...JSON.parse(localStorage.getItem('free-play.popgun') || '{}'), best: 777, rounds: 9 }));
+  localStorage.setItem('free-play.wallet', JSON.stringify({ ...JSON.parse(localStorage.getItem('free-play.wallet')), tickets: 4321 }));
+});
+await page.waitForFunction(() => document.getElementById('popgunStat').textContent === 'Best: 777.', null, { timeout: 3000 });
+assert.equal(await page.textContent('#tix'), '4,321', 'the pocket follows the other tab');
+await tab.evaluate(saves => Object.entries(saves).forEach(([k, v]) => (v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v))),
+  { 'free-play.popgun': popSave, 'free-play.wallet': walletSave });
+await tab.close();
+
 // Every file the pages loaded is kept for offline.
 const shell = [...(await readFile(join(root, 'sw.js'), 'utf8')).match(/SHELL = \[([^\]]*)\]/)[1].matchAll(/'([^']*)'/g)].map(m => m[1]);
 assert.deepEqual([...loaded].filter(f => f !== 'sw.js' && !shell.includes(f)), [], 'files the pages load but sw.js does not keep');
