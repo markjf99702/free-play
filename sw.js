@@ -1,6 +1,7 @@
 // Offline support for the whole arcade: the floor and every machine, so it all plays with no signal.
 // Anything the person saves lives in localStorage, not here.
-// Network first, so a new version shows up as soon as you're online.
+// Network first, so a new version shows up as soon as you're online, but a page the network hasn't answered in a few
+// seconds opens from the offline copy instead.
 
 // Bump the number when the file list changes, or before a release that should refresh every offline copy: a new name
 // is what makes an installed copy download the whole list again.
@@ -61,18 +62,58 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 
+// How long a page waits for the network before it opens from the offline copy instead.
+const PATIENCE = 4000; // ms
+// The pages (by their client ids) that opened from the offline copy: the rest of their files come from it too, so a
+// page never mixes old files with new ones. (The browser stops the worker once it has been idle a while, and the
+// list goes with it.)
+const fromCopy = new Set();
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
-  e.respondWith(
-    fresh(e.request)
-      .then(res => {
-        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
-        return res;
-      })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))),
-  );
+  if (e.request.mode === 'navigate') e.respondWith(page(e));
+  else if (fromCopy.has(e.clientId)) e.respondWith(kept(e.request).then(r => r || network(e)));
+  else e.respondWith(network(e).catch(() => offline(e.request)));
 });
+
+// A page, from the network. On a connection that's up but not answering (a train, a captive wifi, one bar of signal),
+// it opens from the offline copy after PATIENCE instead, if the copy has it, and the network's answer still goes into
+// the copy when it comes. With no copy of the page, it waits on for the network. With no network at all, it opens
+// from the copy straight away, as it always has.
+function page(e) {
+  const net = network(e);
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const answer = res => { if (!done) { done = true; resolve(res); } };
+    const slow = setTimeout(() => kept(e.request).then(copy => {
+      if (!copy || done) return;
+      if (e.resultingClientId) {
+        fromCopy.add(e.resultingClientId);
+        if (fromCopy.size > 50) fromCopy.delete(fromCopy.values().next().value); // the oldest, long gone
+      }
+      answer(copy);
+    }), PATIENCE);
+    net.then(res => { clearTimeout(slow); answer(res); },
+      () => { clearTimeout(slow); offline(e.request).then(answer, reject); });
+  });
+}
+
+// A file from the network, kept in the offline copy for next time. The worker stays up until it's in, even when the
+// page has had its answer from the copy by then.
+function network(e) {
+  let stored;
+  const got = fresh(e.request).then(res => {
+    if (res.ok) { const copy = res.clone(); stored = caches.open(CACHE).then(c => c.put(e.request, copy)); }
+    return res;
+  });
+  try { e.waitUntil(got.then(() => stored, () => {})); } catch { /* the event is over: the copy goes in anyway */ }
+  return got;
+}
+
+const kept = request => caches.match(request, { ignoreSearch: true });
+// With no network: the file from the offline copy, or for anything it hasn't got, the floor.
+const offline = request => kept(request).then(r => r || caches.match('index.html'));
 
 // GitHub Pages lets browsers keep files for ten minutes, so without this an update can take that long to show up.
 // Ask the server every time instead; a file that hasn't changed comes back as a quick "not modified".

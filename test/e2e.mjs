@@ -2,8 +2,9 @@
 // In from the floor to each machine and back, with the tickets each one pays adding up in the one wallet, the prize
 // counter from the floor, every file the pages load kept for offline, Chrome offering to install it, all of it
 // opening again offline, each machine's control deck on a shorter phone and clear of an iPhone's home indicator and
-// notch, everything on the cards big enough to tap, and a new release's offline copy made whole from the server.
-// (Each machine's own browser test, test/<machine>.e2e.mjs, plays it in depth.)
+// notch, everything on the cards big enough to tap, a new release's offline copy made whole from the server, and the
+// floor and a machine opening from it on a weak connection. (Each machine's own browser test,
+// test/<machine>.e2e.mjs, plays it in depth.)
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -484,21 +485,27 @@ await solo.close();
 
 // The offline copy, from a server that answers the way GitHub Pages does: a browser may keep each file for ten
 // minutes (cache-control: max-age=600), and ask again by its ETag. With `next` it serves a new release: sw.js under a
-// new cache name, and a change to Topple's machine.js.
-const gh = { next: false };
+// new cache name, and a change to Topple's machine.js. With `stall` it's a weak connection (a train, a captive wifi):
+// it takes each request and holds on to it, until `stall` goes and the floor has changed by then.
+const gh = { next: false, stall: false, held: [], later: false };
 const pages = createServer(async (req, res) => {
+  if (gh.stall) { gh.held.push([req, res]); return; }
+  await serveLikePages(req, res);
+}).listen(0);
+async function serveLikePages(req, res) {
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path.endsWith('/')) path += 'index.html';
   let body;
   try { body = await readFile(join(root, path)); } catch { res.writeHead(404); res.end(); return; }
   if (gh.next && path === '/sw.js') body = Buffer.from(String(body).replace(/free-play-v\d+/, '$&-next'));
   if (gh.next && path === '/topple/js/machine.js') body = Buffer.concat([body, Buffer.from('\n// the next release\n')]);
+  if (gh.later && path === '/index.html') body = Buffer.concat([body, Buffer.from('\n<!-- later -->\n')]);
   const etag = `"${createHash('sha1').update(body).digest('hex').slice(0, 16)}"`;
   const head = { etag, 'cache-control': 'max-age=600', 'content-type': TYPES[extname(path)] || 'text/html' };
   if (req.headers['if-none-match'] === etag) { res.writeHead(304, head); res.end(); return; }
   res.writeHead(200, head);
   res.end(body);
-}).listen(0);
+}
 const ghBase = `http://localhost:${pages.address().port}/`;
 const ghCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const gp = await ghCtx.newPage();
@@ -517,11 +524,33 @@ await gp.evaluate(async () => (await navigator.serviceWorker.getRegistration()).
 await until(async () => (await gp.evaluate(() => caches.keys())).join() === copy + '-next', 20000, 'the new release made no new offline copy');
 const kept = await gp.evaluate(async name => (await (await caches.open(name)).match('topple/js/machine.js'))?.text(), copy + '-next');
 assert.ok(kept?.endsWith('// the next release\n'), "the new release's offline copy kept an old file");
-gh.next = false;
+
+// On a weak connection the floor and a machine still open, from the offline copy, after a few seconds' wait for the
+// network: the page and every file it loads (were any of them left waiting on the network, it wouldn't open).
+gh.stall = true;
+const opened = [];
+for (const [path, name, called] of [['', 'freePlay', 'the floor'], ['hoops/', 'hoops', 'Hoops']]) {
+  const t0 = Date.now();
+  await gp.goto(ghBase + path, { timeout: 20000 });
+  await gp.waitForFunction(name => !!window[name], name, { timeout: 5000 });
+  const took = Date.now() - t0;
+  assert.ok(took < 8000, `${called} took ${took} ms to open on a weak connection`);
+  opened.push(`${called} opened in ${(took / 1000).toFixed(1)} s`);
+}
+// A page the copy hasn't got waits on for the network, however long it takes.
+const waiting = gp.goto(ghBase + 'not-kept.html', { timeout: 30000 });
+await new Promise(r => setTimeout(r, 6000));
+assert.equal(new URL(gp.url()).pathname, '/hoops/', 'a page the offline copy has not got gave up on the network');
+// The network answers at last, with a newer floor: it goes into the offline copy.
+gh.later = true;
+gh.stall = false;
+for (const [req, res] of gh.held.splice(0)) serveLikePages(req, res);
+assert.equal((await waiting).status(), 404);
+await until(async () => (await gp.evaluate(async name => (await (await caches.open(name)).match('./'))?.text(), copy + '-next'))?.includes('<!-- later -->'), 10000, "the network's late answer did not go into the offline copy");
 await ghCtx.close();
 pages.close();
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();
 server.close();
-console.log('all good');
+console.log(`all good (on a weak connection ${opened.join(' and ')})`);
