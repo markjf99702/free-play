@@ -55,6 +55,17 @@ const busy = () => page.evaluate(async () => {
   Storage.prototype.getItem = get;
   return { reads, muts };
 });
+// The pocket in the corner as a round's tickets feed out of the slot, and how many the strip has fed so far. It counts
+// along with the strip, from what it held before the round paid, and holds them all, with a bump, once they're out.
+const pocketNow = () => page.evaluate(() => ['tix', 'payout'].map(id => Number(document.querySelector(id === 'tix' ? '#tix' : '#over .fp-won b').textContent.replace(/,/g, ''))));
+async function countsAlong(total, won) {
+  const [shown, fed] = await pocketNow();
+  assert.ok(fed < won, `the strip had fed all ${won} before the test looked`);
+  assert.equal(shown, total - won + fed, `with ${fed} of ${won} fed, the pocket shows ${shown} of ${total}`);
+  await page.waitForFunction(won => document.querySelector('#over .fp-won b').textContent.replace(/,/g, '') === String(won), won, { timeout: 4000 });
+  assert.equal((await pocketNow())[0], total, 'once the strip is done, the pocket holds them all');
+  assert.ok(await page.evaluate(() => document.getElementById('tixBtn').classList.contains('bump')), 'and bumps');
+}
 // The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
 const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const pocket = () => page.waitForFunction(() => !!hoops.court.pocket(), null, { timeout: 8000, polling: 16 });
@@ -161,6 +172,7 @@ while (!(await court('over'))) {
 assert.ok(bonus, 'the deck says when a basket is worth 3');
 const score = await court('score');
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+await countsAlong(await tickets(), Math.floor(score / 4));
 assert.ok(score > 40, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.match(await page.textContent('#overHow'), /^\d+ baskets? from \d+ shots?/);

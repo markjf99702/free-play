@@ -25,6 +25,17 @@ const base = `http://localhost:${server.address().port}/`;
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const page = await ctx.newPage();
+// The pocket in the corner as a round's tickets feed out of the slot, and how many the strip has fed so far. It counts
+// along with the strip, from what it held before the round paid, and holds them all, with a bump, once they're out.
+const pocketNow = () => page.evaluate(() => ['tix', 'payout'].map(id => Number(document.querySelector(id === 'tix' ? '#tix' : '#over .fp-won b').textContent.replace(/,/g, ''))));
+async function countsAlong(total, won) {
+  const [shown, fed] = await pocketNow();
+  assert.ok(fed < won, `the strip had fed all ${won} before the test looked`);
+  assert.equal(shown, total - won + fed, `with ${fed} of ${won} fed, the pocket shows ${shown} of ${total}`);
+  await page.waitForFunction(won => document.querySelector('#over .fp-won b').textContent.replace(/,/g, '') === String(won), won, { timeout: 4000 });
+  assert.equal((await pocketNow())[0], total, 'once the strip is done, the pocket holds them all');
+  assert.ok(await page.evaluate(() => document.getElementById('tixBtn').classList.contains('bump')), 'and bumps');
+}
 // The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
 const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const problems = [];
@@ -134,6 +145,7 @@ while (!(await page.evaluate(() => popgun.gallery.over))) {
 }
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const score = await page.evaluate(() => popgun.gallery.score);
+await countsAlong(await tickets(), Math.floor(score / 20));
 assert.ok(score > 100, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.equal(await tickets(), t0 + Math.floor(score / 20));

@@ -7,7 +7,7 @@ import { createScene } from './scene.js';
 import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine } from './daily.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, toast, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, toast, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -191,6 +191,13 @@ function gameOver() {
 // The game-over card, for a game just finished (the tickets feed out) or for today's card played earlier.
 let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
+// While a round's tickets feed out of the slot, the pocket in the corner counts along with them: it holds what the
+// wallet holds less those still to come out. Once they're all out (or another round or leaving stops the strip), it
+// holds them all, with a bump. (Today's card shown again counts nothing: its tickets went in long ago.)
+let toCome = 0;
+const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('tixBtn')); };
+addEventListener('pagehide', () => feeding());
+
 function showOver(r, fresh) {
   const daily = !!r.key;
   $('overT').textContent = daily ? `Today's card, ${fmt(r.score)} points` : `Nine balls, ${fmt(r.score)} points`;
@@ -217,7 +224,7 @@ function showOver(r, fresh) {
   // the tickets come out of the slot one by one, and the strip grows
   feeding();
   // a new best rings out once the tickets are out, not over them
-  feeding = feed($('payout'), r.won, { fresh, tick: () => sound.ticket(), onDone: () => { if (fresh && r.isBest) sound.best(); } });
+  feeding = feed($('payout'), r.won, { fresh, tick: () => sound.ticket(), onCount: fresh ? counting(r.won) : null, onDone: () => { if (fresh && r.isBest) sound.best(); } });
   hud();
   if (fresh) $('again').focus({ preventScroll: true });
 }
@@ -227,7 +234,7 @@ function hud() {
   $('score').textContent = fmt(Math.round(shown));
   const n = mode === 'result' || mode === 'over' ? game.thrown : game.thrown + 1;
   $('ballNo').textContent = mode === 'over' ? 'Game over' : `Ball ${Math.min(BALLS, Math.max(1, n))} of ${BALLS}`;
-  $('tix').textContent = fmt(wallet.read().tickets);
+  $('tix').textContent = fmt(Math.max(0, wallet.read().tickets - toCome));
   $('hint').hidden = !(mode === 'aim' && !thrownOnce);
   const ready = ['aim', 'drag', 'deal'].includes(mode);
   const call = callNow();

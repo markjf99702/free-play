@@ -184,30 +184,35 @@ export function toast(text, { undo } = {}) {
 }
 
 // The tickets coming out of the machine's slot at the end of a game: the count climbs and the strip grows.
-// `box` is a .fp-payout element; tick() is the page's click for each batch. onDone() comes once the last ticket is
-// out (straight away when it isn't a fresh payout), for the page's cheer. Returns a function that stops it (with no
-// onDone).
-export function feed(box, n, { tick, fresh = true, onDone } = {}) {
+// `box` is a .fp-payout element; tick() is the page's click for each batch, and onCount(k) hears each count as it's
+// shown, so the pocket in the page's corner can count along. onDone() comes once the last ticket is out (straight away
+// when it isn't a fresh payout), for the page's cheer. Returns a function that stops it (another round, or leaving):
+// the strip and onCount go straight to all n, and there's no onDone.
+export function feed(box, n, { tick, fresh = true, onCount, onDone } = {}) {
   const strip = box.querySelector('.fp-strip'), count = box.querySelector('.fp-won b'), word = box.querySelector('.fp-won span');
   word.textContent = n === 1 ? 'ticket' : 'tickets';
   const show = k => {
     count.textContent = fmt(k);
     strip.style.height = Math.min(k, 7) * 22 + (k ? 4 : 0) + 'px';
     strip.style.backgroundPositionY = k * 22 + 'px';
+    onCount?.(k);
   };
   if (!fresh) { show(n); onDone?.(); return () => {}; }
-  let k = 0, timer = 0;
+  let k = 0, timer = 0, out = false;
   show(0);
   const step = () => {
     k = Math.min(n, k + Math.max(1, Math.round(n / 40)));
     show(k);
     tick?.();
     if (k < n) timer = setTimeout(step, 55);
-    else onDone?.();
+    else { out = true; onDone?.(); }
   };
   timer = setTimeout(step, 500);
-  return () => clearTimeout(timer);
+  return () => { clearTimeout(timer); if (!out) { out = true; show(n); } };
 }
+
+// A quick swell: the pocket in a machine's corner, as the last of a round's tickets go into it.
+export function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 
 // The best line under the dispenser. A new best ([headline, what it beat]) is said big and in gold, the old best
 // under it; anything else is the plain line.

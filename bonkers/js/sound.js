@@ -3,6 +3,8 @@
 
 let ac = null, out = null, enabled = true;
 
+const TICK = 3; // how loud a ticket's click is
+
 export function unlock() {
   if (!ac) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -113,9 +115,21 @@ export function best() {
   [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, i * 0.13, i === 3 ? 0.24 : 0.2));
 }
 
+// A ticket out of the slot: a short click of white noise round 2.5 kHz, with a tiny tick on top.
 export function ticket() {
   if (!ac || !enabled) return;
-  burst('highpass', 3500, 0.7, 0.16, 0.018);
+  const t = ac.currentTime;
+  const s = ac.createBufferSource(); s.buffer = noise();
+  const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2500; f.Q.value = 1.5;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(TICK, t + 0.001); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
+  s.connect(f); f.connect(g); g.connect(out);
+  s.start(t, Math.random() * 0.5); s.stop(t + 0.03);
+  const o = ac.createOscillator(), h = ac.createGain();
+  o.type = 'triangle'; o.frequency.value = 1400;
+  h.gain.setValueAtTime(0.0001, t); h.gain.linearRampToValueAtTime(TICK * 0.5, t + 0.0005); h.gain.exponentialRampToValueAtTime(0.0001, t + 0.004);
+  o.connect(h); h.connect(out);
+  o.start(t); o.stop(t + 0.02);
 }
 
 export function buy() {

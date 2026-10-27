@@ -8,7 +8,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
-import { openCounter, counterOpen, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -120,6 +120,13 @@ $('keepGoing').addEventListener('click', () => { $('choose').hidden = true; mode
 
 let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
+// While a round's tickets feed out of the slot, the pocket in the corner counts along with them: it holds what the
+// wallet holds less those still to come out. Once they're all out (or another round or leaving stops the strip), it
+// holds them all, with a bump.
+let toCome = 0;
+const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('tixBtn')); };
+addEventListener('pagehide', () => feeding());
+
 function endGame() {
   mode = 'over';
   const built = tower.built, top = built >= FLOORS, won = payout({ built, tookMinor });
@@ -143,7 +150,7 @@ function endGame() {
   $('over').hidden = false;
   feeding();
   // the highest yet rings out once the tickets are out, not over them
-  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onDone: () => { if (isBest) sound.best(); } });
+  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onCount: counting(won), onDone: () => { if (isBest) sound.best(); } });
   $('again').focus({ preventScroll: true });
   hud();
 }
@@ -184,7 +191,7 @@ addEventListener('keydown', e => {
 // ---------- the scoreboard ----------
 function hud() {
   $('floorNo').textContent = mode === 'title' ? '1' : Math.min(FLOORS, mode === 'play' ? tower.floor : tower.built || 1);
-  $('tix').textContent = fmt(wallet.read().tickets);
+  $('tix').textContent = fmt(Math.max(0, wallet.read().tickets - toCome));
   $('titleBest').textContent = saved.games ? `Highest: floor ${saved.best}.${saved.tops ? ` Topped out ${saved.tops === 1 ? 'once' : saved.tops === 2 ? 'twice' : `${saved.tops} times`}.` : ''}` : '';
 }
 

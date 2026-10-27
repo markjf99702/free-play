@@ -35,6 +35,17 @@ await ctx.addInitScript(() => {
   };
 });
 const page = await ctx.newPage();
+// The pocket in the corner as a round's tickets feed out of the slot, and how many the strip has fed so far. It counts
+// along with the strip, from what it held before the round paid, and holds them all, with a bump, once they're out.
+const pocketNow = () => page.evaluate(() => ['tix', 'payout'].map(id => Number(document.querySelector(id === 'tix' ? '#tix' : '#over .fp-won b').textContent.replace(/,/g, ''))));
+async function countsAlong(total, won) {
+  const [shown, fed] = await pocketNow();
+  assert.ok(fed < won, `the strip had fed all ${won} before the test looked`);
+  assert.equal(shown, total - won + fed, `with ${fed} of ${won} fed, the pocket shows ${shown} of ${total}`);
+  await page.waitForFunction(won => document.querySelector('#over .fp-won b').textContent.replace(/,/g, '') === String(won), won, { timeout: 4000 });
+  assert.equal((await pocketNow())[0], total, 'once the strip is done, the pocket holds them all');
+  assert.ok(await page.evaluate(() => document.getElementById('tixBtn').classList.contains('bump')), 'and bumps');
+}
 // The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
 const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
 const problems = [];
@@ -114,6 +125,7 @@ for (let i = 0; i < 8; i++) {
 await page.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 30000 });
 await page.evaluate(() => { rollUp.speed = 1; });
 assert.ok(await page.isVisible('#over'), 'the game-over card shows after nine balls');
+await countsAlong(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), Math.floor((await page.evaluate(() => rollUp.score)) / 10));
 await page.click('#menuBtn');
 assert.ok(await page.isHidden('#menu'), 'the menu button opened the menu over the game-over card');
 await page.keyboard.press('Escape');

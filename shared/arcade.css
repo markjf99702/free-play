@@ -120,4 +120,8 @@
 .fp-best b::before, .fp-best b::after { content: "★"; content: "★" / ""; display: inline-block; margin: 0 .45em; font-size: .75em; vertical-align: .12em; }
 .fp-best span { display: block; margin-top: 2px; }
 
-@media (prefers-reduced-motion: reduce) { .fp-strip { animation: none; } .fp-item { transition: none; } }
+/* The pocket in a machine's corner counts along with the strip, and swells a moment as the last ticket goes in. */
+.hud .tix.bump { animation: fp-bump .45s ease-out; }
+@keyframes fp-bump { 35% { transform: scale(1.1); } }
+
+@media (prefers-reduced-motion: reduce) { .fp-strip, .hud .tix.bump { animation: none; } .fp-item { transition: none; } }

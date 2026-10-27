@@ -6,7 +6,7 @@ import { createCourt, ticketsFor, power, flickFor, FLICK, SWEET, HOOP, LAUNCH } 
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, counterOpen, feed, bestLine, bump, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
@@ -118,10 +118,16 @@ function happened() {
   }
   if (events.length) hud();
 }
-function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 
 let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
+// While a round's tickets feed out of the slot, the pocket in the corner counts along with them: it holds what the
+// wallet holds less those still to come out. Once they're all out (or another round or leaving stops the strip), it
+// holds them all, with a bump.
+let toCome = 0;
+const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('tixBtn')); };
+addEventListener('pagehide', () => feeding());
+
 function endRound() {
   if (mode !== 'play') return;
   mode = 'over';
@@ -139,7 +145,7 @@ function endRound() {
   $('over').hidden = false;
   feeding();
   // a new best rings out once the tickets are out, not over them
-  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onDone: () => { if (isBest) sound.best(); } });
+  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onCount: counting(won), onDone: () => { if (isBest) sound.best(); } });
   $('again').focus({ preventScroll: true });
   hud();
 }
@@ -232,7 +238,7 @@ addEventListener('keyup', e => {
 const put = (id, text) => { const el = $(id); if (el.textContent !== String(text)) el.textContent = text; };
 function hud() {
   put('score', court.score.toLocaleString('en-US'));
-  put('tix', fmt(tickets));
+  put('tix', fmt(Math.max(0, tickets - toCome)));
   const playing = mode === 'play';
   const worth = (playing && court.bonus ? 3 : 2) + (playing && court.fire ? 1 : 0);
   if ($('worth').textContent !== String(worth)) { $('worth').textContent = worth; if (playing) bump($('worth')); }

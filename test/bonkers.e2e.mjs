@@ -56,6 +56,17 @@ const busy = () => page.evaluate(async () => {
 });
 // The best line under the dispenser: what it says, whether it's dressed as a new best, and how big its headline is.
 const bestLine = () => page.evaluate(() => { const e = document.getElementById('overBest'); return { text: e.textContent, big: e.classList.contains('fp-best'), size: getComputedStyle(e.querySelector('b') || e).fontSize }; });
+// The pocket in the corner as a round's tickets feed out of the slot, and how many the strip has fed so far. It counts
+// along with the strip, from what it held before the round paid, and holds them all, with a bump, once they're out.
+const pocketNow = () => page.evaluate(() => ['tix', 'payout'].map(id => Number(document.querySelector(id === 'tix' ? '#tix' : '#over .fp-won b').textContent.replace(/,/g, ''))));
+async function countsAlong(total, won) {
+  const [shown, fed] = await pocketNow();
+  assert.ok(fed < won, `the strip had fed all ${won} before the test looked`);
+  assert.equal(shown, total - won + fed, `with ${fed} of ${won} fed, the pocket shows ${shown} of ${total}`);
+  await page.waitForFunction(won => document.querySelector('#over .fp-won b').textContent.replace(/,/g, '') === String(won), won, { timeout: 4000 });
+  assert.equal((await pocketNow())[0], total, 'once the strip is done, the pocket holds them all');
+  assert.ok(await page.evaluate(() => document.getElementById('tixBtn').classList.contains('bump')), 'and bumps');
+}
 const HOLES = [50, 150, 250, 350, 450];
 // The hole a mole is up in right now (a bare-headed one, unless any will do), waiting for one if need be.
 const upHole = (any = false) => page.waitForFunction(any => {
@@ -129,6 +140,7 @@ assert.ok(frenzy, 'the clock says when it is a frenzy');
 assert.ok(shown, 'and so does the lawn, in words');
 const score = await page.evaluate(() => bonkers.burrow.score);
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+await countsAlong(await tickets(), Math.floor(score / 15));
 assert.ok(score > 200, `a quick hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.equal(await tickets(), t0 + Math.floor(score / 15));
@@ -186,9 +198,15 @@ while (!(await page.evaluate(() => bonkers.burrow.over))) {
   await page.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
   await page.waitForTimeout(30);
 }
-assert.ok(await page.evaluate(() => bonkers.burrow.score) > 20, 'the round beat 20');
+const beat = await page.evaluate(() => bonkers.burrow.score);
+assert.ok(beat > 20, 'the round beat 20');
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 20.', big: true, size: '18px' });
+// Another round straight away, before the strip's done, and the pocket holds all the round's tickets at once.
+assert.ok((await pocketNow())[1] < Math.floor(beat / 15), 'the strip was done before Another round');
+await page.click('#again');
+assert.equal((await pocketNow())[0], await tickets(), 'another round started part-way through the strip, and the pocket holds them all');
+assert.ok(await page.evaluate(() => document.getElementById('tixBtn').classList.contains('bump')));
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
