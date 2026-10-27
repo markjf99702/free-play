@@ -125,7 +125,12 @@ $('payout').innerHTML = PAYOUT;
 // holds them all, with a bump.
 let toCome = 0;
 const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('tixBtn')); };
-addEventListener('pagehide', () => feeding());
+// Leaving while the tower tops out or falls, before its card (by the menu's Back to the arcade, say), the game is over
+// all the same: it pays as the page goes, trophy and all, and its card is what's up if the page comes back.
+addEventListener('pagehide', () => {
+  if (mode === 'ending') { $('menu').hidden = true; paused = false; endGame(); }
+  feeding();
+});
 
 function endGame() {
   mode = 'over';

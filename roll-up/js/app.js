@@ -226,7 +226,13 @@ $('payout').innerHTML = PAYOUT;
 // holds them all, with a bump. (Today's card shown again counts nothing: its tickets went in long ago.)
 let toCome = 0;
 const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('tixBtn')); };
-addEventListener('pagehide', () => feeding());
+// Leaving after the ninth ball has dropped, before the game-over card (by the menu's Back to the arcade, say), the game
+// is over all the same: it pays as the page goes (today's card is played), and its card is what's up if the page
+// comes back.
+addEventListener('pagehide', () => {
+  if (mode === 'result' && game.thrown >= BALLS) { $('menu').hidden = true; paused = false; gameOver(); }
+  feeding();
+});
 
 function showOver(r, fresh) {
   const daily = !!r.key;

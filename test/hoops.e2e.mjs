@@ -260,6 +260,22 @@ for (const leave of ['Escape', 'hide']) {
   assert.equal(await page.evaluate(() => hoops.mode), 'play', 'Play again works');
   assert.deepEqual(await cards(), []);
 }
+// Leaving by the menu's Back to the arcade in that moment still pays the round: it was over, and its tickets and its
+// count go in as the page goes.
+{
+  await page.evaluate(() => { hoops.speed = 20; });
+  await page.waitForFunction(() => hoops.court.left < 3, null, { timeout: 20000, polling: 'raf' });
+  await page.evaluate(() => { hoops.speed = 1; });
+  await page.waitForFunction(() => hoops.court.over, null, { timeout: 8000, polling: 'raf' });
+  await page.keyboard.press('Escape');
+  assert.deepEqual(await cards(), ['menu']);
+  const gap = await page.evaluate(() => ({ score: hoops.court.score, rounds: hoops.saved.rounds }));
+  const had = await tickets();
+  await page.click('#menu a.to-floor');
+  await page.waitForSelector('#hoopsStat');
+  assert.equal(await tickets(), had + Math.floor(gap.score / 4), 'a round left as its end card came still pays');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.hoops')).rounds), gap.rounds + 1, 'and counts');
+}
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

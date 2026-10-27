@@ -212,6 +212,23 @@ for (const leave of ['Escape', 'hide']) {
   assert.equal(await page.evaluate(() => popgun.mode), 'play', 'Play again works');
   assert.deepEqual(await cards(), []);
 }
+// Leaving by the menu's Back to the arcade in that moment still pays the round: it was over, and its tickets and its
+// count go in as the page goes.
+await page.evaluate(() => { popgun.speed = 10; });
+while (!(await page.evaluate(() => popgun.gallery.over))) {
+  await page.waitForFunction(() => popgun.gallery.ready || !popgun.gallery.corks, null, { timeout: 5000, polling: 'raf' });
+  await page.evaluate(() => { if (popgun.gallery.ready) popgun.fire(280, 250); if (!popgun.gallery.corks) popgun.speed = 1; });
+}
+await page.keyboard.press('Escape');
+assert.deepEqual(await cards(), ['menu']);
+const gap = await page.evaluate(() => ({ score: popgun.gallery.score, rounds: popgun.saved.rounds }));
+const hadGap = await tickets();
+await page.click('#menu a.to-floor');
+await page.waitForSelector('#popgunStat');
+assert.equal(await tickets(), hadGap + Math.floor(gap.score / 20), 'a round left as its end card came still pays');
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.popgun')).rounds), gap.rounds + 1, 'and counts');
+await page.goto(base + 'popgun/');
+await page.click('#play');
 
 // A round of one hit says so in the singular, and a round that pays no ticket says how far off one it was: one duck,
 // and the other nineteen corks at the moon.

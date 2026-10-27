@@ -307,6 +307,29 @@ await ctx.setOffline(false);
   await calm.close();
 }
 
+// Leaving after the ninth ball has dropped, before the game-over card, by the menu's Back to the arcade: the game is
+// over all the same, and it pays as the page goes.
+{
+  const late = await ctx.newPage();
+  late.on('pageerror', e => problems.push('leaving late: ' + e.message));
+  await late.goto(base + 'roll-up/');
+  await late.evaluate(() => { rollUp.start(); rollUp.speed = 6; });
+  for (let i = 0; i < 9; i++) {
+    await late.waitForFunction(() => rollUp.mode === 'aim', null, { timeout: 15000 });
+    if (i === 8) await late.evaluate(() => { rollUp.speed = 1; });
+    await late.evaluate(() => rollUp.roll(0, 305, 0));
+  }
+  await late.waitForFunction(() => rollUp.thrown === 9, null, { timeout: 15000, polling: 'raf' });
+  await late.keyboard.press('Escape');
+  assert.deepEqual(await late.evaluate(() => [rollUp.mode, document.getElementById('menu').hidden]), ['result', false]);
+  const then = await late.evaluate(() => ({ score: rollUp.score, games: rollUp.saved.games, tickets: JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets }));
+  await late.click('#menu a.to-floor');
+  await late.waitForSelector('#rollUpStat');
+  const now = await late.evaluate(() => ({ games: JSON.parse(localStorage.getItem('free-play.roll-up')).games, tickets: JSON.parse(localStorage.getItem('free-play.wallet')).tickets }));
+  assert.deepEqual(now, { games: then.games + 1, tickets: then.tickets + Math.floor(then.score / 10) }, 'a game left before its card still pays and counts');
+  await late.close();
+}
+
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();
 server.close();

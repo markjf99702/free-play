@@ -237,6 +237,22 @@ await page.goto(base);
 assert.equal(await page.textContent('#highriseStat'), 'Highest: floor 15. Topped out once.');
 assert.match(await page.textContent('#shelf'), /🏆/);
 
+// Leaving while the tower falls, before its card, by the menu's Back to the arcade: the game is over all the same, and
+// it pays as the page goes.
+await page.goto(base + 'highrise/');
+await page.click('#play');
+await build(2);
+await ready();
+const gamesThen = await page.evaluate(() => highrise.saved.games), t3 = await tickets();
+await page.evaluate(() => highrise.stopAt(0));
+assert.equal(await page.evaluate(() => highrise.mode), 'ending');
+await page.keyboard.press('Escape');
+assert.deepEqual(await cards(), ['menu']);
+await page.click('#menu a.to-floor');
+await page.waitForSelector('#highriseStat');
+assert.equal(await tickets(), t3 + 2, 'a game left as its tower fell still pays');
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')).games), gamesThen + 1, 'and counts');
+
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
 server.close();

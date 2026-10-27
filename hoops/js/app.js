@@ -135,7 +135,12 @@ $('payout').innerHTML = PAYOUT;
 // holds them all, with a bump.
 let toCome = 0;
 const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('tixBtn')); };
-addEventListener('pagehide', () => feeding());
+// Leaving in the moment between the last ball landing and the end card (by the menu's Back to the arcade, say), the
+// round is over all the same: it pays as the page goes, and its card is what's up if the page comes back.
+addEventListener('pagehide', () => {
+  if (endIn > 0) { endIn = 0; $('menu').hidden = true; paused = false; endRound(); }
+  feeding();
+});
 
 function endRound() {
   if (mode !== 'play') return;
