@@ -60,6 +60,7 @@ export function createDraw(canvas) {
   // Fits the cabinet in the page, clear of the scoreboard (top) and the controls (bottom, or right on a wide screen).
   function resize(w, h, ratio, { top = 0, bottom = 0, right = 0 } = {}) {
     dpr = ratio;
+    sprites.clear(); // (drawn for the old pixel ratio and scale)
     canvas.width = back.width = front.width = Math.round(w * dpr);
     canvas.height = back.height = front.height = Math.round(h * dpr);
     const m = measure(), cw = m.cab.x1 - m.cab.x0, ch = m.cab.y1 - m.cab.y0;
@@ -192,17 +193,39 @@ export function createDraw(canvas) {
   }
 
   // ---------- each frame ----------
+  // A coin is four ellipses, and there are 150 or so on the deck: drawn path by path every frame, they took a slow
+  // phone longer than everything else drawn. So each size and kind of coin is drawn once, into a sprite, and stamped
+  // from then on. Sizes go in quarter-pixel steps (too small a difference to see), so a few hundred sprites cover the
+  // deck from front to back; a coin tipping as it falls has its own height, and its own sprite. They're drawn for the
+  // screen's pixel ratio, so a resize starts again.
+  const sprites = new Map();
+  function sprite(kind, rx, ry, th) {
+    const key = `${kind} ${rx} ${ry} ${th}`;
+    let s = sprites.get(key);
+    if (s) return s;
+    const l = LOOK[kind] || LOOK.coin, x = rx + 2, y = ry + 2; // (2 px round it for the edges' smoothing)
+    s = document.createElement('canvas');
+    s.width = Math.ceil((rx * 2 + 4) * dpr); s.height = Math.ceil((ry * 2 + th + 4) * dpr);
+    const c = s.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.fillStyle = l.rim; c.beginPath(); c.ellipse(x, y + th, rx, ry, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = l.face; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = l.ring; c.lineWidth = Math.max(0.6, rx * 0.12);
+    c.beginPath(); c.ellipse(x, y, rx * 0.72, ry * 0.72, 0, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = l.shine; c.lineWidth = Math.max(0.6, rx * 0.14);
+    c.beginPath(); c.ellipse(x, y, rx * 0.86, ry * 0.86, 0, Math.PI * 1.05, Math.PI * 1.55); c.stroke();
+    s.ox = x; s.oy = y;
+    if (sprites.size >= 600) sprites.clear(); // (more than the deck needs: start again rather than grow)
+    sprites.set(key, s);
+    return s;
+  }
+  const quarter = v => Math.max(0.5, Math.round(v * 4) / 4);
   function coin(c, x, y, z, kind, alpha = 1, tilt = 0) {
     const p = at(x, y + COIN.thick, z), q = at(x, y + COIN.thick, z + COIN.r);
     const rx = COIN.r * p.s, ry = Math.max(0.5, (q.y - p.y) * Math.cos(tilt) + rx * Math.abs(Math.sin(tilt)) * 0.9);
-    const th = COIN.thick * p.s * 0.8, l = LOOK[kind] || LOOK.coin;
+    const s = sprite(kind, quarter(rx), quarter(ry), quarter(COIN.thick * p.s * 0.8));
     c.globalAlpha = alpha;
-    c.fillStyle = l.rim; c.beginPath(); c.ellipse(p.x, p.y + th, rx, ry, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = l.face; c.beginPath(); c.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = l.ring; c.lineWidth = Math.max(0.6, rx * 0.12);
-    c.beginPath(); c.ellipse(p.x, p.y, rx * 0.72, ry * 0.72, 0, 0, Math.PI * 2); c.stroke();
-    c.strokeStyle = l.shine; c.lineWidth = Math.max(0.6, rx * 0.14);
-    c.beginPath(); c.ellipse(p.x, p.y, rx * 0.86, ry * 0.86, 0, Math.PI * 1.05, Math.PI * 1.55); c.stroke();
+    c.drawImage(s, p.x - s.ox, p.y - s.oy, s.width / dpr, s.height / dpr);
     c.globalAlpha = 1;
   }
 
