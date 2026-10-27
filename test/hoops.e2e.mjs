@@ -42,6 +42,19 @@ const hide = gone => page.evaluate(gone => {
   if (gone) Object.defineProperty(document, 'hidden', { value: true, configurable: true }); else delete document.hidden;
   document.dispatchEvent(new Event('visibilitychange'));
 }, gone);
+// How busy the scoreboard keeps the page over a second of play: lines rewritten, and reads of the pocket.
+const busy = () => page.evaluate(async () => {
+  let reads = 0, muts = 0;
+  const get = Storage.prototype.getItem;
+  Storage.prototype.getItem = function (k) { if (k === 'free-play.wallet') reads++; return get.call(this, k); };
+  const mo = new MutationObserver(l => { muts += l.length; });
+  mo.observe(document.querySelector('.hud'), { subtree: true, childList: true, characterData: true, attributes: true });
+  mo.observe(document.getElementById('deck'), { subtree: true, childList: true, characterData: true, attributes: true });
+  await new Promise(r => setTimeout(r, 1000));
+  mo.disconnect();
+  Storage.prototype.getItem = get;
+  return { reads, muts };
+});
 const pocket = () => page.waitForFunction(() => !!hoops.court.pocket(), null, { timeout: 8000, polling: 16 });
 // A flick as the finger would make it: points up the screen from (x, y), `speed` cabinet-heights a second over 90ms.
 const flickAt = (speed, x = 195, y = 640, across = 0) => page.evaluate(([speed, x, y, across]) => {
@@ -94,6 +107,11 @@ assert.ok(right.vx > 20, `aimed right, it goes right (${right.vx.toFixed(0)})`);
 await pocket();
 assert.equal(await flickAt(0.2), null, 'too gentle');
 assert.equal(await flickAt(2.4, 195, 640, 3), null, 'sideways');
+
+// The scoreboard is only redone when something changes, and the pocket only read when it does.
+await page.waitForFunction(() => !hoops.court.balls.some(b => b.shot), null, { timeout: 6000 });
+const load = await busy();
+assert.ok(load.reads === 0 && load.muts < 20, `a second of play read the pocket ${load.reads} times and rewrote the scoreboard ${load.muts} times`);
 
 // The keyboard: Space winds up a throw, letting go throws it.
 await pocket();

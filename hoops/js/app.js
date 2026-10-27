@@ -67,12 +67,14 @@ let court = createCourt({ timed: false });
 let mode = 'title';            // title → play → over (behind the title, the machine shoots by itself)
 let paused = false, timeScale = 1, hold = 0, demoIn = 1;
 let endIn = 0;                 // seconds from the last ball landing to the end card, on the round's clock (it waits while paused)
+let tickets = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
 const pops = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   court = createCourt();
   mode = 'play';
+  tickets = wallet.read().tickets;
   pops.length = 0; flicks.clear(); keyAim = null; charge = null; early = null; endIn = 0;
   hud();
 }
@@ -90,8 +92,11 @@ function throwIt(speed, aim) {
   return b;
 }
 
+// What the balls did since the last look. The scoreboard is only redone when something happened: 60 times a second,
+// it had the phone redoing it for nothing.
 function happened() {
-  for (const e of court.take()) {
+  const events = court.take();
+  for (const e of events) {
     if (mode !== 'play') continue; // the machine playing by itself keeps quiet
     if (e === 'slide') { sound.slide(); say('The hoop is on the move.'); pops.push({ text: 'On the move!', t: -0.2, y: 34 }); }
     else if (e === 'bonus') { sound.bonus(); say('Last ten seconds: 3 points a basket.'); pops.push({ text: '3 points!', t: -0.2, y: 34, gold: true, big: true }); }
@@ -111,7 +116,7 @@ function happened() {
     } else if (e.fire === true) { sound.fire(true); say('Three in a row: the rim is alight.'); pops.push({ text: 'On fire!', t: -0.15, y: 50, gold: true, big: true }); }
     else if (e.fire === false) sound.fire(false);
   }
-  hud();
+  if (events.length) hud();
 }
 function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 
@@ -222,16 +227,18 @@ addEventListener('keyup', e => {
 });
 
 // ---------- the scoreboard ----------
+// Each line is only written when it says something new.
+const put = (id, text) => { const el = $(id); if (el.textContent !== String(text)) el.textContent = text; };
 function hud() {
-  $('score').textContent = court.score.toLocaleString('en-US');
-  $('tix').textContent = fmt(wallet.read().tickets);
+  put('score', court.score.toLocaleString('en-US'));
+  put('tix', fmt(tickets));
   const playing = mode === 'play';
   const worth = (playing && court.bonus ? 3 : 2) + (playing && court.fire ? 1 : 0);
   if ($('worth').textContent !== String(worth)) { $('worth').textContent = worth; if (playing) bump($('worth')); }
-  $('worthWord').textContent = 'points a basket';
+  put('worthWord', 'points a basket');
   $('worthBox').classList.toggle('bonus', playing && court.bonus);
   $('worthBox').classList.toggle('hot', playing && court.fire);
-  $('titleBest').textContent = saved.rounds ? `Best: ${saved.best.toLocaleString('en-US')}.` : '';
+  put('titleBest', saved.rounds ? `Best: ${saved.best.toLocaleString('en-US')}.` : '');
 }
 
 // ---------- the menu and the prize counter ----------
@@ -270,8 +277,10 @@ function openPrizes() {
 }
 $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
-addEventListener('free-play:wallet', hud);
-addEventListener('pageshow', hud); // back from the floor, where tickets may have been spent
+// tickets won or spent here, at the counter, in another tab, or on the floor while this page was kept: read them again
+const pocket = () => { tickets = wallet.read().tickets; hud(); };
+addEventListener('free-play:wallet', pocket);
+addEventListener('pageshow', pocket);
 
 // Hoops open in another tab, or this page brought back by Back as it was: look at the save again, so a round ending
 // here adds to what's there now instead of writing an old copy over it.

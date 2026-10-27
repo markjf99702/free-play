@@ -66,12 +66,15 @@ let burrow = createBurrow();
 let mode = 'title';            // title → play → over (behind the title, the moles go about their business)
 let swingAt = null, paused = false, timeScale = 1;
 let endIn = 0;                 // seconds from the buzzer to the end card, on the round's clock (it waits while paused)
+let lastScore = 0;             // the round just played: behind its card, a fresh burrow's moles carry on at 0
+let tickets = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
 const pops = [], puffs = [];
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
   burrow = createBurrow();
   mode = 'play';
+  tickets = wallet.read().tickets;
   pops.length = 0; puffs.length = 0; swingAt = null; endIn = 0;
   hud();
 }
@@ -86,10 +89,16 @@ function swing(x, y) {
   return r;
 }
 
+// What the moles did since the last look. The scoreboard is only redone when something happened, or the clock ticks
+// over a second: 60 times a second, it had the phone redoing it for nothing.
+let ticked = -1;
 function happened() {
-  for (const e of burrow.take()) {
-    if (e === 'frenzy') { sound.frenzy(); say('Frenzy! Ten seconds left.'); }
-    else if (e === 'over') { sound.over(); endIn = 0.9; }
+  const events = burrow.take();
+  for (const e of events) {
+    if (e === 'frenzy') {
+      sound.frenzy(); say('Frenzy! Ten seconds left.');
+      pops.push({ x: 250, y: -130, text: 'Frenzy!', t: -0.1, gold: true, big: true });
+    } else if (e === 'over') { sound.over(); endIn = 0.9; }
     else if (e.pop !== undefined) sound.pop();
     else if (e.peek !== undefined) sound.peek();
     else if (e.away !== undefined) sound.away();
@@ -104,7 +113,8 @@ function happened() {
       if (e.run) { sound.run(); pops.push({ x: 250, y: -130, text: 'Ten in a row! +50', t: -0.1, gold: true, big: true }); }
     }
   }
-  hud();
+  const clock = Math.ceil(burrow.left);
+  if (events.length || clock !== ticked) { ticked = clock; hud(); }
 }
 
 let feeding = () => {};
@@ -113,6 +123,7 @@ function endRound() {
   if (mode !== 'play') return;
   mode = 'over';
   const score = burrow.score, won = ticketsFor(score), first = !saved.rounds;
+  lastScore = score;
   wallet.pay(won);
   saved.rounds++;
   const isBest = score > saved.best && !first;
@@ -156,14 +167,16 @@ addEventListener('keydown', e => {
 });
 
 // ---------- the scoreboard ----------
+// Each line is only written when it says something new.
+const put = (id, text) => { const el = $(id); if (el.textContent !== String(text)) el.textContent = text; };
 function hud() {
-  $('score').textContent = burrow.score.toLocaleString('en-US');
-  $('tix').textContent = fmt(wallet.read().tickets);
+  put('score', (mode === 'over' ? lastScore : burrow.score).toLocaleString('en-US'));
+  put('tix', fmt(tickets));
   const left = mode === 'play' ? Math.ceil(burrow.left) : mode === 'title' ? ROUND : 0;
-  if ($('left').textContent !== String(left)) $('left').textContent = left;
-  $('clockWord').textContent = left === 1 ? 'second' : 'seconds';
+  put('left', left);
+  put('clockWord', left === 1 ? 'second' : 'seconds');
   document.querySelector('.clock').classList.toggle('frenzy', mode === 'play' && burrow.frenzy);
-  $('titleBest').textContent = saved.rounds ? `Best: ${saved.best.toLocaleString('en-US')}.` : '';
+  put('titleBest', saved.rounds ? `Best: ${saved.best.toLocaleString('en-US')}.` : '');
 }
 
 // ---------- the menu and the prize counter ----------
@@ -202,8 +215,10 @@ function openPrizes() {
 }
 $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'overPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
-addEventListener('free-play:wallet', hud);
-addEventListener('pageshow', hud); // back from the floor, where tickets may have been spent
+// tickets won or spent here, at the counter, in another tab, or on the floor while this page was kept: read them again
+const pocket = () => { tickets = wallet.read().tickets; hud(); };
+addEventListener('free-play:wallet', pocket);
+addEventListener('pageshow', pocket);
 
 // Bonkers open in another tab, or this page brought back by Back as it was: look at the save again, so a round ending
 // here adds to what's there now instead of writing an old copy over it.
@@ -251,6 +266,7 @@ window.bonkers = {
   get burrow() { return burrow; },
   get mode() { return mode; },
   get saved() { return saved; },
+  get pops() { return pops; },
   start,
   swing,
   set speed(k) { timeScale = k; },

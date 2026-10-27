@@ -41,6 +41,19 @@ const hide = gone => page.evaluate(gone => {
 }, gone);
 // Which cards are up.
 const cards = () => page.evaluate(() => ['title', 'over', 'menu', 'choose'].filter(id => document.getElementById(id)?.hidden === false));
+// How busy the scoreboard keeps the page over a second of play: lines rewritten, and reads of the pocket.
+const busy = () => page.evaluate(async () => {
+  let reads = 0, muts = 0;
+  const get = Storage.prototype.getItem;
+  Storage.prototype.getItem = function (k) { if (k === 'free-play.wallet') reads++; return get.call(this, k); };
+  const mo = new MutationObserver(l => { muts += l.length; });
+  mo.observe(document.querySelector('.hud'), { subtree: true, childList: true, characterData: true, attributes: true });
+  mo.observe(document.getElementById('deck'), { subtree: true, childList: true, characterData: true, attributes: true });
+  await new Promise(r => setTimeout(r, 1000));
+  mo.disconnect();
+  Storage.prototype.getItem = get;
+  return { reads, muts };
+});
 const HOLES = [50, 150, 250, 350, 450];
 // The hole a mole is up in right now (a bare-headed one, unless any will do), waiting for one if need be.
 const upHole = (any = false) => page.waitForFunction(any => {
@@ -72,6 +85,10 @@ p = await page.evaluate(() => bonkers.draw.at(250, 200));
 await page.mouse.click(p.x, p.y);
 assert.equal(await page.evaluate(() => bonkers.burrow.swings), before + 1, 'the ground under the lawn is not a hole');
 
+// The scoreboard is only redone when something changes, and the pocket only read when it does.
+const load = await busy();
+assert.ok(load.reads === 0 && load.muts < 20, `a second of play read the pocket ${load.reads} times and rewrote the scoreboard ${load.muts} times`);
+
 // The number keys swing at the holes.
 hole = await upHole();
 const bonks = await page.evaluate(() => bonkers.burrow.bonks);
@@ -99,19 +116,25 @@ await page.click('#resume');
 // The rest of the round, quickly, and its tickets: one for every 15 points.
 const t0 = await tickets();
 await page.evaluate(() => { bonkers.speed = 4; });
-let frenzy = false;
+let frenzy = false, shown = false;
 while (!(await page.evaluate(() => bonkers.burrow.over))) {
   frenzy ||= await page.evaluate(() => document.querySelector('.clock').classList.contains('frenzy'));
+  shown ||= await page.evaluate(() => bonkers.pops.some(p => p.text === 'Frenzy!'));
   await page.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
   await page.waitForTimeout(30);
 }
 assert.ok(frenzy, 'the clock says when it is a frenzy');
+assert.ok(shown, 'and so does the lawn, in words');
 const score = await page.evaluate(() => bonkers.burrow.score);
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.ok(score > 200, `a quick hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.equal(await tickets(), t0 + Math.floor(score / 15));
 assert.equal(await page.evaluate(() => bonkers.saved.best), score);
+// Behind the card the moles carry on, but the scoreboard keeps the round's score, whatever redraws it.
+await page.waitForTimeout(300);
+await page.evaluate(() => { dispatchEvent(new Event('free-play:wallet')); dispatchEvent(new Event('pageshow')); });
+assert.equal(await page.textContent('#score'), score.toLocaleString('en-US'), 'the scoreboard went back to 0 behind the end card');
 await page.click('#again');
 assert.equal(await page.textContent('#score'), '0');
 assert.equal(await page.textContent('#left'), '45', 'another round, another 45 seconds');
