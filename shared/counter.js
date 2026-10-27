@@ -2,7 +2,7 @@
 // The counter builds itself the first time it opens, so a page only needs shared/arcade.css and a button.
 
 import { PRIZES, SHELF } from './prizes.js';
-import { read, buy, refund } from './wallet.js';
+import { KEY, read, buy, refund } from './wallet.js';
 
 // A count as people write it: 1,234 tickets. Anything that isn't a number reads as 0.
 export const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
@@ -143,6 +143,14 @@ export function closeCounter() {
   opts.onClose?.();
 }
 export const counterOpen = () => !!sheet && !sheet.hidden;
+
+// Tickets won or spent in another tab or window of the arcade: this page hears about it as it does about its own
+// (free-play:wallet, which every page's ticket count listens for), and an open counter shows the pocket as it is now.
+globalThis.addEventListener?.('storage', e => {
+  if (e.key !== KEY && e.key !== null) return; // (null: the whole of storage was cleared)
+  dispatchEvent(new CustomEvent('free-play:wallet', { detail: read() }));
+  if (counterOpen()) render();
+});
 
 // A line at the foot of the screen (or of the counter, while it's open) for a moment. With undo, it carries an Undo
 // button for a few seconds longer.

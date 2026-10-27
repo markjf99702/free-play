@@ -29,6 +29,9 @@ const HOME = 'https://free-play.junkdrawer.works/';
 const browser = await pw.chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, serviceWorkers: 'block' });
 const page = await ctx.newPage();
+// another tab on the floor, which wins or spends tickets while a page is open
+const other = await ctx.newPage();
+await other.goto(base);
 const problems = [];
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
@@ -90,6 +93,20 @@ for (const [path, hook, tix, opener] of PAGES) {
     await lollipop('tilt, paused', tix, '#pausePrizes', 1229);
     assert.ok(await page.isVisible('#pause'), 'tilt: the pause card is still up');
   }
+
+  // Tickets won or spent in another tab show up here as well, in the ticket count and in an open counter.
+  const elsewhere = async (tickets, lollipops) => {
+    await other.evaluate(w => localStorage.setItem('free-play.wallet', JSON.stringify(w)), { tickets, prizes: { lollipop: lollipops } });
+    await page.waitForFunction(([sel, t]) => document.querySelector(sel).textContent.trim() === t, [tix, tickets.toLocaleString('en-US')], { timeout: 3000 }).catch(() => {});
+    assert.equal(await text(tix), tickets.toLocaleString('en-US'), `${where}: tickets changed in another tab`);
+  };
+  await elsewhere(4321, 3);
+  await page.click(hook === 'tilt' ? '#pausePrizes' : opener); // (Tilt's game is paused by now)
+  await elsewhere(2, 4);
+  assert.equal(await text('.fp-bal b'), '2', `${where}: the open counter's balance, changed in another tab`);
+  assert.equal(await page.getAttribute('.fp-shelf .fp-item', 'aria-label'), 'Lollipop, 4', `${where}: the open counter's shelf, changed in another tab`);
+  assert.equal(await page.locator('.fp-prize:not(.short)').count(), 0, `${where}: with 2 tickets nothing at the counter is affordable`);
+  await page.keyboard.press('Escape');
 }
 
 // On a phone the counter's heading stays on one line, whatever the balance, with the balance and the close button clear
