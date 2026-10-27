@@ -61,6 +61,17 @@ function bell(f, at, peak) {
   tone('sine', f * 2.01, f * 2.01, peak * 0.3, 0.3, at);
 }
 const loud = (speed, top) => Math.min(1, speed / top);
+// A beep held flat for `len` seconds, then let go: the scoreboard's and the cabinet's own voice.
+function beep(type, f, at, len, peak) {
+  const t = ac.currentTime + at;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.006);
+  g.gain.setValueAtTime(peak, t + len); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06);
+  o.connect(g); g.connect(out);
+  o.start(t); o.stop(t + len + 0.1);
+}
+
 
 // The throw: a soft whoosh off the fingers.
 export function shot() {
@@ -80,12 +91,14 @@ export function board(speed) {
   if (!ac || !enabled) return;
   const v = 0.12 + 0.35 * loud(speed, 600);
   tone('sine', 150, 90, v, 0.12); burst('bandpass', 1100, 2, v * 0.5, 0.08);
+  burst('bandpass', 1300, 1.2, v * 3.6, 0.035); tone('triangle', 600, 360, v * 1.4, 0.07); // (the part a phone plays)
 }
 // A bounce on the ramp, or two balls knocking together.
 export function thud(speed) {
   if (!ac || !enabled) return;
   const v = 0.06 + 0.3 * loud(speed, 500);
   tone('sine', 120, 70, v, 0.1); burst('lowpass', 500, 0.7, v * 0.4, 0.05);
+  burst('bandpass', 900, 1.2, v * 3.6, 0.03); tone('triangle', 480, 280, v * 1.6, 0.06); // (the part a phone plays)
 }
 export function knock(speed) {
   if (!ac || !enabled) return;
@@ -111,12 +124,13 @@ export function fire(on) {
 // The hoop setting off along its rail; the last ten seconds; the buzzer.
 export function slide() {
   if (!ac || !enabled) return;
-  tone('sawtooth', 90, 140, 0.05, 0.6); tone('square', 880, 880, 0.05, 0.1, 0.1); tone('square', 880, 880, 0.05, 0.1, 0.3);
+  tone('sawtooth', 90, 140, 0.05, 0.6); tone('triangle', 330, 660, 0.12, 0.45);
+  for (const at of [0.1, 0.3]) { beep('square', 880, at, 0.07, 0.07); beep('square', 1320, at, 0.07, 0.045); }
 }
 export function bonus() {
   if (!ac || !enabled) return;
-  for (let i = 0; i < 3; i++) tone('square', 988, 988, 0.06, 0.09, i * 0.14);
-  tone('square', 1319, 1319, 0.07, 0.3, 0.42);
+  for (let i = 0; i < 3; i++) { beep('square', 988, i * 0.14, 0.07, 0.042); beep('square', 1482, i * 0.14, 0.07, 0.028); }
+  beep('square', 1319, 0.42, 0.26, 0.045); beep('square', 1976, 0.42, 0.26, 0.028);
 }
 // Each of the last five seconds: a short beep, the shot clock's, higher for the last one.
 export function count(n) {
@@ -130,9 +144,10 @@ export function count(n) {
   o.connect(g); g.connect(out);
   o.start(t); o.stop(t + 0.25);
 }
+// The buzzer: a two-tone horn, held.
 export function buzzer() {
   if (!ac || !enabled) return;
-  tone('sawtooth', 196, 196, 0.16, 1.0); tone('square', 207, 207, 0.1, 1.0);
+  beep('sawtooth', 220, 0, 0.75, 0.072); beep('sawtooth', 277, 0, 0.75, 0.06); beep('square', 110, 0, 0.75, 0.028);
 }
 
 // A new best, once the tickets are out: four bells, climbing.

@@ -95,13 +95,24 @@ function burst(type, freq, q, peak, decay, at = 0) {
   s.start(t, Math.random()); s.stop(t + decay + 0.05);
 }
 
+// A short knock of white noise round `freq`: the part of a thump a phone's speaker can play.
+function knock(freq, peak, decay) {
+  const t = ac.currentTime;
+  const s = ac.createBufferSource(); s.buffer = white();
+  const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
+  const g = ac.createGain();
+  env(g, t, peak, decay);
+  s.connect(f); f.connect(g); g.connect(out);
+  s.start(t, Math.random() * 0.5); s.stop(t + decay + 0.05);
+}
+
 // Something the ball hit, from js/physics.js's list.
 export function hit(kind, speed) {
   if (!ac || !enabled) return;
   const k = Math.min(1, speed / 320);
   if (k < 0.06) return;
   switch (kind) {
-    case 'board': tone('sine', 150, 70, 0.55 * k, 0.12); burst('lowpass', 900, 0.8, 0.35 * k, 0.05); break;
+    case 'board': tone('sine', 150, 70, 0.55 * k, 0.12); burst('lowpass', 900, 0.8, 0.35 * k, 0.05); knock(1200, 2.2 * k, 0.035); tone('triangle', 600, 300, 0.4 * k, 0.07); break;
     case 'jump': tone('sine', 110, 60, 0.4 * k, 0.1); break;
     case 'lip': case 'rim': tone('triangle', 1500, 1100, 0.22 * k, 0.05); burst('bandpass', 3200, 2, 0.4 * k, 0.035); break;
     case 'wall': tone('sine', 280, 190, 0.3 * k, 0.07); burst('lowpass', 1600, 0.7, 0.25 * k, 0.04); break;

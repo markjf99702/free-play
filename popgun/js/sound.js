@@ -101,6 +101,7 @@ export function miss() {
   if (!ac || !enabled) return;
   burst('lowpass', 500, 0.8, 0.25, 0.08);
   tone('sine', 140, 80, 0.15, 0.1);
+  burst('bandpass', 1000, 1.2, 1.4, 0.03); tone('triangle', 560, 320, 0.2, 0.06); // (the part a phone plays)
 }
 
 // The moon, hit: a boing.

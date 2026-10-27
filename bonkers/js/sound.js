@@ -59,6 +59,17 @@ function bell(f, at, peak) {
   tone('sine', f, f, peak, 0.6, at);
   tone('sine', f * 2.01, f * 2.01, peak * 0.3, 0.3, at);
 }
+// A beep held flat for `len` seconds, then let go: the scoreboard's and the cabinet's own voice.
+function beep(type, f, at, len, peak) {
+  const t = ac.currentTime + at;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.006);
+  g.gain.setValueAtTime(peak, t + len); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06);
+  o.connect(g); g.connect(out);
+  o.start(t); o.stop(t + len + 0.1);
+}
+
 
 // A mole popping up: a quick squeaky boing, with a sparkle for a golden one. A peek is just a sniff.
 export function pop(gold = false) {
@@ -76,6 +87,8 @@ export function bonk(kind) {
   if (!ac || !enabled) return;
   tone('sine', 160, 70, 0.5, 0.14);
   burst('lowpass', 900, 0.8, 0.35, 0.06);
+  // the knock a phone's speaker can play (the thump under it is too low for one)
+  burst('bandpass', 1200, 1.3, 2.4, 0.035); tone('triangle', 560, 300, 0.65, 0.08);
   tone('square', 900, 1400, 0.05, 0.08, 0.03);
   if (kind === 'gold') [1319, 1568, 2093, 2637].forEach((f, i) => bell(f, 0.06 + i * 0.06, 0.14));
 }
@@ -88,6 +101,7 @@ export function miss() {
   if (!ac || !enabled) return;
   tone('sine', 110, 60, 0.35, 0.12);
   burst('lowpass', 400, 0.7, 0.3, 0.1);
+  burst('bandpass', 900, 1.2, 2.2, 0.035); tone('triangle', 440, 240, 0.5, 0.08); // (the part a phone plays)
 }
 
 // A mole getting away: a raspberry.
@@ -101,9 +115,10 @@ export function run() {
   if (!ac || !enabled) return;
   [784, 988, 1175, 1568].forEach((f, i) => bell(f, i * 0.07, 0.16));
 }
+// The frenzy: six quick beeps, each doubled a fifth up.
 export function frenzy() {
   if (!ac || !enabled) return;
-  for (let i = 0; i < 6; i++) tone('square', i % 2 ? 660 : 880, i % 2 ? 660 : 880, 0.05, 0.08, i * 0.1);
+  for (let i = 0; i < 6; i++) { const f = i % 2 ? 660 : 880; beep('square', f, i * 0.1, 0.06, 0.06); beep('square', f * 1.5, i * 0.1, 0.06, 0.04); }
 }
 // Each of the last five seconds: a short beep, higher for the last one.
 export function count(n) {
@@ -117,9 +132,12 @@ export function count(n) {
   o.connect(g); g.connect(out);
   o.start(t); o.stop(t + 0.25);
 }
+// Time's up: three notes falling, the last held.
 export function over() {
   if (!ac || !enabled) return;
-  tone('square', 440, 440, 0.07, 0.5); tone('square', 330, 330, 0.07, 0.7, 0.35);
+  [[659, 0, 0.14], [523, 0.19, 0.14], [392, 0.38, 0.45]].forEach(([f, at, len]) => {
+    beep('square', f, at, len, 0.05); beep('triangle', f * 2, at, len, 0.038);
+  });
 }
 
 // A new best, once the tickets are out: four bells, climbing.
