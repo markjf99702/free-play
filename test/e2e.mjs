@@ -475,7 +475,8 @@ for (const [path, name] of Object.entries(OFFLINE)) {
 await ctx.setOffline(false);
 
 // On a computer each machine's title card says how to play it on the keyboard, in its menu's words (Tilt, in its pause
-// card's); on a phone, which has no keys, it doesn't.
+// card's); on a phone, which has no keys, it doesn't. The menu says the same on a computer; on a phone it says how to
+// play by touch instead (Tilt's pause card says both, touch first, on a computer).
 for (const [opts, shown] of [[{ viewport: { width: 1280, height: 800 } }, true], [{ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, false]]) {
   const kc = await browser.newContext({ ...opts, serviceWorkers: 'block' });
   const kp = await kc.newPage();
@@ -483,13 +484,19 @@ for (const [opts, shown] of [[{ viewport: { width: 1280, height: 800 } }, true],
   for (const [path, name] of Object.entries(OFFLINE).slice(1)) {
     await kp.goto(base + path);
     await kp.waitForFunction(name => !!window[name], name, { timeout: 10000 });
-    const [line, seen, menu] = await kp.evaluate(() => {
+    const [line, seen, menu, menuSeen, touch, touchSeen] = await kp.evaluate(() => {
       const keys = document.querySelector('#title .keys');
       const menu = [...document.querySelectorAll('#menu .how, #pause .keys')].find(p => /keyboard/.test(p.textContent));
-      return [keys?.textContent, !!keys?.getClientRects().length, menu?.textContent];
+      // (the menu's shut, so what its own rules make of each line)
+      const touch = document.querySelector('#menu .touch, #pause .ctl:not(.keys)');
+      const on = el => !!el && getComputedStyle(el).display !== 'none';
+      return [keys?.textContent, !!keys?.getClientRects().length, menu?.textContent, on(menu), touch?.textContent, on(touch)];
     });
     assert.ok(line && line === menu, `${name}'s title card's keyboard line "${line}" isn't its menu's "${menu}"`);
     assert.equal(seen, shown, `${name}'s keyboard line ${shown ? "isn't" : 'is'} shown ${shown ? 'on a computer' : 'on a phone'}`);
+    assert.equal(menuSeen, shown, `${name}'s menu's keyboard line ${shown ? "isn't" : 'is'} shown ${shown ? 'on a computer' : 'on a phone'}`);
+    assert.ok(touch && !/keyboard/i.test(touch), `${name}'s menu has no line saying how to play by touch`);
+    assert.equal(touchSeen, name === 'tilt' || !shown, `${name}'s menu's touch line "${touch}" ${shown ? 'is' : "isn't"} shown ${shown ? 'on a computer' : 'on a phone'}`);
   }
   await kc.close();
 }
