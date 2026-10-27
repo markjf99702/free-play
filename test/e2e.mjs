@@ -131,10 +131,12 @@ await page.waitForFunction(() => !!window.freePlay);
 assert.equal(await page.evaluate(() => scrollY), 0, 'Back to the floor went to Clutch');
 
 // Topple: in from the floor, a few coins and the tickets they push over, and back.
-const beforeTopple = await tickets();
 await page.click('.cab.topple');
 await page.waitForURL(base + 'topple/');
 await page.click('#play');
+// (what the pocket had as the cup began: the shelf runs behind the title card, and a coin it pushes over there goes in
+// the pocket too, so this is read once the cup's begun, less what the cup has already won)
+const beforeTopple = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets - topple.cup.won);
 await page.evaluate(() => { topple.speed = 4; });
 for (let i = 0; i < 6; i++) { await page.waitForFunction(() => topple.machine.ready); await page.evaluate(() => topple.drop(150)); }
 await page.waitForFunction(() => topple.cup.won > 0, null, { timeout: 20000 });

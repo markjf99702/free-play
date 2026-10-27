@@ -76,6 +76,13 @@ for (const [path, hook, tix, opener] of PAGES) {
   await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1234, prizes: {} })));
   await page.reload();
   await page.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
+  if (hook === 'topple') {
+    // Topple's shelf runs behind its title card, and a coin it pushes over there goes in the pocket: the shelf is
+    // stopped, and the pocket set to 1,234 again from the other tab (this page hears it), so the count is exact.
+    await page.evaluate(() => { topple.speed = 0; });
+    await other.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1234, prizes: {} })));
+    await page.waitForFunction(sel => document.querySelector(sel).textContent.trim() === '1,234', tix, { timeout: 3000 });
+  }
   await page.evaluate(() => document.fonts.ready);
 
   // A link to the page shows that page, with a picture from the live site.
