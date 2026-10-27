@@ -174,6 +174,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 ### Files
 
 - `index.html`, `css/floor.css`, `js/floor.js`: the floor, with a cabinet for each machine and the prize counter at the back.
+- `404.html`: the page for a mistyped address ("That machine isn't on the floor."), with the way to the floor and to each machine. GitHub Pages serves it for any address that isn't there, at any depth, and the offline copy does the same for a page it hasn't kept, so its styles are on the page and its links and fonts start from the site's root (`/hoops/`), the one place a path here isn't relative.
 - `shared/wallet.js`: the one pocket of tickets and shelf of prizes every machine pays into and the counter spends from.
 - `shared/counter.js`, `shared/arcade.css`: the prize counter, the ticket dispenser at the end of a game, and the toast, for every page.
 - `shared/prizes.js`: what's at the prize counter and what it costs, the plush Clutch gives out, the prizes on Topple's deck and Highrise's trophy.

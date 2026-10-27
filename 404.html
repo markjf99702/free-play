@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Not on the floor · Free Play</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0d0b1f">
+  <!-- GitHub Pages serves this page for any address that isn't there, at any depth (/hoop/, /tilt/tables/), and so
+       does sw.js offline. A relative path would start from wherever that is, so every link, font and icon here starts
+       from the site's root instead, and the styles are all on the page. -->
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-180.png">
+  <style>
+    @font-face { font-family: "Bungee"; src: url(/fonts/bungee.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Bungee Outline"; src: url(/fonts/bungee-outline.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Figtree"; src: url(/fonts/figtree.woff2) format("woff2"); font-weight: 300 900; font-display: swap; }
+    :root {
+      --carpet: #0d0b1f; --ink: #fbeed2; --ink2: rgba(251, 238, 210, .76); --ink3: rgba(251, 238, 210, .52);
+      --pink: #ff5fa2; --teal: #4ff0e0; --gold: #ffd36a;
+      --disp: "Bungee", Impact, sans-serif; --body: "Figtree", system-ui, sans-serif;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--carpet); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink); font: 16px/1.45 var(--body); -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(16px, env(safe-area-inset-left, 0px));
+      /* the floor's carpet */
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(255, 95, 162, .16), transparent 55%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='none' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' opacity='.2'%3E%3Cpath d='M14 30l12-14 12 14 12-14 12 14' stroke='%23ff4f9a'/%3E%3Ccircle cx='132' cy='40' r='13' stroke='%233fe0d0'/%3E%3Cpath d='M40 120l18-30 18 30z' stroke='%23ffd23f'/%3E%3Cpath d='M104 110c10-14 20 14 30 0s20 14 30 0' stroke='%238a6bff'/%3E%3Cpath d='M150 150l14 14M164 150l-14 14' stroke='%23ff4f9a'/%3E%3Ccircle cx='22' cy='160' r='7' stroke='%23ffd23f'/%3E%3C/g%3E%3Cg fill='%23fbeed2' opacity='.22'%3E%3Ccircle cx='90' cy='20' r='2'/%3E%3Ccircle cx='70' cy='64' r='1.6'/%3E%3Ccircle cx='160' cy='90' r='2'/%3E%3Ccircle cx='100' cy='160' r='1.6'/%3E%3Ccircle cx='12' cy='86' r='1.6'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 180px 180px,
+        var(--carpet);
+    }
+    :focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+    main { max-width: 560px; margin: 0 auto; padding: 40px 0 28px; text-align: center; }
+    /* the sign over the door, with its second tube out */
+    .sign { margin: 0; font: 400 clamp(52px, 15vw, 88px)/.95 "Bungee Outline", var(--disp); letter-spacing: .01em; }
+    .sign span { display: inline-block; }
+    .sign .free { color: #ffd0e3; text-shadow: 0 0 4px var(--pink), 0 0 14px var(--pink), 0 0 34px rgba(255, 95, 162, .7); }
+    .sign .play { color: rgba(214, 255, 251, .3); text-shadow: none; }
+    h1 { margin: 26px 0 8px; font: 400 24px/1.2 var(--disp); text-wrap: balance; }
+    p { margin: 0 auto 22px; max-width: 26em; color: var(--ink2); text-wrap: balance; }
+    .home {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 24px; border-radius: 999px;
+      font: 400 18px var(--disp); color: #2a0b19; text-decoration: none;
+      background: linear-gradient(#ff8cbd, #e0347a); border: 1px solid #ffc2dc; box-shadow: 0 4px 0 #7d0c3c;
+    }
+    .home:active { transform: translateY(2px); box-shadow: 0 2px 0 #7d0c3c; }
+    h2 { margin: 30px 0 12px; font: 600 13px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
+    /* the eight machines, each in its cabinet's colours */
+    ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    li a {
+      display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 12px; border-radius: 12px;
+      font: 400 16px var(--disp); color: var(--ink); text-decoration: none;
+      background: linear-gradient(90deg, var(--trim2) 0 5px, #19131f 5px calc(100% - 5px), var(--trim2) calc(100% - 5px));
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 10px 24px rgba(0, 0, 0, .45), 0 0 34px -14px var(--trim);
+    }
+    li a:hover, li a:focus-visible { color: #fff; box-shadow: 0 0 0 1px var(--trim), 0 10px 24px rgba(0, 0, 0, .45), 0 0 40px -10px var(--trim); }
+    .roll-up { --trim: #c23a2e; --trim2: #7a1c16; }
+    .tilt { --trim: #ffa53a; --trim2: #6a3a0c; }
+    .clutch { --trim: #ff5fa2; --trim2: #8a1446; }
+    .topple { --trim: #16a39b; --trim2: #085451; }
+    .highrise { --trim: #5cc8ff; --trim2: #1a2068; }
+    .popgun { --trim: #d63a2f; --trim2: #6b4220; }
+    .bonkers { --trim: #ffc93c; --trim2: #c97a12; }
+    .hoops { --trim: #ff8a1f; --trim2: #0f2266; }
+    .jd-foot { margin: 34px 0 0; font-size: 12px; color: var(--ink3); }
+    .jd-foot a { padding: 15px 4px; margin: 0 -4px; color: var(--ink3); text-decoration: none; }
+    .jd-foot a:hover, .jd-foot a:focus-visible { text-decoration: underline; color: var(--ink2); }
+    .jd-foot span { margin: 0 6px; }
+    @media (prefers-reduced-motion: reduce) { .home:active { transform: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="sign" aria-hidden="true"><span class="free">Free</span> <span class="play">Play</span></div>
+    <h1>That machine isn't on the floor.</h1>
+    <p>There's nothing at this address. Here's the way back to the floor, and to each machine on it.</p>
+    <a class="home" href="/">To the floor</a>
+    <h2>Or go straight to one</h2>
+    <ul>
+      <li><a class="roll-up" href="/roll-up/">Roll Up</a></li>
+      <li><a class="tilt" href="/tilt/">Tilt</a></li>
+      <li><a class="clutch" href="/clutch/">Clutch</a></li>
+      <li><a class="topple" href="/topple/">Topple</a></li>
+      <li><a class="highrise" href="/highrise/">Highrise</a></li>
+      <li><a class="popgun" href="/popgun/">Popgun</a></li>
+      <li><a class="bonkers" href="/bonkers/">Bonkers</a></li>
+      <li><a class="hoops" href="/hoops/">Hoops</a></li>
+    </ul>
+    <footer class="jd-foot">
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </main>
+</body>
+</html>

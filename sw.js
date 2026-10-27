@@ -5,9 +5,11 @@
 
 // Bump the number when the file list changes, or before a release that should refresh every offline copy: a new name
 // is what makes an installed copy download the whole list again.
-const CACHE = 'free-play-v8';
+const CACHE = 'free-play-v9';
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
+  // the page for an address that is not there
+  '404.html',
   // the machines by their addresses as well as by index.html, so either opens offline
   'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/', 'hoops/',
   // floor
@@ -112,8 +114,15 @@ function network(e) {
 }
 
 const kept = request => caches.match(request, { ignoreSearch: true });
-// With no network: the file from the offline copy, or for anything it hasn't got, the floor.
-const offline = request => kept(request).then(r => r || caches.match('index.html'));
+// With no network: the file from the offline copy. A page it hasn't got (a mistyped address) gets the arcade's own
+// page saying so, 404.html, as GitHub Pages answers online. A script, a style or a picture it hasn't got fails, as it
+// would with no copy at all: the floor's page in its place only broke whatever asked for it.
+async function offline(request) {
+  const copy = await kept(request);
+  if (copy) return copy;
+  const lost = request.mode === 'navigate' && await caches.match('404.html');
+  return lost || Response.error();
+}
 
 // GitHub Pages lets browsers keep files for ten minutes, so without this an update can take that long to show up.
 // Ask the server every time instead; a file that hasn't changed comes back as a quick "not modified".

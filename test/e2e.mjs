@@ -28,7 +28,8 @@ const server = createServer(async (req, res) => {
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path.endsWith('/')) path += 'index.html';
   let body;
-  try { body = await readFile(join(root, path)); } catch { res.writeHead(404); res.end(); return; }
+  // (anything that isn't there gets the arcade's 404.html, as GitHub Pages does)
+  try { body = await readFile(join(root, path)); } catch { res.writeHead(404, { 'content-type': 'text/html' }); res.end(await readFile(join(root, '404.html'))); return; }
   res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'text/html' });
   res.end(body);
 }).listen(0);
@@ -481,6 +482,7 @@ const OFFLINE = { '': 'freePlay', 'roll-up/': 'rollUp', 'tilt/': 'tilt', 'clutch
 const away = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const ap = await away.newPage();
 ap.on('pageerror', e => problems.push(e.message));
+ap.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the site: ' + r.url()); });
 await ap.goto(base);
 await ap.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 15000 });
 await until(() => ap.evaluate(async shell => (await Promise.all(shell.map(f => caches.match(f)))).every(Boolean), shell), 20000, 'the offline copy never held every file');
@@ -498,8 +500,41 @@ for (const [path, name] of [...Object.entries(OFFLINE), ['tilt/?table=haunted', 
   assert.deepEqual(pictures, [], `${called}'s pictures didn't load offline`);
 }
 assert.equal(await ap.evaluate(() => window.tilt.table.name), 'Haunted House', "Tilt's link to a table opened another offline");
+// A mistyped address gets the arcade's own page saying so, at any depth, styled, with its fonts, and links to the
+// floor and every machine that work from there. Offline it comes from the copy (not the floor's page at the wrong
+// address, unstyled, which is what it was), and a script, a style or a picture the copy hasn't got fails, rather than
+// coming back as a page.
+const ADDRESSES = ['/', ...Object.keys(OFFLINE).slice(1).map(p => '/' + p)];
+const lostPage = async (path, how) => {
+  const seen = await ap.evaluate(async () => {
+    await document.fonts.ready;
+    return {
+      says: document.querySelector('h1')?.textContent, styled: getComputedStyle(document.body).backgroundColor,
+      faces: [...document.fonts].filter(f => f.status !== 'loaded').map(f => `${f.family} ${f.status}`),
+      links: [...document.querySelectorAll('.home, ul a')].map(a => a.pathname),
+    };
+  });
+  assert.equal(seen.says, "That machine isn't on the floor.", `${path}, ${how}`);
+  assert.equal(seen.styled, 'rgb(13, 11, 31)', `${path}, ${how}, has no styles`);
+  assert.deepEqual(seen.faces, [], `${path}, ${how}: fonts that didn't load`);
+  assert.deepEqual(seen.links, ADDRESSES, `${path}, ${how}: its links`);
+};
+for (const path of ['hoop/', 'tilt/tables/haunted/']) {
+  await ap.goto(base + path);
+  await lostPage(path, 'offline');
+}
+await ap.click('a[href="/hoops/"]');
+await ap.waitForFunction(() => !!window.hoops, null, { timeout: 10000 }).catch(() => assert.fail("the lost page's link to Hoops did not open it offline"));
+const missing = await ap.evaluate(() => Promise.all(['js/nope.js', 'css/nope.css', 'floor/nope.jpg']
+  .map(f => fetch('../' + f).then(r => `${f}: ${r.status} ${r.headers.get('content-type')}`, () => null))));
+assert.deepEqual(missing, [null, null, null], 'files the offline copy has not got came back as something');
 await away.setOffline(false);
 down = false;
+// and online, from the server, with GitHub's 404 status
+assert.equal((await ap.goto(base + 'hoop/')).status(), 404);
+await lostPage('hoop/', 'online');
+await ap.click('a[href="/clutch/"]');
+await ap.waitForFunction(() => !!window.clutch, null, { timeout: 10000 });
 await away.close();
 
 // On a computer each machine's title card says how to play it on the keyboard, in its menu's words (Tilt, in its pause
@@ -694,7 +729,7 @@ async function serveLikePages(req, res) {
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path.endsWith('/')) path += 'index.html';
   let body;
-  try { body = await readFile(join(root, path)); } catch { res.writeHead(404); res.end(); return; }
+  try { body = await readFile(join(root, path)); } catch { res.writeHead(404, { 'content-type': 'text/html' }); res.end(await readFile(join(root, '404.html'))); return; }
   if (gh.next && path === '/sw.js') body = Buffer.from(String(body).replace(/free-play-v\d+/, '$&-next'));
   if (gh.next && path === '/topple/js/machine.js') body = Buffer.concat([body, Buffer.from('\n// the next release\n')]);
   if (gh.later && path === '/index.html') body = Buffer.concat([body, Buffer.from('\n<!-- later -->\n')]);
