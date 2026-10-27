@@ -68,8 +68,10 @@ await page.mouse.down(); await page.mouse.up();
 assert.equal(await page.evaluate(() => highrise.tower.built), 0, 'the stop button does nothing behind the title card');
 await page.click('#play');
 
-// The row moves, and the stop button sets it down where it is.
+// The row moves, and the stop button sets it down where it is. On the ground floor there's no floor below to stop it
+// on, and the deck says so; from the next floor up it says to stop it on the one below.
 await ready();
+assert.equal(await page.textContent('#aimHint'), 'Stop it anywhere to start');
 const seen = new Set();
 for (let i = 0; i < 8; i++) { seen.add(await page.evaluate(() => highrise.shown)); await page.waitForTimeout(70); }
 assert.ok(seen.size > 2, 'the row slides along');
@@ -78,6 +80,7 @@ await page.mouse.down(); await page.mouse.up();
 const first = await page.evaluate(() => highrise.tower.rows[0]);
 assert.equal(first.length, 3, 'the ground floor lands whole, wherever it stops');
 assert.equal(await page.textContent('#floorNo'), '2');
+assert.equal(await page.textContent('#aimHint'), 'Stop it on the floor below');
 
 // Space sets the next one down. It lands where the row is, so wait until the row is over the ground floor by two
 // windows: one more step along (153 ms on floor 2) can't then take it off the edge, however slow the machine.

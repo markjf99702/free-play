@@ -196,6 +196,9 @@ addEventListener('keydown', e => {
 // ---------- the scoreboard ----------
 function hud() {
   $('floorNo').textContent = mode === 'title' ? '1' : Math.min(FLOORS, mode === 'play' ? tower.floor : tower.built || 1);
+  // the ground floor lands wherever it stops; every floor after that has one below it to land on
+  const aim = mode === 'title' || tower.floor <= 1 ? 'Stop it anywhere to start' : 'Stop it on the floor below';
+  if ($('aimHint').textContent !== aim) $('aimHint').textContent = aim;
   const have = Math.max(0, wallet.read().tickets - toCome);
   $('tix').textContent = fmt(have);
   pocketButton($('tixBtn'), have);
