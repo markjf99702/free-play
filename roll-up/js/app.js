@@ -42,12 +42,16 @@ sound.setEnabled(saved.sound);
 // ---------- the scene ----------
 const canvas = $('stage');
 const scene = createScene(canvas);
+const notes = document.querySelector('.notes');
 function layout() {
   const hud = document.querySelector('.hud').getBoundingClientRect();
   scene.resize(innerWidth, innerHeight, Math.min(2, devicePixelRatio || 1), {
     top: Math.max(hud.bottom + 4, 56),
     bottom: insets().bottom + 4, // clear of an iPhone's home indicator
   });
+  // The notes about the ball in hand float mid-lane, from 150 cm up it: clear of the red line and of where a finger
+  // takes the ball (up to 108 cm), and under the board.
+  notes.style.bottom = `${innerHeight - scene.project({ x: 0, y: phys.ground(150), z: 150 }).y}px`;
 }
 addEventListener('resize', layout);
 layout();
@@ -62,6 +66,7 @@ let handX = 0;
 let shown = 0;               // the score on the board, counting up to game.score
 let resultT = 0, deal = null, drag = null, charge = null, thrownOnce = false;
 let paused = false, timeScale = 1;
+let foulAt = 0;              // when the ball was last carried over the red line too slowly to roll (the line flashes)
 let zoom = 0;                // 0: the whole machine; 1: pushed in on the board while the ball's up there
 const pops = [];
 let flash = null;
@@ -247,6 +252,7 @@ canvas.addEventListener('pointerdown', e => {
   drag = { id: e.pointerId, off: { x: ball.x - w.x, z: ball.z - w.z }, samples: [] };
   try { canvas.setPointerCapture(e.pointerId); } catch { /* fine without */ }
   mode = 'drag';
+  hud(); // the hint has done its job
   sample(e);
   e.preventDefault();
 });
@@ -260,33 +266,41 @@ canvas.addEventListener('pointermove', e => {
   const z = last.z + drag.off.z;
   ball.z = Math.max(LANE.start - 12, Math.min(LANE.foul, z));
   ball.y = phys.ground(ball.z) + R;
-  if (z >= LANE.foul) release(); // over the line: it's gone
+  if (z >= LANE.foul) release(true); // over the line: it's gone
 });
 canvas.addEventListener('pointerup', e => { if (drag && e.pointerId === drag.id) release(); });
 canvas.addEventListener('pointercancel', e => { if (drag && e.pointerId === drag.id) { drag = null; settle(); } });
 
-function release() {
+// over: the finger carried the ball over the red line, rather than lifting.
+function release(over = false) {
   const s = drag.samples;
   drag = null;
-  if (s.length < 2) return settle();
+  if (s.length < 2) return settle(over);
   const last = s[s.length - 1];
   let i = s.length - 2;
   while (i > 0 && last.t - s[i - 1].t <= FLICK.window) i--;
   const first = s[i], dt = (last.t - first.t) / 1000;
-  if (dt <= 0.004) return settle();
+  if (dt <= 0.004) return settle(over);
   const vx = (last.x - first.x) / dt, vz = (last.z - first.z) / dt;
-  if (vz < FLICK.min) return settle();
+  if (vz < FLICK.min) return settle(over);
   const speed = power(Math.hypot(vx, vz));
   const ang = Math.max(-FLICK.maxAngle, Math.min(FLICK.maxAngle, Math.atan2(vx, vz) * FLICK.aim));
   throwBall(speed * Math.sin(ang), speed * Math.cos(ang));
 }
 
-// Not a throw: the ball goes back to its spot behind the line, where the finger left it across the lane.
-function settle() {
+// Not a throw: the ball goes back to its spot behind the line, where the finger left it across the lane. Carried over
+// the red line too slowly to roll (foul), the line flashes and says so.
+function settle(foul = false) {
   handX = ball.x;
   ball.z = LANE.start;
   ball.y = phys.ground(ball.z) + R;
   mode = 'aim';
+  hud();
+  if (foul) {
+    foulAt = performance.now();
+    sound.foul();
+    $('live').textContent = 'Flick it before the red line.';
+  }
 }
 
 // The keyboard: arrows move the ball, Space winds up and lets go.
@@ -417,6 +431,7 @@ function tick(now) {
   if (!paused) update(dt);
   scene.frame({
     ball, tray: trayCount(), trayGold: trayGold(), call: callNow(), pops, flash, lights, now, zoom: zoom * zoom * (3 - 2 * zoom),
+    foul: foulAt && now - foulAt < 1200 ? (now - foulAt) / 1000 : null,
     charge: charge && mode === 'aim' ? chargeLevel() : null,
   });
   requestAnimationFrame(tick);
@@ -472,6 +487,7 @@ window.rollUp = {
   get ball() { return ball; },
   get saved() { return saved; },
   get game() { return game; },
+  get fouled() { return foulAt; },
   start,
   roll(vx, vz, x) {
     if (mode !== 'aim') return false;

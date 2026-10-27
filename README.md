@@ -39,7 +39,7 @@
 
 Skee-ball, the boardwalk kind. Flick the ball up the lane, and it hops the ramp and drops into a ring worth 10 to 50, or a 100 up in the corners. A game is nine balls.
 
-- **Drag, then flick.** Put a finger on the lane and the ball moves with it, so you can line it up anywhere across. Flick up the lane to roll; a slow drag just moves it.
+- **Drag, then flick.** Put a finger on the lane and the ball moves with it, so you can line it up anywhere across. Flick it up the lane, before the red line, to roll it; a slow drag just moves it, and a ball pushed over the line without a flick goes back.
 - **How hard decides where it lands.** A gentle roll drops into the 20, firmer climbs to the 30, 40 and 50, and too hard sails over the rings into the 10. Too gentle and it doesn't make the jump at all, which scores nothing.
 - **The 100s want an angle.** They sit in the top corners: roll firmly and a little toward one.
 - **Real bounces.** The ball is simulated in 3D, so it rattles off the ring lips and can bounce out of a ring or into a better one.

@@ -442,7 +442,8 @@ export function createScene(canvas) {
   }
 
   // ---------- each frame ----------
-  // view: { ball, tray, trayGold, call, lights: { mode, t }, flash: { hole, t }, pops: [{ text, sub, x, y, z, age, big }], charge, now }
+  // view: { ball, tray, trayGold, call, lights: { mode, t }, flash: { hole, t }, pops: [{ text, sub, x, y, z, age, big }], charge,
+  // foul (seconds since the ball was carried over the red line too slowly, or null), now }
   function frame(view) {
     setZoom(view.zoom || 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -450,6 +451,7 @@ export function createScene(canvas) {
     base(ctx);
     if (view.call) called(view.call, view.now);
     if (view.flash) holeFlash(view.flash);
+    if (view.foul != null) foulFlash(view.foul);
     lights(view.lights, view.now);
     trayBalls(view.tray, view.trayGold);
     const b = view.ball;
@@ -471,6 +473,18 @@ export function createScene(canvas) {
       ctx.stroke();
       fillPts(ctx, circleOnBoard(o.u, o.s, o.r, 0.2, 40), `rgba(${COL.call},${0.12 + k * 0.1})`);
     }
+    ctx.restore();
+  }
+
+  // The red line flashing, wider and brighter than it's painted, with a glow.
+  function foulFlash(t) {
+    const a = Math.max(0, 1 - t / 1.1) * (0.7 + 0.3 * Math.cos(t * 18));
+    if (a <= 0) return;
+    const band = (z0, z1) => [V(-LANE.half, ground(z0), z0), V(LANE.half, ground(z0), z0), V(LANE.half, ground(z1), z1), V(-LANE.half, ground(z1), z1)];
+    fillPts(ctx, band(LANE.foul - 0.8, LANE.foul + 2.2), `rgba(240,40,40,${a.toFixed(3)})`);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    fillPts(ctx, band(LANE.foul - 3, LANE.foul + 4.4), `rgba(255,80,60,${(a * 0.35).toFixed(3)})`);
     ctx.restore();
   }
 

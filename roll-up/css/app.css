@@ -55,7 +55,7 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .hud .menu { width: 40px; display: grid; place-content: center; gap: 4px; padding: 0; }
 .hud .menu span { display: block; width: 16px; height: 2px; border-radius: 2px; background: var(--ink); }
 
-/* things to know about the ball in hand, floating over the lane */
+/* things to know about the ball in hand, floating over the lane (js/app.js puts their foot mid-lane) */
 .notes {
   position: fixed; left: 16px; right: 16px; bottom: calc(22vh + env(safe-area-inset-bottom, 0px)); z-index: 1;
   display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;

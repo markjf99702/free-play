@@ -78,6 +78,18 @@ assert.equal(await mode(), 'aim', 'a slow drag should not roll the ball');
 const moved = await page.evaluate(() => rollUp.ball.x);
 assert.ok(moved > 3, `the ball should move across with the finger (x = ${moved.toFixed(1)})`);
 
+// One pushed slowly over the red line doesn't roll either: it goes back, the line flashes and says why.
+at = await ballOnScreen();
+await page.mouse.move(at.x, at.y);
+await page.mouse.down();
+assert.ok(await page.isHidden('#hint'), 'the hint goes while the ball is dragged');
+for (let i = 1; i <= 40 && await mode() === 'drag'; i++) { await page.mouse.move(at.x, at.y - i * 6); await page.waitForTimeout(40); }
+await page.mouse.up();
+assert.equal(await mode(), 'aim', 'a ball pushed slowly over the line should not roll');
+assert.ok(await page.evaluate(() => rollUp.fouled > 0), 'the red line flashes');
+assert.equal(await page.textContent('#live'), 'Flick it before the red line.');
+assert.ok(await page.isVisible('#hint'), 'the hint comes back');
+
 // A flick rolls it up the lane, and it scores.
 at = await ballOnScreen();
 await page.mouse.move(at.x, at.y);
@@ -144,6 +156,13 @@ assert.equal(await mode(), 'aim');
 const card = await page.evaluate(() => rollUp.game.card);
 assert.equal(card.calls.length, 9);
 assert.ok(await page.isVisible('#callNote'), 'the called hole is shown before rolling');
+// The notes float mid-lane: clear of the red line and of where a finger takes the ball, and under the board.
+const lane = await page.evaluate(async () => {
+  const { ground, LANE } = await import(new URL('js/physics.js', location.href).href);
+  const y = z => rollUp.scene.project({ x: 0, y: ground(z), z }).y;
+  return { notes: document.querySelector('.notes').getBoundingClientRect().bottom, foul: y(LANE.foul), grab: y(LANE.foul + 50) };
+});
+assert.ok(lane.notes <= lane.grab + 1 && lane.notes < lane.foul - 40, `the notes come down to ${lane.notes.toFixed(0)}, the red line is at ${lane.foul.toFixed(0)}`);
 assert.equal(await page.textContent('#callV'), String(card.calls[0]));
 const SPEED = { 20: [0, 250], 30: [0, 280], 40: [0, 305], 50: [0, 332], 100: [26, 374] };
 await page.evaluate(() => { rollUp.speed = 6; });
