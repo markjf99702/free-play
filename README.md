@@ -9,7 +9,7 @@
   &nbsp;
   <img src="docs/phone-roll-up.png" alt="Roll Up pushed in on the board as a ball drops into the 50 cup: chrome rings on a blue board with lit numbers 20, 30, 40 and 50, 100 cups in both top corners, and +50 rising over the cup" width="250">
   &nbsp;
-  <img src="docs/phone-tilt.png" alt="The end of a game of Tilt: 268,550 points, number 2 on the list, and a strip of 26 orange tickets hanging out of a slot" width="250">
+  <img src="docs/phone-tilt.png" alt="The end of a game of Tilt: 268,550 points, number 2 on the list at a ticket for every 10,000 points, and a strip of 26 orange tickets hanging out of a slot" width="250">
 </p>
 <p align="center">
   <img src="docs/phone-clutch.png" alt="Clutch, a candy-pink claw machine: CLUTCH in neon on a bulb-lit sign, the claw coming up out of a heap of plush frogs, ghosts, aliens, penguins and a chick with a penguin in its grip, the prize chute behind a clear wall on the left, and a big pink HOLD button under the cabinet" width="250">
