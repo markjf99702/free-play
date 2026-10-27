@@ -79,12 +79,15 @@ await page.waitForFunction(() => topple.machine.pieces.some(p => p.kind === 'pri
 // Every coin over the front edge is a ticket, paid as it goes over.
 await page.evaluate(() => { topple.speed = 4; });
 while (await left() > 3) { await reloaded(); await page.evaluate(() => topple.drop(40 + Math.random() * 220)); }
-const mid = await page.evaluate(() => topple.cup.won);
+// (read together: coins are still going over while the test looks)
+const [mid, shown] = await page.evaluate(() => [topple.cup.won, document.getElementById('won').textContent]);
 assert.ok(mid > 0, 'some coins have gone over the edge');
-assert.equal(await page.textContent('#won'), String(mid), 'the scoreboard shows this cup\'s tickets');
+assert.equal(shown, String(mid), 'the scoreboard shows this cup\'s tickets');
 
 // The cup keeps between visits: the page comes back with the same coins left, and the deck as it was.
-await page.evaluate(() => { topple.speed = 1; });
+// The machine stands still while the deck is counted, so nothing goes over between the count and the reload.
+await page.evaluate(() => { topple.speed = 0; });
+await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 const pieces = await page.evaluate(() => topple.machine.pieces.length);
 await page.reload();
 await page.evaluate(() => document.fonts.ready);
