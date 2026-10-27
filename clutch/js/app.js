@@ -69,8 +69,8 @@ layout();
 if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), document.fonts.load('600 15px Figtree')]).then(() => draw.repaint()).catch(() => {});
 
 // ---------- the button ----------
-// down: the button's held. armed: it went down while the claw was ready, so it starts a go (a press left over from
-// the last go doesn't start the next one by itself).
+// down: the button's held. armed: it went down while the claw was ready (or on its way back from a press too short to
+// be a go), so it starts a go (a press left over from the last go doesn't start the next one by itself).
 let down = false, armed = false, aim = null;
 let paused = false, timeScale = 1;
 const carded = () => !$('title').hidden || !$('win').hidden || !$('menu').hidden || counterOpen();
@@ -80,7 +80,7 @@ function press(e) {
   if (carded() || down) return;
   e?.preventDefault();
   down = true;
-  armed = machine.state === 'ready';
+  armed = machine.state === 'ready' || machine.state === 'home';
   $('hold').classList.add('down');
   sound.press();
 }
@@ -119,8 +119,9 @@ let door = null, glow = 0;
 const wins = [];
 function happened() {
   for (const e of machine.take()) {
-    if (e === 'start') { armed = false; saved.goes++; save(); }
-    else if (e === 'drop') aim = null;
+    if (e === 'start') armed = false;
+    else if (e === 'drop') { aim = null; saved.goes++; save(); } // a go once the claw drops: a tap isn't one
+    else if (e === 'short') { aim = null; nudge(); }
     else if (e === 'close') sound.close();
     else if (e === 'release') sound.open();
     else if (e === 'slip') { sound.slip(); say('It slipped.'); }
@@ -141,6 +142,17 @@ function won(w) {
   say(`You won ${prize.say}!`);
   if (navigator.vibrate) try { navigator.vibrate([20, 50, 20]); } catch { /* not allowed */ }
   hud(true);
+}
+
+// Let go before the claw was clear of the chute: it slides back, and the hint on the deck lights up to say how it goes.
+let nudged = 0;
+function nudge() {
+  sound.short();
+  say('Hold the button down to move the claw.');
+  const hint = deck.querySelector('.say');
+  hint.classList.remove('nudge'); void hint.offsetWidth; hint.classList.add('nudge');
+  clearTimeout(nudged);
+  nudged = setTimeout(() => hint.classList.remove('nudge'), 1600);
 }
 
 // The win card, once the claw's back and ready: what came out of the door, drawn big.
@@ -250,7 +262,7 @@ function tick(now) {
     owed = Math.min(owed + dt * timeScale, STEP * 6 * timeScale);
     while (owed >= STEP) { machine.step(holding()); owed -= STEP; happened(); }
   }
-  const st = machine.state, busy = !paused && ['move', 'drop', 'lift', 'carry'].includes(st);
+  const st = machine.state, busy = !paused && ['move', 'home', 'drop', 'lift', 'carry'].includes(st);
   sound.motor(busy ? 1 : 0, st === 'lift' ? (machine.held ? 0.9 : 0.7) : st === 'drop' ? 0.3 : 0.5);
   if (door) door.t += dt / 1000;
   glow = Math.max(0, glow - dt / 1000);

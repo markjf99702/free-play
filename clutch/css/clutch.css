@@ -71,6 +71,9 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .deck.side .say br { display: none; }
 .say { flex: 1; max-width: 9em; font: 400 12px/1.25 var(--disp); letter-spacing: .04em; text-transform: uppercase; color: #fff1f6; text-align: center; opacity: .9; }
 .deck.side .say { flex: none; }
+/* a press too short to be a go: "Hold to move the claw" lights up for a moment (js/app.js) */
+.say.nudge { animation: nudge 1.6s ease-out; }
+@keyframes nudge { 0%, 55% { color: #ffe28a; opacity: 1; transform: scale(1.12); } }
 /* On a short phone the cabinet is narrower, and the deck under it (js/app.js marks it): under 290 px the hint is
    smaller, and no more lines than the deck has room for, and under 220 px it goes, as the title card says it too. */
 .deck.narrow .say { font-size: 10px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
@@ -148,4 +151,5 @@ a.plain { color: inherit; text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .marquee::before, .marquee::after, .hud .score b.bump { animation: none; }
+  .say.nudge { animation: none; color: #ffe28a; opacity: 1; }
 }

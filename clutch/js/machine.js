@@ -6,7 +6,9 @@
 //
 // A go: the claw slides right while the button's held (move), drops when it's let go (drop) until it comes to rest
 // on the heap, the way a claw on a cable goes slack, closes its two arms (close), lifts (lift), carries what it holds
-// back over the chute (carry), opens (release) and waits a moment for anything to fall (settle).
+// back over the chute (carry), opens (release) and waits a moment for anything to fall (settle). Let go before it's
+// clear of the chute's wall (a tap on the button, say), and it slides back home instead (home): that's not a go, since
+// nothing dropped on from there can win.
 // The machine moves the claw and its arms itself, and matter-js pushes the plush out of their way. Plush doesn't squash
 // here the way it does in a real machine, so the grab itself is judged when the arms close: how squarely the plush sits
 // between them, and whether the hooks closed under its middle or only round its sides. A plush that's caught then hangs
@@ -18,6 +20,7 @@ export const HOME = { x: 78, y: 110 };
 const ARM = { pivot: 20, drop: 12, shaft: 118, tip: 34, thick: 12 };
 const OPEN = 0.52, SHUT = -0.22;          // arm angles, radians: splayed out, and past straight so the hooks meet
 const SPEED = { move: 170, drop: 240, lift: 150, carry: 210, close: 1.1 }; // mm/s, and radians/s for the arms
+const CLEAR = 20;                         // mm past the chute's wall the claw has to be for letting go to drop it
 const REST = 4;                           // how hard (mm of give) the claw presses on the heap before it's resting on it
 const EASE = [0.06, 0.14];                // how far the arms ease open on the way up, radians (somewhere in this range)
 // How likely a caught plush is to slip off each second on the way up: SLIP.base for a perfect grab, rising steeply
@@ -175,7 +178,13 @@ export function createMachine(Matter, { random = Math.random, plush = 14 } = {})
         break;
       case 'move':
         if (holding && claw.x < BOX.W - 46) claw.x = Math.min(BOX.W - 46, claw.x + SPEED.move * dt);
+        else if (claw.x < BOX.guard.x + CLEAR) { state = 'home'; t = 0; events.push('short'); }
         else { state = 'drop'; t = 0; events.push('drop'); }
+        break;
+      case 'home':
+        // let go too soon: back over the chute, and ready for a proper go
+        claw.x = Math.max(HOME.x, claw.x - SPEED.carry * dt);
+        if (claw.x <= HOME.x) { state = 'ready'; t = 0; events.push('ready'); }
         break;
       case 'drop': {
         // down until it's resting on something (what it only brushes, it pushes aside), or as low as it goes
@@ -247,8 +256,8 @@ export function createMachine(Matter, { random = Math.random, plush = 14 } = {})
     get held() { return held; },
     get toys() { return toys; },
     arms, hub,
-    // what's happened since the last look: 'start', 'drop', 'close', 'lift', 'release', 'let-go', 'slip', 'ready',
-    // 'won:<kind>'
+    // what's happened since the last look: 'start', 'short' (let go too soon: no go), 'drop', 'close', 'lift',
+    // 'release', 'let-go', 'slip', 'ready', 'won:<kind>'
     take() { const e = events; events = []; return e; },
     // the plush won since the last look, { kind, tone } each
     takeWon() { const w = won; won = []; return w; },

@@ -56,13 +56,32 @@ test('the claw only moves while the button is held, and drops as soon as it is l
   const m = createMachine(Matter, { random: seeded(4) });
   for (let i = 0; i < 30; i++) m.step(false);
   assert.equal(m.state, 'ready', 'nothing happens without the button');
-  for (let i = 0; i < 31; i++) m.step(true);
+  for (let i = 0; i < 40; i++) m.step(true);
   const x = m.claw.x;
-  assert.ok(x > HOME.x + 60 && x < HOME.x + 120, `half a second of holding moved the claw ${(x - HOME.x).toFixed(0)}mm`);
+  assert.ok(x > HOME.x + 60 && x < HOME.x + 120, `two-thirds of a second of holding moved the claw ${(x - HOME.x).toFixed(0)}mm`);
   m.step(false);
   assert.equal(m.state, 'drop');
   for (let i = 0; i < 20; i++) m.step(true);
   assert.equal(m.claw.x, x, 'holding again once it has dropped does nothing');
+});
+
+test('a press too short to take the claw past the chute is no go: it slides back, and waits', () => {
+  const m = createMachine(Matter, { random: seeded(4) });
+  for (let i = 0; i < 10; i++) m.step(true);
+  assert.equal(m.state, 'move');
+  assert.ok(m.claw.x < BOX.guard.x, 'still over the chute');
+  const events = m.take();
+  for (let i = 0; i < 60 * 3; i++) {
+    m.step(false);
+    events.push(...m.take());
+    assert.ok(!['drop', 'close', 'lift'].includes(m.state), `the claw went down (${m.state})`);
+  }
+  assert.equal(m.state, 'ready');
+  assert.deepEqual([m.claw.x, m.claw.y], [HOME.x, HOME.y]);
+  assert.deepEqual(events.filter(e => ['start', 'short', 'drop', 'ready'].includes(e)), ['start', 'short', 'ready']);
+  // and a press after that is a go as ever
+  const g = go(m, 300);
+  assert.ok(g.events.includes('drop'));
 });
 
 test('aiming over the middle of a plush wins far more often than dropping anywhere', () => {

@@ -107,6 +107,13 @@ export function press() {
   tone('square', 240, 200, 0.05, 0.04);
 }
 
+// A press too short to take the claw clear of the chute: a soft click as it slides back.
+export function short() {
+  if (!ac || !enabled) return;
+  burst('bandpass', 1500, 1.2, 0.1, 0.025);
+  tone('sine', 520, 440, 0.05, 0.06);
+}
+
 // The arms snapping shut, and opening over the chute.
 export function close() {
   if (!ac || !enabled) return;

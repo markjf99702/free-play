@@ -85,10 +85,18 @@ await ready();
 assert.equal(await clawX(), home, 'the claw comes back over the chute');
 assert.equal(await page.evaluate(() => clutch.saved.goes), 1);
 
+// A tap too short to take the claw past the chute's wall isn't a go: it slides back, and the hint says to hold.
+await page.mouse.down(); await page.waitForTimeout(120); await page.mouse.up();
+await page.waitForFunction(() => document.getElementById('live').textContent === 'Hold the button down to move the claw.', null, { timeout: 3000 });
+assert.ok(await page.evaluate(() => document.querySelector('#deck .say').classList.contains('nudge')), 'the hint lights up');
+await page.waitForFunction(() => clutch.state === 'ready', null, { timeout: 3000 });
+assert.equal(await clawX(), home, 'the claw is back over the chute');
+assert.equal(await page.evaluate(() => clutch.saved.goes), 1, 'a tap is not a go');
+
 // A held button doesn't start the next go by itself: it has to go down again.
 await page.mouse.down();
 await page.waitForFunction(() => clutch.state === 'move');
-await page.waitForTimeout(250);
+await page.waitForTimeout(600);
 await page.mouse.up();
 await page.waitForFunction(() => clutch.state === 'drop' || clutch.state === 'close');
 await page.mouse.down();
@@ -99,7 +107,7 @@ await page.mouse.up();
 
 // The keyboard: hold Space, let go.
 await page.keyboard.down(' ');
-await page.waitForTimeout(500);
+await page.waitForTimeout(700);
 assert.equal(await state(), 'move');
 await page.keyboard.up(' ');
 await page.waitForFunction(() => clutch.state !== 'move');
@@ -123,7 +131,7 @@ await ready();
 const hb = await page.locator('#hold').boundingBox();
 await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
 await page.mouse.down();
-await page.waitForFunction(() => clutch.state === 'move');
+await page.waitForFunction(() => clutch.state === 'move' && clutch.machine.claw.x > 200);
 await hide(true);
 assert.ok(await page.isVisible('#menu'), 'leaving the page mid-go did not open the menu');
 assert.ok(!(await page.evaluate(() => document.getElementById('hold').classList.contains('down'))), 'the button is still held behind the menu');
