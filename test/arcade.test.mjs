@@ -96,7 +96,7 @@ test("a prize with no name, or no price, isn't traded, given or taken back", () 
 });
 
 test('counts saved as text read as numbers, and stay numbers', () => {
-  kept.set('free-play.wallet', '{"tickets":"50","prizes":{"lollipop":"2","duck":2.7,"kite":0,"bear":-1,"dice":"x","disc":null}}');
+  kept.set('free-play.wallet', '{"tickets":"50","prizes":{"lollipop":"2","duck":2.7,"kite":0,"bear":-1,"dice":"x","disc":null,"unicorn":1e999}}');
   assert.deepEqual(wallet.read(), { tickets: 50, prizes: { lollipop: 2, duck: 2 } });
   wallet.buy(PRIZES.find(p => p.id === 'lollipop'));
   assert.deepEqual(JSON.parse(kept.get('free-play.wallet')), { tickets: 45, prizes: { lollipop: 3, duck: 2 } }, "a '2' and one more is 3, not '21'");

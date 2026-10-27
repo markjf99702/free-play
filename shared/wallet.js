@@ -5,8 +5,8 @@
 
 export const KEY = 'free-play.wallet';
 
-// A count, as a whole number: a number, or a number written as text ('50'); anything else is NaN.
-const whole = v => Math.floor(typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : NaN);
+// A count, as a whole number: a number, or a number written as text ('50'); anything else, or too big to save, is NaN.
+const whole = v => { const n = Math.floor(typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : NaN); return Number.isFinite(n) ? n : NaN; };
 const named = prize => typeof prize?.id === 'string' && prize.id !== '';
 const priced = prize => named(prize) && Number.isFinite(prize.cost) && prize.cost >= 0;
 
