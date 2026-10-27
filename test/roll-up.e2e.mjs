@@ -46,6 +46,12 @@ assert.ok(await page.isVisible('#title'), 'the title card shows first');
 await hide(true);
 assert.ok(await page.isHidden('#menu'), 'leaving the page from the title card opened the menu');
 await hide(false);
+// The menu stays shut while a card is up, by the menu button or Escape: the card has its own buttons.
+await page.click('#menuBtn');
+assert.ok(await page.isHidden('#menu'), 'the menu button opened the menu over the title card');
+await page.keyboard.press('Escape');
+assert.ok(await page.isHidden('#menu'), 'Escape opened the menu over the title card');
+assert.equal(await mode(), 'title');
 await page.click('#play');
 assert.equal(await mode(), 'aim');
 assert.ok(await page.isVisible('#hint'), 'a first-timer is told how to roll');
@@ -82,6 +88,11 @@ for (let i = 0; i < 8; i++) {
 await page.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 30000 });
 await page.evaluate(() => { rollUp.speed = 1; });
 assert.ok(await page.isVisible('#over'), 'the game-over card shows after nine balls');
+await page.click('#menuBtn');
+assert.ok(await page.isHidden('#menu'), 'the menu button opened the menu over the game-over card');
+await page.keyboard.press('Escape');
+assert.ok(await page.isHidden('#menu'), 'Escape opened the menu over the game-over card');
+assert.equal(await mode(), 'over');
 assert.equal(await page.locator('#tally span').count(), 9, 'it lists all nine balls');
 const score = await page.evaluate(() => rollUp.score);
 assert.ok(score >= 8 * 20, `eight rolls at 305 should score well (got ${score})`);
@@ -174,6 +185,11 @@ await page.click('#menuBtn');
 assert.ok(await page.isVisible('#menu'));
 await page.click('#resume');
 assert.ok(await page.isHidden('#menu'));
+// Start a new game, from the menu mid-game: a fresh game, with no card left up.
+await page.click('#menuBtn');
+await page.click('#restart');
+assert.deepEqual([await mode(), await page.evaluate(() => rollUp.thrown)], ['aim', 0]);
+assert.ok(await page.isHidden('#menu') && await page.isHidden('#title') && await page.isHidden('#over'));
 
 // Fits a phone: nothing scrolls sideways.
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the page scrolls sideways on a phone');

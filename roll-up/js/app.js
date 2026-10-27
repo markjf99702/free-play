@@ -355,6 +355,7 @@ $('share').addEventListener('click', async () => {
 });
 
 function toggleMenu(open = $('menu').hidden) {
+  if (!$('title').hidden || !$('over').hidden) return; // a card is up: it has its own buttons
   $('menu').hidden = !open;
   paused = open;
   if (open) { drag = null; charge = null; if (mode === 'drag') settle(); $('resume').focus({ preventScroll: true }); }
@@ -364,7 +365,7 @@ $('resume').addEventListener('click', () => toggleMenu(false));
 // Leaving the page mid-round (a call, another app, the phone locked) opens the menu, so the round waits there
 // rather than carrying on the moment the page is back.
 document.addEventListener('visibilitychange', () => { if (document.hidden && $('title').hidden && $('over').hidden) toggleMenu(true); });
-$('restart').addEventListener('click', () => { toggleMenu(false); newGame(!!game.card); });
+$('restart').addEventListener('click', () => { start(!!game.card); toggleMenu(false); });
 $('sound').addEventListener('click', () => {
   saved.sound = !saved.sound; save();
   sound.setEnabled(saved.sound);
