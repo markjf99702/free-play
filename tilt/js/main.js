@@ -14,6 +14,9 @@ import { openCounter, counterOpen, feed, PAYOUT } from '../../shared/counter.js'
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.tilt'; // what was 'tilt.v1' at tilt.junkdrawer.works; ../shared/carry.js brings it over
 const FIRST = Object.keys(TABLES)[0]; // the table a new player starts on
+// A copy saved as a single file says so with data-single on <html> (as the other machines read it; TILT_SINGLE_FILE
+// is what an older copy set): it has no floor to go back to and keeps no offline copy.
+const SINGLE = !!window.TILT_SINGLE_FILE || 'single' in document.documentElement.dataset;
 const store = load();
 const renderer = new Renderer($('table'));
 setSound(store.sound !== false);
@@ -109,7 +112,7 @@ function useTable(id) {
   if (store.table !== id) { store.table = id; save(); }
   // The first table needs no name in the address, and anything else there (?debug, say) stays as it was. The
   // single-file copy may be inside someone else's page, so it leaves the address alone.
-  if (!window.TILT_SINGLE_FILE) {
+  if (!SINGLE) {
     try {
       const keep = location.search.slice(1).split('&').filter(p => p && p.split('=')[0] !== 'table');
       const q = (id === FIRST ? keep : [...keep, 'table=' + id]).join('&'), search = q && '?' + q;
@@ -352,6 +355,6 @@ requestAnimationFrame(frame);
 // For the tests and the screenshot tool.
 window.tilt = { get game() { return game; }, get table() { return table; }, renderer, store, startGame, setPaused, useTable };
 
-if ('serviceWorker' in navigator && location.protocol !== 'file:' && !window.TILT_SINGLE_FILE) {
+if ('serviceWorker' in navigator && location.protocol !== 'file:' && !SINGLE) {
   navigator.serviceWorker.register('../sw.js').catch(() => { });
 }

@@ -19,6 +19,7 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+[data-single] .to-floor { display: none !important; }
 html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
 body {
   background: var(--bg); color: var(--ink); font: 15px/1.45 var(--body);

@@ -363,6 +363,29 @@ for (const [path, name] of Object.entries(OFFLINE)) {
 }
 await ctx.setOffline(false);
 
+// A page saved as a single file (how a machine is tried out before it joins the floor) says so with data-single on
+// <html>: it hides every link back to the floor, which isn't there, and keeps no offline copy. Tilt leaves its address
+// alone too, as the copy may be inside someone else's page.
+const solo = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+const one = await solo.newPage();
+one.on('pageerror', e => problems.push(e.message));
+await solo.route(/\/(index\.html)?(\?.*)?$/, async route => {
+  const res = await route.fetch();
+  await route.fulfill({ response: res, body: (await res.text()).replace('<html lang="en">', '<html lang="en" data-single>') });
+});
+for (const [path, name] of Object.entries(OFFLINE)) {
+  if (name === 'tilt') await one.evaluate(() => localStorage.setItem('free-play.tilt', JSON.stringify({ table: 'space' })));
+  await one.goto(base + path);
+  await one.waitForFunction(name => !!window[name] && 'single' in document.documentElement.dataset, name, { timeout: 10000 });
+  await one.waitForTimeout(300);
+  const left = await one.evaluate(() => [...document.querySelectorAll('a[href="../"]')]
+    .filter(a => { const t = a.closest('.to-floor'); return !t || getComputedStyle(t).display !== 'none'; }).map(a => a.textContent.trim()));
+  assert.deepEqual(left, [], `${path || 'the floor'}, as a single file, still has links back to the floor`);
+  assert.equal(await one.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length), 0, `${path || 'the floor'}, as a single file, keeps an offline copy`);
+  if (name === 'tilt') assert.equal(new URL(one.url()).search, '', 'Tilt, as a single file, changed its address');
+}
+await solo.close();
+
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();
 server.close();
