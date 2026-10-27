@@ -94,6 +94,8 @@ let shown = 0;               // the score on the board, counting up to game.scor
 let resultT = 0, deal = null, drag = null, charge = null, thrownOnce = false;
 let paused = false, timeScale = 1;
 let foulAt = 0;              // when the ball was last carried over the red line too slowly to roll (the line flashes)
+let pingAt = 0, pingOff = 0; // when a touch up the lane, past where a grab starts, last asked to start on the ball
+const PING = 1500;           // how long that says so, in ms (the ring round the ball pulses for the first 600)
 let zoom = 0;                // 0: the whole machine; 1: pushed in on the board while the ball's up there
 const pops = [];
 let flash = null;
@@ -286,8 +288,9 @@ function hud() {
   const have = Math.max(0, wallet.read().tickets - toCome);
   $('tix').textContent = fmt(have);
   pocketButton($('tixBtn'), have);
-  $('hint').hidden = !(mode === 'aim' && !thrownOnce);
-  const hint = keyed ? '← → move, hold Space to roll' : 'Drag the ball, flick it up the lane';
+  const pinged = mode === 'aim' && pingAt && performance.now() - pingAt < PING;
+  $('hint').hidden = !(mode === 'aim' && (!thrownOnce || pinged));
+  const hint = pinged ? 'Start on the ball, then flick' : keyed ? '← → move, hold Space to roll' : 'Drag the ball, flick it up the lane';
   if ($('hint').textContent !== hint) $('hint').textContent = hint;
   const ready = ['aim', 'drag', 'deal'].includes(mode);
   const call = callNow();
@@ -310,7 +313,13 @@ canvas.addEventListener('pointerdown', e => {
   sound.unlock();
   if (mode !== 'aim' || paused || charge) return;
   const w = scene.unproject(e.clientX, e.clientY);
-  if (!w || w.z > LANE.foul + 50) return; // a touch up by the board isn't a grab
+  if (!w) return;
+  if (w.z > LANE.foul + 50) {
+    // a touch up by the board isn't a grab. One on the lane, short of the jump, is someone trying to: say where to start
+    if (w.z < phys.JUMP.z0 && Math.abs(w.x) <= LANE.half) startOnBall();
+    return;
+  }
+  pingAt = 0;
   drag = { id: e.pointerId, off: { x: ball.x - w.x, z: ball.z - w.z }, samples: [] };
   try { canvas.setPointerCapture(e.pointerId); } catch { /* fine without */ }
   mode = 'drag';
@@ -348,6 +357,17 @@ function release(over = false) {
   const speed = power(Math.hypot(vx, vz));
   const ang = Math.max(-FLICK.maxAngle, Math.min(FLICK.maxAngle, Math.atan2(vx, vz) * FLICK.aim));
   throwBall(speed * Math.sin(ang), speed * Math.cos(ang));
+}
+
+// A touch up the lane, past where a grab starts: the hint comes back for a moment saying to start on the ball, a ring
+// pulses round it, and the red line's click sounds, quietly.
+function startOnBall() {
+  pingAt = performance.now();
+  sound.foul(0.5);
+  $('live').textContent = 'Start on the ball, then flick.';
+  hud();
+  clearTimeout(pingOff);
+  pingOff = setTimeout(hud, PING + 20);
 }
 
 // Not a throw: the ball goes back to its spot behind the line, where the finger left it across the lane. Carried over
@@ -500,6 +520,7 @@ function tick(now) {
   scene.frame({
     ball, tray: trayCount(), trayGold: trayGold(), call: callNow(), pops, flash, lights, now, zoom: zoom * zoom * (3 - 2 * zoom),
     foul: foulAt && now - foulAt < 1200 ? (now - foulAt) / 1000 : null,
+    ping: mode === 'aim' && pingAt && now - pingAt < 600 ? (now - pingAt) / 1000 : null,
     charge: charge && mode === 'aim' ? chargeLevel() : null, meter: charge ? meterMarks() : null,
   });
   requestAnimationFrame(tick);
@@ -557,6 +578,7 @@ window.rollUp = {
   get saved() { return saved; },
   get game() { return game; },
   get fouled() { return foulAt; },
+  get pinged() { return pingAt; },
   get zoom() { return zoom; },
   start,
   roll(vx, vz, x) {

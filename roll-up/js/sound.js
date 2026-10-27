@@ -128,10 +128,11 @@ export function drop() {
   burst('lowpass', 500, 0.6, 0.25, 0.5, 0.12);
 }
 
-// The ball carried over the red line too slowly to roll: the 'No jump' buzz, softly.
-export function foul() {
+// The ball carried over the red line too slowly to roll: the 'No jump' buzz, softly (and more softly still, k < 1, for
+// a touch up the lane that wasn't on the ball).
+export function foul(k = 1) {
   if (!ac || !enabled) return;
-  tone('square', 120, 90, 0.06, 0.22);
+  tone('square', 120, 90, 0.06 * k, 0.22);
 }
 
 const NOTES = { 10: [523], 20: [587], 30: [659], 40: [784], 50: [880, 1319], 100: [784, 988, 1175, 1568] };

@@ -117,6 +117,18 @@ const first = await page.evaluate(() => rollUp.score);
 assert.ok([0, 10, 20, 30, 40, 50, 100].includes(first), `the first ball scored ${first}`);
 assert.match(await page.textContent('#live'), /points/, 'the score is read out');
 
+// A touch up the lane, past where a grab starts, isn't a grab: it says where to start, even after the first ball.
+await page.waitForFunction(() => rollUp.mode === 'aim', null, { timeout: 15000 });
+assert.ok(await page.isHidden('#hint'));
+const upLane = await page.evaluate(() => rollUp.scene.unproject(195, 450));
+assert.ok(upLane.z > 108 && upLane.z < 210, `y 450 is on the lane past the grab (z ${upLane.z.toFixed(0)})`);
+await page.touchscreen.tap(195, 450);
+assert.equal(await mode(), 'aim', 'a touch up the lane is not a grab');
+assert.ok(await page.isVisible('#hint'), 'the hint comes back');
+assert.equal(await page.textContent('#hint'), 'Start on the ball, then flick');
+assert.ok(await page.evaluate(() => rollUp.pinged > 0), 'and a ring pulses round the ball');
+await page.waitForFunction(() => document.getElementById('hint').hidden, null, { timeout: 2500 });
+
 // The other eight, quickly. (After games with a best of 50.)
 await page.evaluate(() => { rollUp.speed = 6; Object.assign(rollUp.saved, { best: 50, games: 3 }); });
 for (let i = 0; i < 8; i++) {

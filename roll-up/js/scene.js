@@ -446,7 +446,8 @@ export function createScene(canvas) {
 
   // ---------- each frame ----------
   // view: { ball, tray, trayGold, call, lights: { mode, t }, flash: { hole, t }, pops: [{ text, sub, x, y, z, age, big }], charge,
-  // foul (seconds since the ball was carried over the red line too slowly, or null), now }
+  // foul (seconds since the ball was carried over the red line too slowly, or null), ping (seconds since a touch up the
+  // lane missed the ball, or null), now }
   function frame(view) {
     setZoom(view.zoom || 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -458,6 +459,7 @@ export function createScene(canvas) {
     lights(view.lights, view.now);
     trayBalls(view.tray, view.trayGold);
     const b = view.ball;
+    if (b && view.ping != null) ping(b, view.ping);
     if (b && b.state !== 'done' && !b.hidden) drawBall(b);
     if (view.charge != null && b) chargeMeter(b, view.charge, view.meter);
     for (const p of view.pops) pop(p);
@@ -488,6 +490,20 @@ export function createScene(canvas) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     fillPts(ctx, band(LANE.foul - 3, LANE.foul + 4.4), `rgba(255,80,60,${(a * 0.35).toFixed(3)})`);
+    ctx.restore();
+  }
+
+  // A ring spreading out over the lane round the ball in hand, fading as it goes: start the flick here.
+  function ping(b, t) {
+    const k = Math.min(1, t / 0.6), grow = calm?.matches ? 0.4 : k;
+    const r = R * (1.7 + grow * 2.6), pts = [];
+    for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2, z = b.z + Math.sin(a) * r; pts.push(V(b.x + Math.cos(a) * r, ground(z) + 0.2, z)); }
+    const a = 1 - k, w = Math.max(2.5, P(V(b.x, b.y, b.z)).k * 1.1);
+    ctx.save();
+    path(ctx, pts);
+    // a dark edge under a bright one, so it shows on the pale maple
+    ctx.lineWidth = w * 2; ctx.strokeStyle = `rgba(60,20,10,${(0.35 * a).toFixed(3)})`; ctx.stroke();
+    ctx.lineWidth = w; ctx.strokeStyle = `rgba(255,190,70,${a.toFixed(3)})`; ctx.stroke();
     ctx.restore();
   }
 
