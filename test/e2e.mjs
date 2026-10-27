@@ -48,6 +48,8 @@ assert.equal(await page.textContent('#tix'), '0');
 assert.equal(await page.locator('.cab').count(), 8);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
 assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
+// Each cabinet says what its machine is before it's been played: Hoops' hoop starts to slide 20 seconds in.
+assert.equal(await page.textContent('#hoopsStat'), 'Forty-five seconds. Twenty\u00a0in, the hoop starts to slide.');
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
 // To a screen reader each cabinet is a link named by its machine and what it says about you (its description comes
 // after, as the link's description, and the picture keeps its own words), and the purse says it opens the counter.

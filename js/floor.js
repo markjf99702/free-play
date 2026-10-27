@@ -71,7 +71,7 @@ function machines() {
 
   // Hoops: the best round.
   const hp = readSave('free-play.hoops');
-  $('hoopsStat').textContent = hp.rounds ? best(hp.best || 0) : 'Forty-five seconds. Then the hoop starts moving.';
+  $('hoopsStat').textContent = hp.rounds ? best(hp.best || 0) : 'Forty-five seconds. Twenty\u00a0in, the hoop starts to slide.';
 }
 
 function pocket() {

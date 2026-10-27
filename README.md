@@ -189,6 +189,8 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `highrise/`: Highrise. `js/tower.js` is the rules, with no clock of its own, `js/draw.js` draws the tower and the city, `js/app.js` keeps time and runs the stop button and the prizes, and `js/sound.js` makes the noises.
 - `topple/`: Topple. `js/machine.js` is the pusher (the shelf, in the code), the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
 - `floor/`: the pictures on the cabinets' screens.
+- `docs/`: the README's pictures of each machine and the counter on a phone.
+- `tools/`: `screenshots.mjs` draws the pictures (`floor/*.jpg`, `docs/*.png` and `og.png`) from the pages themselves, `make-icons.mjs` draws the PNG icons from `icon.svg` and `tools/icon-full-bleed.svg` (the one with square corners, for phones that round them), and `tune.mjs` plays Tilt's tables with the autopilot and reports how balls drain and what they score.
 - `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the prize counter on every page (`counter.e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
 - `fonts/`: Bungee, Bungee Outline and Figtree (SIL Open Font License), served from here so nothing loads from elsewhere.
 - `sw.js`: keeps a copy of the floor and every machine for playing offline.

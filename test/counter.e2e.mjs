@@ -35,6 +35,8 @@ const page = await ctx.newPage();
 const other = await ctx.newPage();
 await other.goto(base);
 const problems = [];
+// og.png, in words: what a link to any page shows
+const OG_ALT = "FREE PLAY in pink and teal neon over the line 'An arcade on your phone: eight machines on free play, and a prize counter.' Beside it, screens from the eight machines: skee-ball rings, a pinball table, a claw over a heap of plush, a coin pusher's deck, a stacker's tower, a shooting gallery's ducks and rabbits, moles in their tunnels, and a basketball dropping through the hoop under SWISH! +3.";
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
 page.on('request', r => { if (!r.url().startsWith(base)) problems.push('left the site: ' + r.url()); });
@@ -88,6 +90,10 @@ for (const [path, hook, tix, opener] of PAGES) {
   // A link to the page shows that page, with a picture from the live site.
   assert.equal(await page.getAttribute('meta[property="og:url"]', 'content'), HOME + path, `${where}: og:url`);
   assert.match(await page.getAttribute('meta[property="og:image"]', 'content'), /^https:\/\/free-play\.junkdrawer\.works\/\S+\.png$/, `${where}: og:image`);
+  // and says what's in the picture, for anyone who can't see it
+  const ogAlt = await page.getAttribute('meta[property="og:image:alt"]', 'content');
+  if ((await page.getAttribute('meta[property="og:image"]', 'content')).endsWith('/og.png')) assert.equal(ogAlt, OG_ALT, `${where}: og:image:alt`);
+  else assert.ok(ogAlt && ogAlt.length > 40, `${where}: og:image:alt`);
 
   assert.equal(await text(tix), '1,234', `${where}: the tickets, with a comma`);
   // the ticket count in a machine's corner says what it is and how many, to a screen reader too
