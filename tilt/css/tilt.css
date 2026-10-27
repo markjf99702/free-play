@@ -171,6 +171,17 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 
 .noscript { position: fixed; inset: 0; z-index: 10; margin: 0; display: flex; align-items: center; justify-content: center; padding: 16px; text-align: center; font: 22px var(--disp); color: var(--amber); background: var(--bg); }
 
+/* On a short screen the end card's buttons come straight after the tickets, and the top five goes under them, so Play
+   again is in sight without scrolling (with the list above them, a phone this short showed none of them). The strip
+   of tickets hangs four long here. */
+@media (max-height: 700px) {
+  #over .card { display: flex; flex-direction: column; }
+  #over .card > * { flex-shrink: 0; } /* (the card scrolls, rather than squeezing the note under the tickets) */
+  #over .scores { order: 1; width: 100%; margin: 16px auto 0; }
+  #over .go { margin-top: 12px; }
+  #over .fp-strip { max-height: 88px; }
+  #over .fp-payout { min-height: 96px; }
+}
 @media (max-height: 640px) {
   h1 { font-size: 48px; } .card { padding: 18px 18px 14px; }
   .ctl { margin-bottom: 12px; } .tables { gap: 4px; } .tables span { padding-block: 6px; } .best { margin-top: 8px; }

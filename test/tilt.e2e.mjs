@@ -309,6 +309,25 @@ const cut = await small.evaluate(async () => {
 assert.deepEqual(cut, [], 'cut off at the ends of the display on a 320 px phone');
 await small.context().close();
 
+// On a short phone (an iPhone SE in Safari shows 375 x 548), the end card of a six-digit game with a full top five
+// shows the score and Play again together, without scrolling: there the buttons come before the list.
+const short = await freshPage({ viewport: { width: 375, height: 548 } });
+await short.addInitScript(() => localStorage.setItem('free-play.tilt', JSON.stringify({ table: 'classic', scores: [412650, 305210, 268550, 154320, 98760].map((score, i) => ({ score, date: `2026-10-1${i}` })) })));
+await short.goto(base);
+await short.waitForFunction(() => window.tilt);
+await short.evaluate(() => document.fonts.ready);
+await short.evaluate(() => { window.tilt.startGame(); window.tilt.game.score = 888880; document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
+await short.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+await short.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '88', null, { timeout: 10000 });
+const endCard = await short.evaluate(() => {
+  const card = document.querySelector('#over .card').getBoundingClientRect(), at = id => document.getElementById(id).getBoundingClientRect();
+  return { top: card.top, bottom: Math.min(card.bottom, innerHeight), score: at('final').top, again: at('againBtn').bottom, list: document.querySelectorAll('#scores li').length };
+});
+assert.equal(endCard.list, 5);
+assert.ok(endCard.score >= endCard.top, `on a short phone the end card's score is scrolled ${Math.round(endCard.top - endCard.score)} px out of sight`);
+assert.ok(endCard.again <= endCard.bottom, `on a short phone Play again ends ${Math.round(endCard.again - endCard.bottom)} px below the end card's fold`);
+await short.context().close();
+
 // When one shot earns two awards, the display shows both, one after the other: the first for a second, the next for
 // its own time. On Space, the ramp that lights the eighth planet in multiball lights the extra ball and scores the
 // jackpot, and the skill shot into the dock with the lock lit locks the ball too. Of four messages at once the display
