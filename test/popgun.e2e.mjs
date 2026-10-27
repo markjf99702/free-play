@@ -85,6 +85,16 @@ await page.keyboard.down('ArrowUp'); await page.waitForTimeout(150); await page.
 await page.keyboard.press(' ');
 assert.equal(await corks(), 17);
 
+// The prize counter, opened mid-round and shut with Escape: Space fires again, rather than opening it again.
+await page.click('#tixBtn');
+assert.ok(await page.isVisible('.fp-sheet'));
+await page.keyboard.press('Escape');
+assert.ok(await page.isHidden('.fp-sheet'));
+await ready();
+await page.keyboard.press(' ');
+assert.ok(await page.isHidden('.fp-sheet'), 'Space after the counter opened it again');
+assert.equal(await corks(), 16, 'Space after the counter fires a cork');
+
 // The menu stops the conveyors.
 await page.keyboard.press('Escape');
 assert.ok(await page.isVisible('#menu'));

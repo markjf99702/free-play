@@ -99,6 +99,24 @@ assert.equal(await page.evaluate(() => highrise.shown), away, 'the row slides on
 await hide(false);
 await page.click('#resume');
 
+// The prize counter, opened mid-game and shut with Escape: Space stops the row again, rather than opening it again.
+await ready();
+await page.click('#tixBtn');
+assert.ok(await page.isVisible('.fp-sheet'));
+await page.keyboard.press('Escape');
+assert.ok(await page.isHidden('.fp-sheet'));
+const built = await page.evaluate(() => highrise.tower.built);
+await page.waitForFunction(() => {
+  const { tower, shown } = highrise;
+  if (!highrise.ready) return false;
+  let over = 0;
+  for (let c = shown; c < shown + tower.width; c++) if (tower.rows[tower.built - 1].includes(c)) over++;
+  return over >= Math.min(2, tower.width);
+}, null, { timeout: 5000 });
+await page.keyboard.press(' ');
+assert.ok(await page.isHidden('.fp-sheet'), 'Space after the counter opened it again');
+assert.equal(await page.evaluate(() => highrise.tower.built), built + 1, 'Space after the counter stops the row');
+
 // Floor 11, taking the minor prize: 11 tickets and 25 more.
 const t0 = await tickets();
 await page.evaluate(() => highrise.start());

@@ -266,7 +266,11 @@ function openPrizes() {
   paused = true;
   openCounter({
     onBuy: () => sound.buy(),
-    onClose: () => { paused = !$('menu').hidden; hud(); },
+    onClose: () => {
+      paused = !$('menu').hidden; hud();
+      // back to the game: the keys go to it again, not to the ticket button the counter handed the focus back to
+      if (!carded()) document.activeElement?.blur();
+    },
   });
 }
 $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });

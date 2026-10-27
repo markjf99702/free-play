@@ -384,7 +384,11 @@ function openPrizes() {
   sound.rolling(0); // a ball held mid-roll goes quiet
   openCounter({
     onBuy: () => sound.buy(),
-    onClose: () => { paused = !$('menu').hidden; hud(); },
+    onClose: () => {
+      paused = !$('menu').hidden; hud();
+      // back to the game: the keys go to it again, not to the ticket button the counter handed the focus back to
+      if ($('title').hidden && $('over').hidden && $('menu').hidden) document.activeElement?.blur();
+    },
   });
 }
 $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
