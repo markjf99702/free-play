@@ -55,7 +55,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- the machines ---------- */
 .floor {
-  max-width: 900px; margin: 26px auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; align-items: flex-start;
+  max-width: 900px; margin: 26px auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; align-items: stretch;
 }
 .cab {
   flex: 1 1 290px; max-width: 440px;
@@ -65,7 +65,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 18px 40px rgba(0, 0, 0, .55), 0 0 60px -20px var(--trim);
   transition: transform .18s ease, box-shadow .18s ease;
 }
-.cab:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 24px 46px rgba(0, 0, 0, .6), 0 0 70px -14px var(--trim); }
+/* (a lift for a pointer that hovers: on a touch screen a hover can stick after a tap) */
+@media (hover: hover) {
+  .cab:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 24px 46px rgba(0, 0, 0, .6), 0 0 70px -14px var(--trim); }
+}
 .cab:active { transform: translateY(0); }
 .cab:focus-visible { outline-offset: 6px; }
 .cab.tilt { --trim: #ffa53a; --trim2: #6a3a0c; --go: linear-gradient(#ffb04d, #f07a1a); --go-edge: #a2420c; --go-ink: #2a1200; }
@@ -116,8 +119,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .screen img { display: block; width: 100%; height: auto; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; }
 
+/* Cabinets side by side stand as tall as each other, and their Play buttons line up along the bottom. */
 .panel {
-  display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 12px 0 0; padding: 14px 18px 18px; text-align: center;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 12px 0 0; padding: 14px 18px 18px; text-align: center;
   background: linear-gradient(#211a2b, #15101c); border-top: 1px solid rgba(255, 255, 255, .06);
 }
 .what { color: var(--ink2); font-size: 15px; text-wrap: balance; }
@@ -129,7 +133,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 @keyframes blink { 70% { opacity: .35; } }
 .go {
-  display: block; width: 100%; padding: 13px 18px; border-radius: 12px; background: var(--go); color: var(--go-ink);
+  display: block; width: 100%; margin-top: auto; padding: 13px 18px; border-radius: 12px; background: var(--go); color: var(--go-ink);
   font: 400 19px var(--disp); letter-spacing: .03em; box-shadow: 0 4px 0 var(--go-edge);
 }
 .cab:active .go { transform: translateY(2px); box-shadow: 0 2px 0 var(--go-edge); }

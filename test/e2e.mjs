@@ -447,6 +447,18 @@ assert.deepEqual(errors, []);
 await page.setViewportSize({ width: 1280, height: 860 });
 const tops = await page.locator('.cab').evaluateAll(els => els.map(e => e.getBoundingClientRect().top));
 assert.ok(Math.abs(tops[0] - tops[1]) < 8 && Math.abs(tops[2] - tops[3]) < 8 && tops[2] > tops[0] + 100, 'the cabinets stand two by two on a wide screen'); // (a hovered one lifts a little)
+// and the two in a row end together, their Play buttons in a line (with the pointer away, so none is lifted)
+await page.mouse.move(2, 2);
+const rows = await page.evaluate(() => {
+  const by = new Map();
+  for (const cab of document.querySelectorAll('.cab')) {
+    const top = Math.round(cab.getBoundingClientRect().top), go = cab.querySelector('.go').getBoundingClientRect().top;
+    by.set(top, [...(by.get(top) || []), Math.round(go)]);
+  }
+  return [...by.values()];
+});
+assert.deepEqual(rows.map(r => r.length), [2, 2, 2, 2], `the cabinets in rows: ${JSON.stringify(rows)}`);
+for (const r of rows) assert.ok(Math.max(...r) - Math.min(...r) <= 1, `Play buttons in a row at ${r.join(' and ')} px`);
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 await page.setViewportSize({ width: 390, height: 844 });
 
