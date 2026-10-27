@@ -4,7 +4,7 @@
 // (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
-import { openCounter, shelfItem, fmt } from '../shared/counter.js';
+import { openCounter, shelfItem, fmt, tickets } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
 import { dayKey } from '../roll-up/js/daily.js';
 
@@ -44,7 +44,7 @@ function machines() {
   const tp = readSave('free-play.topple');
   const prizes = Number(tp.prizes) || 0;
   $('toppleStat').textContent = tp.cups
-    ? `Best cup: ${fmt(tp.best || 0)} tickets.${prizes ? ` ${prizes} ${prizes === 1 ? 'prize' : 'prizes'} pushed off.` : ''}`
+    ? `Best cup: ${tickets(tp.best || 0)}.${prizes ? ` ${prizes} ${prizes === 1 ? 'prize' : 'prizes'} pushed off.` : ''}`
     : 'Twenty coins a cup, and a prize on the deck.';
 
   // Highrise: the highest floor built, and how often it's been topped out.
@@ -70,6 +70,9 @@ function machines() {
 function pocket() {
   const w = wallet.read();
   $('tix').textContent = fmt(w.tickets);
+  $('tixWord').textContent = w.tickets === 1 ? 'ticket' : 'tickets';
+  // the booth's button says what there is to trade, once there's anything
+  $('trade').textContent = w.tickets ? `Trade your ${tickets(w.tickets)}` : 'Trade tickets';
   const shelf = $('shelf');
   shelf.replaceChildren();
   const owned = SHELF.filter(p => w.prizes[p.id]);

@@ -218,9 +218,9 @@ function showDone() {
   const { won, before } = done;
   if (won > (saved.best || 0)) saved.best = won;
   save();
-  $('overT').textContent = `${CUP} coins, ${fmt(won)} ${won === 1 ? 'ticket' : 'tickets'}`;
+  $('overT').textContent = `${CUP} coins, ${tickets(won)}`;
   wonPrizes(done.prizes);
-  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${fmt(before)} ${before === 1 ? 'ticket' : 'tickets'}.`], `Best cup: ${fmt(saved.best)} tickets`);
+  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${tickets(before)}.`], `Best cup: ${tickets(saved.best)}`);
   hud();
 }
 // The prizes a cup pushed off, under its card's heading: 'And a toy car and a lucky keyring for your shelf.'
@@ -260,7 +260,7 @@ function hud(bump = false) {
   document.querySelector('.cup').classList.toggle('empty', !left);
   $('drop').disabled = !left;
   if (bump) { const b = $('won'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
-  $('titleBest').textContent = saved.cups ? `Best cup: ${fmt(saved.best)} tickets.` : '';
+  $('titleBest').textContent = saved.cups ? `Best cup: ${tickets(saved.best)}.` : '';
   $('play').textContent = cup && cup.left > 0 ? 'Carry on' : 'Play';
 }
 

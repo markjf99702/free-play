@@ -56,7 +56,11 @@ function showBest() {
   $('bestLine').textContent = top ? `Best: ${fmt(+top.score)}` : '';
   showTickets();
 }
-function showTickets() { $('tixT').textContent = fmt(wallet.read().tickets); }
+function showTickets() {
+  const n = wallet.read().tickets;
+  $('tixT').textContent = fmt(n);
+  $('tixWordT').textContent = n === 1 ? 'ticket' : 'tickets';
+}
 addEventListener('free-play:wallet', showTickets);
 addEventListener('pageshow', showTickets); // back from the floor, where tickets may have been spent
 

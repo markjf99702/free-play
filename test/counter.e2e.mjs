@@ -114,6 +114,12 @@ for (const [path, hook, tix, opener] of PAGES) {
     assert.equal(await page.getAttribute('#tixBtn', 'aria-label'), 'Prize counter, 1 ticket', `${where}: the ticket button's name at 1`);
     await elsewhere(2, 4);
   }
+  if (hook === 'tilt') {
+    await other.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1, prizes: { lollipop: 4 } })));
+    await page.waitForFunction(() => document.getElementById('prizesBtn').textContent === '1 ticket · Prize counter', null, { timeout: 3000 }).catch(() => {});
+    assert.equal(await page.textContent('#prizesBtn'), '1 ticket · Prize counter', "tilt: the title card's button at 1");
+    await elsewhere(2, 4);
+  }
   assert.equal(await page.getAttribute('.fp-shelf .fp-item', 'aria-label'), 'Lollipop, 4', `${where}: the open counter's shelf, changed in another tab`);
   assert.equal(await page.locator('.fp-prize:not(.short)').count(), 0, `${where}: with 2 tickets nothing at the counter is affordable`);
   await page.keyboard.press('Escape');

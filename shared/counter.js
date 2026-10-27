@@ -32,7 +32,7 @@ function build() {
   sheet.innerHTML = `<div class="fp-sheet-in" tabindex="-1">
       <div class="fp-head">
         <h2 id="fp-counter-h">Prize counter</h2>
-        <span class="fp-bal">${TICKET}<b></b> tickets</span>
+        <span class="fp-bal">${TICKET}<b></b> <span>tickets</span></span>
         <button type="button" class="fp-x" aria-label="Close">×</button>
       </div>
       <h3>Your shelf</h3>
@@ -92,6 +92,7 @@ if (ours()) { try { history.replaceState(null, ''); } catch { /* as above */ } }
 function render() {
   const w = read();
   sheet.querySelector('.fp-bal b').textContent = fmt(w.tickets);
+  sheet.querySelector('.fp-bal span').textContent = w.tickets === 1 ? 'ticket' : 'tickets';
   const shelf = sheet.querySelector('.fp-shelf');
   shelf.replaceChildren();
   const owned = SHELF.filter(p => w.prizes[p.id]);
@@ -151,7 +152,8 @@ function trade(p) {
   if (performance.now() - lastTrade < SAME_TAP) return;
   const have = read().tickets;
   const w = buy(p);
-  if (!w) return toast(`You need ${fmt(p.cost - have)} more tickets for that.`);
+  const short = p.cost - have;
+  if (!w) return toast(`You need ${fmt(short)} more ${short === 1 ? 'ticket' : 'tickets'} for that.`);
   lastTrade = performance.now();
   opts.onBuy?.(p);
   const n = w.prizes[p.id];

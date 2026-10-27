@@ -65,6 +65,7 @@ for (const [i, name] of (await cabinetNames()).entries()) {
 }
 assert.equal(await page.locator('.cab.roll-up').getAttribute('aria-describedby'), 'rollUpWhat');
 assert.equal(await nameOf(page.locator('#purse')), '0 tickets · Prize counter', "the purse's name");
+assert.equal(await page.textContent('#trade'), 'Trade tickets', "the booth's button with nothing to trade");
 
 // Roll Up: in from the floor, a game, and its tickets.
 await page.click('.cab.roll-up');
@@ -229,6 +230,21 @@ await page.click('#trade');
 assert.deepEqual(await page.locator('.fp-prize').evaluateAll(els => els.slice(0, 2).map(e => e.getAttribute('aria-label'))), ['Lollipop, 5 tickets', 'Spider ring, 10 tickets, 3 more than you have']);
 await page.click('.fp-x');
 
+// One ticket is one ticket: one short of a lollipop, and one left in the pocket.
+await pocket({ tickets: 4, prizes: {} });
+await page.click('#trade');
+await page.click('.fp-prize >> nth=0');
+assert.equal(await page.textContent('.fp-toast'), 'You need 1 more ticket for that.');
+await page.click('.fp-x');
+await pocket({ tickets: 1, prizes: {} });
+assert.equal((await page.textContent('#purse')).trim(), '1 ticket · Prize counter', 'the purse at 1');
+assert.equal(await page.textContent('#trade'), 'Trade your 1 ticket');
+await page.click('#trade');
+assert.equal((await page.textContent('.fp-bal')).trim(), '1 ticket', "the counter's heading at 1");
+await page.click('.fp-x');
+await pocket({ tickets: 12345, prizes: {} });
+assert.equal(await page.textContent('#trade'), 'Trade your 12,345 tickets');
+
 // A double tap at the counter buys one, not two; two taps a second apart buy two.
 const stored = () => page.evaluate(() => localStorage.getItem('free-play.wallet'));
 const tapPrize = async n => {
@@ -346,12 +362,13 @@ await page.click('.fp-x');
 
 // Saves with an odd value in them still open: a best of null (what a NaN is saved as), and today's card saved
 // without its balls. (The saves there were are put back after.)
-const ODD = ['free-play.popgun', 'free-play.bonkers', 'free-play.hoops', 'free-play.roll-up'];
+const ODD = ['free-play.popgun', 'free-play.bonkers', 'free-play.hoops', 'free-play.roll-up', 'free-play.topple'];
 const saves = await page.evaluate(keys => keys.map(k => localStorage.getItem(k)), ODD);
 const day = new Date(), today = [day.getFullYear(), day.getMonth() + 1, day.getDate()].map(n => String(n).padStart(2, '0')).join('-');
 await page.evaluate(([keys, today]) => {
   for (const k of keys) localStorage.setItem(k, JSON.stringify({ best: null, rounds: 3 }));
   localStorage.setItem('free-play.roll-up', JSON.stringify({ best: 120, games: 4, daily: { key: today, score: 5 } }));
+  localStorage.setItem('free-play.topple', JSON.stringify({ best: 1, cups: 2 })); // (and a best cup of one ticket)
 }, [ODD, today]);
 for (const [path, name] of [['popgun/', 'popgun'], ['bonkers/', 'bonkers'], ['hoops/', 'hoops']]) {
   await page.goto(base + path);
@@ -361,9 +378,13 @@ for (const [path, name] of [['popgun/', 'popgun'], ['bonkers/', 'bonkers'], ['ho
 await page.goto(base + 'roll-up/');
 await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
 assert.equal(await page.textContent('#daily'), "Today's card", "a card with no balls isn't today's played card");
+await page.goto(base + 'topple/');
+await page.waitForFunction(() => !!window.topple, null, { timeout: 5000 });
+assert.equal(await page.textContent('#titleBest'), 'Best cup: 1 ticket.');
 await page.goto(base);
 await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
 assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready: nine called shots. Best 120.");
+assert.equal(await page.textContent('#toppleStat'), 'Best cup: 1 ticket.');
 await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [ODD, saves]);
 
 // A machine played in another tab: the floor's cabinet says so without a reload, and so does the pocket.
