@@ -6,46 +6,53 @@
 import * as wallet from '../shared/wallet.js';
 import { openCounter, shelfItem, fmt, tickets } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
-import { dayKey } from '../roll-up/js/daily.js';
+import { dayKey, dayBefore } from '../roll-up/js/daily.js';
 
 const $ = id => document.getElementById(id);
 const readSave = key => {
   try { const v = JSON.parse(localStorage.getItem(key)); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
 };
 
+// A best, as every cabinet and card says it: 'Best: 1,340.'
+const best = n => `Best: ${fmt(n)}.`;
+
 function machines() {
-  // Roll Up: today's card first, since it changes every day; then the best game.
+  // Roll Up: today's card first, since it changes every day, with the run of days it's been played; then the best game.
   const ru = readSave('free-play.roll-up');
-  const today = ru.daily && ru.daily.key === dayKey() && Array.isArray(ru.daily.balls) ? ru.daily : null;
-  const card = today
-    ? `Today's card: ${fmt(today.score)}, ${today.balls.filter(b => b.hit).length} of 9 calls.`
-    : "Today's card is ready: nine called shots.";
-  $('rollUpStat').textContent = ru.best ? `${card} Best ${fmt(ru.best)}.` : card;
+  const daily = ru.daily && Array.isArray(ru.daily.balls) ? ru.daily : null;
+  const run = Number(daily?.streak) || 1;
+  const card = daily?.key === dayKey()
+    ? `Today's card: ${fmt(daily.score)}, ${daily.balls.filter(b => b.hit).length} of 9 calls${run > 1 ? `, ${run} days in a row` : ''}.`
+    : daily?.key === dayBefore(dayKey())
+      ? `Today's card is ready. Play it to make it ${run + 1} days in a row.`
+      : "Today's card is ready: nine called shots.";
+  $('rollUpStat').textContent = ru.best ? `${card} ${best(ru.best)}` : card;
 
   // Tilt: the best score on any table, and which table.
   const t = readSave('free-play.tilt');
   const tables = { scores: 'Classic', spaceScores: 'Space', hauntedScores: 'Haunted House' };
-  let best = null;
+  let top = null;
   for (const [key, name] of Object.entries(tables)) {
-    const top = Array.isArray(t[key]) ? t[key].find(s => s && Number.isFinite(+s.score)) : null;
-    if (top && (!best || +top.score > best.score)) best = { score: +top.score, name };
+    const first = Array.isArray(t[key]) ? t[key].find(s => s && Number.isFinite(+s.score)) : null;
+    if (first && (!top || +first.score > top.score)) top = { score: +first.score, name };
   }
-  $('tiltStat').textContent = best ? `Best ${fmt(best.score)}, on ${best.name}.` : 'Three balls a game. Nudge, but not too hard.';
+  $('tiltStat').textContent = top ? `Best: ${fmt(top.score)}, on ${top.name}.` : 'Three balls a game. Nudge, but not too hard.';
 
-  // Clutch: how many plush it's given you, and whether one was the lucky star.
+  // Clutch: how many plush it's given you, and how many were the lucky star.
   const c = readSave('free-play.clutch');
   const won = c.won && typeof c.won === 'object' ? c.won : {};
-  const plush = Object.values(won).reduce((n, k) => n + (Number(k) || 0), 0);
+  const plush = Object.values(won).reduce((n, k) => n + (Number(k) || 0), 0), stars = Number(won.star) || 0;
   $('clutchStat').textContent = plush
-    ? `${fmt(plush)} plush won${won.star ? ', a lucky star among them' : ''}.`
+    ? `${fmt(plush)} plush won${stars > 1 ? `, ${fmt(stars)} lucky stars among them` : stars ? ', a lucky star among them' : ''}.`
     : 'Pays in plush, straight onto your shelf.';
 
-  // Topple: the best cup, and any prizes pushed off.
+  // Topple: a cup part-played first (one of 20 coins, with some down and some to go), then the best cup and any prizes
+  // pushed off.
   const tp = readSave('free-play.topple');
-  const prizes = Number(tp.prizes) || 0;
-  $('toppleStat').textContent = tp.cups
-    ? `Best cup: ${tickets(tp.best || 0)}.${prizes ? ` ${prizes} ${prizes === 1 ? 'prize' : 'prizes'} pushed off.` : ''}`
-    : 'Twenty coins a cup, and a prize on the deck.';
+  const prizes = Number(tp.prizes) || 0, left = Number.isInteger(tp.cup?.left) ? tp.cup.left : 0;
+  const going = left > 0 && left < 20 ? `A cup on the go: ${left} ${left === 1 ? 'coin' : 'coins'} left.` : '';
+  const cups = tp.cups ? `Best cup: ${tickets(tp.best || 0)}.${prizes ? ` ${prizes} ${prizes === 1 ? 'prize' : 'prizes'} pushed off.` : ''}` : '';
+  $('toppleStat').textContent = [going, cups].filter(Boolean).join(' ') || 'Twenty coins a cup, and a prize on the deck.';
 
   // Highrise: the highest floor built, and how often it's been topped out.
   const hr = readSave('free-play.highrise');
@@ -56,15 +63,15 @@ function machines() {
 
   // Popgun: the best round.
   const pg = readSave('free-play.popgun');
-  $('popgunStat').textContent = pg.rounds ? `Best: ${fmt(pg.best || 0)}.` : 'Twenty corks. A ticket for every 20 points.';
+  $('popgunStat').textContent = pg.rounds ? best(pg.best || 0) : 'Twenty corks. A ticket for every 20 points.';
 
   // Bonkers: the best round.
   const bk = readSave('free-play.bonkers');
-  $('bonkersStat').textContent = bk.rounds ? `Best: ${fmt(bk.best || 0)}.` : 'Forty-five seconds. Watch them coming.';
+  $('bonkersStat').textContent = bk.rounds ? best(bk.best || 0) : 'Forty-five seconds. Watch them coming.';
 
   // Hoops: the best round.
   const hp = readSave('free-play.hoops');
-  $('hoopsStat').textContent = hp.rounds ? `Best: ${fmt(hp.best || 0)}.` : 'Forty-five seconds. Then the hoop starts moving.';
+  $('hoopsStat').textContent = hp.rounds ? best(hp.best || 0) : 'Forty-five seconds. Then the hoop starts moving.';
 }
 
 function pocket() {

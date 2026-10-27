@@ -87,7 +87,7 @@ const storage = page => page.evaluate(() => Object.fromEntries(Object.keys(local
   assert.deepEqual(JSON.parse(got['free-play.carried']), { tilt: 'done', 'roll-up': 'done' });
   assert.ok(!('other-thing' in got), "nothing that isn't a machine's comes along");
   assert.match(await page.textContent('#tiltStat'), /333,300, on Space/, 'the floor shows the carried Tilt score');
-  assert.match(await page.textContent('#rollUpStat'), /Best 410/);
+  assert.match(await page.textContent('#rollUpStat'), /Best: 410\./);
 
   // The next visit loads once, and the tickets aren't counted twice.
   await page.reload();
@@ -98,7 +98,7 @@ const storage = page => page.evaluate(() => Object.fromEntries(Object.keys(local
   await page.goto(HOME + '/tilt/');
   await page.waitForFunction(() => window.tilt);
   assert.equal(await page.evaluate(() => window.tilt.table.name), 'Space');
-  assert.equal(await page.textContent('#bestLine'), 'Best: 333,300');
+  assert.equal(await page.textContent('#bestLine'), 'Best: 333,300.');
   assert.match(await page.textContent('#tixT'), /^57$/);
   await page.goto(HOME + '/roll-up/');
   await page.waitForFunction(() => window.rollUp);

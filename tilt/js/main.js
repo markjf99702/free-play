@@ -53,7 +53,7 @@ function topFive() {
 }
 function showBest() {
   const top = topFive()[0];
-  $('bestLine').textContent = top ? `Best: ${fmt(+top.score)}` : '';
+  $('bestLine').textContent = top ? `Best: ${fmt(+top.score)}.` : '';
   showTickets();
 }
 function showTickets() {
@@ -252,7 +252,10 @@ $('quitBtn').addEventListener('click', () => {
 // The arcade's prize counter, from the title card, the pause card or the end of a game.
 for (const id of ['prizesBtn', 'pausePrizes', 'overPrizes']) $(id).addEventListener('click', () => { unlock(); openCounter({ onBuy: () => play('award') }); });
 
-function soundLabel() { $('soundBtn').textContent = 'Sound: ' + (store.sound === false ? 'off' : 'on'); }
+function soundLabel() {
+  $('soundBtn').textContent = 'Sound: ' + (store.sound === false ? 'off' : 'on');
+  $('soundBtn').setAttribute('aria-pressed', String(store.sound !== false));
+}
 soundLabel();
 $('soundBtn').addEventListener('click', () => {
   store.sound = store.sound === false; setSound(store.sound); save(); soundLabel();

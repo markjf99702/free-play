@@ -150,7 +150,7 @@ function endRound() {
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}`
     + (swish ? `, ${swish === n ? (n === 1 ? 'nothing but net' : 'all of them nothing but net') : `${swish} nothing but net`}` : '') + '. A ticket for every 4 points.';
-  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
+  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();

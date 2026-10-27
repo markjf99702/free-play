@@ -29,7 +29,7 @@
 
 ## How it plays
 
-- **The floor** has a cabinet for each machine, showing what you've done on it: your best, whether you've played today's card, the plush you've won. Tap one to play. Every machine has a way back to the floor.
+- **The floor** has a cabinet for each machine, showing what you've done on it: your best, today's card and how many days in a row you've played it, a cup still on the go on Topple, the plush you've won. Tap one to play. Every machine has a way back to the floor.
 - **Tickets.** Roll Up pays one for every 10 points. Tilt pays one for every 10,000 on Classic and Space, and one for every 5,000 on Haunted House, the hard one. A fair game on either machine earns about 25 to 35, and they feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 20 points, Bonkers one for every 15, and Hoops one for every 4.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush. Tapped the wrong one? For a few seconds after a trade, Undo gives the tickets back.

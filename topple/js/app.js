@@ -222,7 +222,7 @@ function showDone() {
   save();
   $('overT').textContent = `${CUP} coins, ${tickets(won)}`;
   wonPrizes(done.prizes);
-  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${tickets(before)}.`], `Best cup: ${tickets(saved.best)}`);
+  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${tickets(before)}.`], `Best cup: ${tickets(saved.best)}.`);
   hud();
 }
 // The prizes a cup pushed off, under its card's heading: 'And a toy car and a lucky keyring for your shelf.'

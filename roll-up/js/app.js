@@ -230,7 +230,10 @@ addEventListener('pagehide', () => feeding());
 
 function showOver(r, fresh) {
   const daily = !!r.key;
-  $('overT').textContent = daily ? `Today's card, ${fmt(r.score)} points` : `Nine balls, ${fmt(r.score)} points`;
+  // the heading in two lines: which game, small, and its score, big
+  const which = document.createElement('small');
+  which.textContent = daily ? "Today's card" : 'Nine balls';
+  $('overT').replaceChildren(which, ' ', `${fmt(r.score)} ${r.score === 1 ? 'point' : 'points'}`);
   $('tally').replaceChildren(...r.balls.map(b => {
     const c = document.createElement('span');
     c.textContent = b.points;
@@ -246,9 +249,9 @@ function showOver(r, fresh) {
     b.textContent = r.balls.map(x => (x.hit ? '★' : '☆')).join('');
     $('stars').append(b, `${hits} of 9 calls${r.streak > 1 ? ` · ${r.streak} days in a row` : ''}`);
   }
-  bestLine($('overBest'), !daily && r.isBest && ['A new best!', `Your old one was ${fmt(r.was)}.`], daily ? 'A new card comes at midnight.' : `Best: ${fmt(saved.best)}`);
+  bestLine($('overBest'), !daily && r.isBest && ['A new best!', `Your old one was ${fmt(r.was)}.`], daily ? 'A new card comes at midnight.' : `Best: ${fmt(saved.best)}.`);
   $('share').hidden = !daily;
-  $('again').textContent = daily ? 'Play' : 'Roll again';
+  $('again').textContent = daily ? 'Play a regular game' : 'Roll again';
   $('over').hidden = false;
   $('title').hidden = true;
   // the tickets come out of the slot one by one, and the strip grows
@@ -392,9 +395,11 @@ function dailyButton() {
   const d = playedToday(), done = !!d;
   $('daily').classList.toggle('done', !!done);
   $('daily').textContent = done ? `Today: ${fmt(d.score)}` : "Today's card";
+  // yesterday's card played, the run of days goes on with today's
+  const y = saved.daily, run = !done && y?.key === dayBefore(dayKey()) && Array.isArray(y.balls) ? (Number(y.streak) || 1) + 1 : 0;
   $('dailyHow').textContent = done
     ? `${d.balls.filter(b => b.hit).length} of 9 calls${d.streak > 1 ? `, ${d.streak} days in a row` : ''}. A new card comes at midnight.`
-    : 'Nine called shots, the same for everyone today. One go a day. Hit the call for double.';
+    : `Nine called shots, the same for everyone today. One go a day. Hit the call for double.${run ? ` Play it to make it ${run} days in a row.` : ''}`;
 }
 $('daily').addEventListener('click', () => {
   sound.unlock();
@@ -407,7 +412,7 @@ dailyButton();
 $('share').addEventListener('click', async () => {
   const d = saved.daily;
   if (!d || !Array.isArray(d.balls)) return;
-  const text = shareLine(d.key, d.score, d.balls.map(b => b.hit));
+  const text = shareLine(d.key, d.score, d.balls.map(b => b.hit), d.streak);
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
     try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
   }
@@ -519,7 +524,7 @@ function update(dt) {
 }
 
 hud();
-function titleBest() { $('titleBest').textContent = saved.best ? `Best: ${fmt(saved.best)}` : ''; }
+function titleBest() { $('titleBest').textContent = saved.best ? `Best: ${fmt(saved.best)}.` : ''; }
 titleBest();
 requestAnimationFrame(tick);
 

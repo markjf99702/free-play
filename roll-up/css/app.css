@@ -87,6 +87,9 @@ svg { width: 1.3em; height: .9em; flex: none; }
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 .card h2 { margin: 2px 0 10px; font: 400 24px/1.15 var(--disp); color: var(--ink); }
+/* the end card's heading: which game, small, over its score, big */
+#overT { font-size: 30px; }
+#overT small { display: block; margin-bottom: 4px; font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); }
 .marquee {
   margin: 0 auto 14px; padding: 12px 10px 10px; border-radius: 14px; background: linear-gradient(#8e1c22, #55101a);
   border: 2px solid var(--gold); position: relative;

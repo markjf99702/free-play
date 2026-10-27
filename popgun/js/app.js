@@ -133,8 +133,11 @@ function endRound() {
   save();
   sound.over();
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
-  $('overHow').textContent = `${gallery.hits} hits from ${gallery.shots} corks. A ticket for every 20 points.`;
-  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
+  // and with no ticket, how far off one it was
+  const { hits, shots } = gallery, short = 20 - (score % 20);
+  $('overHow').textContent = `${hits} ${hits === 1 ? 'hit' : 'hits'} from ${shots} ${shots === 1 ? 'cork' : 'corks'}. `
+    + (won ? 'A ticket for every 20 points.' : `${{ 10: 'Ten', 20: 'Twenty' }[short] || short} more points and it's a ticket.`);
+  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();

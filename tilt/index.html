@@ -21,6 +21,13 @@
   <link rel="stylesheet" href="css/tilt.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ticket" viewBox="0 0 24 16">
+      <path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/>
+      <path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/>
+      <circle cx="15" cy="8" r="2.6" fill="#fbeed2"/>
+    </symbol>
+  </svg>
   <header class="backbox">
     <div class="ball" id="ballNo" aria-live="off">Ball 1</div>
     <div class="display" id="display"><span id="score">0</span></div>
@@ -48,10 +55,10 @@
       <p class="ctl keys">On a keyboard: Z and / flip, and hold Space to launch.</p>
       <fieldset class="tables" id="tables" hidden><legend>Table</legend></fieldset>
       <p class="rate" id="rate"></p>
-      <button type="button" class="go" id="startBtn">Start game</button>
+      <button type="button" class="go" id="startBtn">Play</button>
       <p class="best" id="bestLine"></p>
       <div class="row">
-        <button type="button" class="ghost tix" id="prizesBtn"><span id="tixT"></span> <span id="tixWordT">tickets</span> · Prize counter</button>
+        <button type="button" class="ghost tix" id="prizesBtn"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg><span id="tixT"></span> <span id="tixWordT">tickets</span> · Prize counter</button>
       </div>
       <details class="how">
         <summary>How to play</summary>
@@ -74,13 +81,13 @@
       <h2 id="pauseH">Paused</h2>
       <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
       <p class="ctl keys">On a keyboard: Z and / flip, and hold Space to launch.</p>
-      <button type="button" class="go" id="resumeBtn">Resume</button>
+      <button type="button" class="go" id="resumeBtn">Keep playing</button>
       <div class="row">
-        <button type="button" class="ghost" id="soundBtn">Sound: on</button>
+        <button type="button" class="ghost" id="soundBtn" aria-pressed="true">Sound: on</button>
         <button type="button" class="ghost" id="quitBtn">End game</button>
       </div>
       <div class="row">
-        <button type="button" class="ghost" id="pausePrizes">Prize counter</button>
+        <button type="button" class="ghost" id="pausePrizes"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg>Prize counter</button>
         <a class="ghost to-floor" href="../">Back to the arcade</a>
       </div>
       <footer class="jd-foot">
@@ -103,7 +110,7 @@
         <button type="button" class="ghost" id="tablesBtn">Change table</button>
       </div>
       <div class="row">
-        <button type="button" class="ghost" id="overPrizes">Prize counter</button>
+        <button type="button" class="ghost" id="overPrizes"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg>Prize counter</button>
         <a class="ghost to-floor" href="../">Back to the arcade</a>
       </div>
     </div>

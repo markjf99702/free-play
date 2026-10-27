@@ -63,7 +63,7 @@ export function createDraw(canvas) {
     c.beginPath(); c.arc(96, 330, 92, 0, Math.PI * 2); c.stroke();
     for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; c.beginPath(); c.moveTo(96, 330); c.lineTo(96 + Math.cos(a) * 92, 330 + Math.sin(a) * 92); c.stroke(); }
     c.fillStyle = 'rgba(120, 100, 190, .35)';
-    c.beginPath(); c.moveTo(380, 520); c.lineTo(440, 410); c.lineTo(500, 520); c.fill();
+    c.beginPath(); c.moveTo(380, ROWS[2].rail + 6); c.lineTo(440, ROWS[2].rail - 90); c.lineTo(500, ROWS[2].rail + 6); c.fill(); // standing on the pond's bank
     // the strips the rows run along: clouds at the top, a hedge in the middle, the pond at the bottom
     const strip = (y, h, fill) => { c.fillStyle = fill; c.fillRect(-30, y, W + 60, h); };
     strip(ROWS[0].rail + 6, 30, '#3b3f8f');

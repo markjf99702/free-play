@@ -159,7 +159,7 @@ await page.evaluate(() => highrise.stopAt(0));
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await tickets(), t1 + 11);
 assert.match(await page.textContent('#overT'), /Eleven floors\. So close\./);
-assert.deepEqual(await bestLine(), { text: 'Highest: floor 11', big: false, size: '13px' }, 'as high as the highest is not higher');
+assert.deepEqual(await bestLine(), { text: 'Highest: floor 11.', big: false, size: '13px' }, 'as high as the highest is not higher');
 
 // Highrise open in a second tab too, from before the next game.
 const other = await ctx.newPage();
@@ -196,7 +196,7 @@ await other.evaluate(() => highrise.stopAt(0));
 await other.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const kept = await other.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')));
 assert.deepEqual([kept.best, kept.tops, kept.games], [15, 1, gamesBefore + 2], 'the top-out in the other tab is kept, and both games count');
-assert.equal(await other.textContent('#overBest'), 'Highest: floor 15');
+assert.equal(await other.textContent('#overBest'), 'Highest: floor 15.');
 await other.close();
 
 // The menu opened just as floor 11 lands, before the choice comes up, by Escape or by leaving the page, holds the

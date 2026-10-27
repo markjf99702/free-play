@@ -70,5 +70,9 @@ test("today's card is the same all day, different the next, and fair", async () 
   assert.deepEqual(points(40, { call: 30, golden: true }), { points: 80, hit: false });
   assert.deepEqual(points(100, { call: 100, golden: true }), { points: 400, hit: true });
   assert.deepEqual(points(0, { call: 20, golden: true }), { points: 0, hit: false });
-  assert.equal(shareLine('2026-10-18', 340, [true, false, true]), 'Roll Up · Sun 18 Oct · 340\n★☆★\nroll-up.junkdrawer.works');
+  // the line to send: where Roll Up is now (the old roll-up.junkdrawer.works only forwards), with commas, and the run
+  // of days played once there's one
+  assert.equal(shareLine('2026-10-18', 340, [true, false, true]), 'Roll Up · Sun 18 Oct · 340\n★☆★\nfree-play.junkdrawer.works/roll-up/');
+  assert.equal(shareLine('2026-10-27', 1240, [true, true], 1), 'Roll Up · Tue 27 Oct · 1,240\n★★\nfree-play.junkdrawer.works/roll-up/');
+  assert.equal(shareLine('2026-10-27', 440, [false, true], 3), 'Roll Up · Tue 27 Oct · 440 · 3 days in a row\n☆★\nfree-play.junkdrawer.works/roll-up/');
 });

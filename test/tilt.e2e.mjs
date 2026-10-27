@@ -68,6 +68,7 @@ assert.ok(await page.isVisible('#title .ctl'), 'the title card does not say how 
 assert.match(await page.textContent('#title .ctl'), /hold either side to flip\. Hold Launch and let go/);
 assert.equal(await page.textContent('#rate'), await rateLine(page), 'the title card does not say what the table pays');
 
+assert.equal(await page.textContent('#startBtn'), 'Play');
 await page.tap('#startBtn');
 await page.waitForFunction(() => window.tilt.game.mode === 'play');
 assert.ok(await page.isHidden('#title'));
@@ -108,9 +109,16 @@ await page.keyboard.press('Space');
 assert.ok(await page.evaluate(() => window.tilt.game.tiltMeter > 0.5), 'Space did not nudge');
 assert.match(await page.textContent('#howTo'), /Nudge:[^.]*Space/, 'How to play does not say Space nudges');
 
-// The menu pauses everything, and says how to flip and launch.
+// The menu pauses everything, and says how to flip and launch. Its buttons say what the other machines' do, and the
+// sound switch says whether it's on to a screen reader too.
 await page.tap('#menuBtn');
 assert.ok(await page.isVisible('#pause'));
+assert.equal(await page.textContent('#resumeBtn'), 'Keep playing');
+assert.equal(await page.getAttribute('#soundBtn', 'aria-pressed'), 'true');
+await page.tap('#soundBtn');
+assert.deepEqual([await page.textContent('#soundBtn'), await page.getAttribute('#soundBtn', 'aria-pressed')], ['Sound: off', 'false']);
+await page.tap('#soundBtn');
+assert.equal(await page.getAttribute('#soundBtn', 'aria-pressed'), 'true');
 assert.match(await page.textContent('#pause .ctl'), /hold either side to flip\. Hold Launch and let go/);
 const frozen = await page.evaluate(() => window.tilt.game.world.time);
 await page.waitForTimeout(300);

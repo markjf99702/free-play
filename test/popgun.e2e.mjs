@@ -213,6 +213,24 @@ for (const leave of ['Escape', 'hide']) {
   assert.deepEqual(await cards(), []);
 }
 
+// A round of one hit says so in the singular, and a round that pays no ticket says how far off one it was: one duck,
+// and the other nineteen corks at the moon.
+await page.evaluate(() => { popgun.speed = 3; });
+while (!(await page.evaluate(() => popgun.gallery.over))) {
+  await page.waitForFunction(() => popgun.gallery.ready || popgun.gallery.over);
+  await page.evaluate(() => {
+    const g = popgun.gallery, row = g.rows[2];
+    const duck = g.hits ? null : row.targets.find(t => !t.hit && t.kind === 'duck' && t.x + row.dir * row.now * 0.32 > 60 && t.x + row.dir * row.now * 0.32 < 500);
+    if (duck) popgun.fire(duck.x + row.dir * row.now * 0.32, row.rail - 22);
+    else if (g.hits) popgun.fire(560 - 92, 70);
+  });
+  await page.waitForTimeout(20);
+}
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+const [hit, scored] = await page.evaluate(() => [popgun.gallery.hits, popgun.gallery.score]);
+assert.deepEqual([hit, scored], [1, 10], 'one duck hit, and nothing else');
+assert.equal(await page.textContent('#overHow'), "1 hit from 20 corks. Ten more points and it's a ticket.");
+
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
 server.close();

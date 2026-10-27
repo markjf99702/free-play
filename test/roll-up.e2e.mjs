@@ -147,6 +147,8 @@ assert.equal(stored.best, score);
 await page.waitForFunction(t => document.querySelector('.fp-won b').textContent === String(t), stored.tickets, { timeout: 8000 });
 assert.ok(await page.evaluate(() => document.querySelector('.fp-strip').offsetHeight > 20), 'the tickets feed out of the slot');
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 50.', big: true, size: '18px' });
+assert.equal(await page.textContent('#overT'), `Nine balls ${score.toLocaleString('en-US')} points`);
+assert.equal(await page.textContent('#again'), 'Roll again');
 assert.equal(await page.textContent('#live'), `Game over: ${score.toLocaleString('en-US')} points, ${Math.floor(score / 10)} tickets. A new best.`, 'what a screen reader hears at the end of the game');
 
 // The prize counter: buy the cheapest thing, and it goes on the shelf.
@@ -200,7 +202,10 @@ assert.ok(await page.isVisible('#stars'));
 assert.match(await page.textContent('#stars'), new RegExp(`${called} of 9 calls`));
 await page.click('#share');
 const shared = await page.evaluate(() => navigator.clipboard.readText());
-assert.match(shared, new RegExp(`^Roll Up · .+ · ${daily.score}\n[★☆]{9}\nroll-up.junkdrawer.works$`), `the share line: ${shared}`);
+assert.match(shared, new RegExp(`^Roll Up · .+ · ${daily.score.toLocaleString('en-US')}\n[★☆]{9}\nfree-play\\.junkdrawer\\.works/roll-up/$`), `the share line: ${shared}`);
+// Its card says which game it was over the score, and its big button is for a regular game, not today's card again.
+assert.equal(await page.textContent('#overT small'), "Today's card");
+assert.equal(await page.textContent('#again'), 'Play a regular game');
 
 // Once it's played, today's card shows how it went instead of starting again.
 await page.reload();

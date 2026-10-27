@@ -140,7 +140,7 @@ function endRound() {
   save();
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
   $('overHow').textContent = `${burrow.bonks} ${burrow.bonks === 1 ? 'mole' : 'moles'} bonked in ${ROUND} seconds. A ticket for every 15 points.`;
-  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}`);
+  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();

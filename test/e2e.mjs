@@ -84,7 +84,7 @@ assert.equal(await tickets(), Math.floor(rolled / 10), 'Roll Up pays a ticket fo
 await page.click('#over .back a');
 await page.waitForURL(base);
 assert.equal(await page.textContent('#tix'), String(Math.floor(rolled / 10)));
-assert.match(await page.textContent('#rollUpStat'), new RegExp(`Best ${rolled.toLocaleString('en-US')}`));
+assert.match(await page.textContent('#rollUpStat'), new RegExp(`Best: ${rolled.toLocaleString('en-US')}\\.$`));
 
 // Tilt: a game ended from its menu, and its tickets on top.
 const before = await tickets();
@@ -100,7 +100,7 @@ assert.equal(await tickets(), before + 15, 'Classic pays a ticket for every 10,0
 await page.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '15', null, { timeout: 8000 });
 await page.click('#over a.ghost');
 await page.waitForURL(base);
-assert.match(await page.textContent('#tiltStat'), /154,320, on Classic/);
+assert.equal(await page.textContent('#tiltStat'), 'Best: 154,320, on Classic.');
 
 // Clutch: in from the floor, a go, and back by its menu.
 await page.click('.cab.clutch');
@@ -383,9 +383,38 @@ await page.waitForFunction(() => !!window.topple, null, { timeout: 5000 });
 assert.equal(await page.textContent('#titleBest'), 'Best cup: 1 ticket.');
 await page.goto(base);
 await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
-assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready: nine called shots. Best 120.");
+assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready: nine called shots. Best: 120.");
 assert.equal(await page.textContent('#toppleStat'), 'Best cup: 1 ticket.');
 await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [ODD, saves]);
+
+// A daily player's cabinets: Roll Up's run of days, with today's card played or still to play (and its title card says
+// so too), a Topple cup on the go, and more than one lucky star from Clutch. (The saves there were are put back after.)
+const DAILY = ['free-play.roll-up', 'free-play.topple', 'free-play.clutch'];
+const dailySaves = await page.evaluate(keys => keys.map(k => localStorage.getItem(k)), DAILY);
+const yday = new Date(day.getFullYear(), day.getMonth(), day.getDate() - 1, 12);
+const yesterday = [yday.getFullYear(), yday.getMonth() + 1, yday.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+const nine = Array.from({ length: 9 }, (_, i) => ({ value: 30, points: 30, hit: i < 5 }));
+const seed = saves => page.evaluate(saves => { for (const [k, v] of Object.entries(saves)) localStorage.setItem(k, JSON.stringify(v)); }, saves);
+await seed({
+  'free-play.roll-up': { best: 450, games: 9, daily: { key: today, score: 310, balls: nine, streak: 6 } },
+  'free-play.topple': { best: 34, cups: 3, cup: { left: 12, won: 5, prizes: [] } },
+  'free-play.clutch': { goes: 30, won: { frog: 3, star: 2 } },
+});
+await page.reload();
+await page.waitForFunction(() => !!window.freePlay);
+assert.equal(await page.textContent('#rollUpStat'), "Today's card: 310, 5 of 9 calls, 6 days in a row. Best: 450.");
+assert.equal(await page.textContent('#toppleStat'), 'A cup on the go: 12 coins left. Best cup: 34 tickets.');
+assert.equal(await page.textContent('#clutchStat'), '5 plush won, 2 lucky stars among them.');
+await seed({ 'free-play.roll-up': { best: 450, games: 9, daily: { key: yesterday, score: 200, balls: nine, streak: 3 } } });
+await page.reload();
+await page.waitForFunction(() => !!window.freePlay);
+assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready. Play it to make it 4 days in a row. Best: 450.");
+await page.goto(base + 'roll-up/');
+await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
+assert.match(await page.textContent('#dailyHow'), / Play it to make it 4 days in a row\.$/);
+await page.goto(base);
+await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
+await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [DAILY, dailySaves]);
 
 // A machine played in another tab: the floor's cabinet says so without a reload, and so does the pocket.
 const tab = await ctx.newPage();

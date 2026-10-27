@@ -42,9 +42,11 @@ export function points(value, { call = null, golden = false } = {}) {
   return { points: value * (hit ? 2 : 1) * (golden ? 2 : 1), hit };
 }
 
-// The line to send someone: the day, the score, and a star for each call hit.
-export function shareLine(key, score, marks) {
+// The line to send someone: the day, the score, the run of days played when there's one, a star for each call hit, and
+// where Roll Up is.
+export function shareLine(key, score, marks, streak = 1) {
   const [y, m, d] = key.split('-').map(Number);
   const day = new Date(y, m - 1, d, 12).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-  return `Roll Up · ${day} · ${score}\n${marks.map(h => (h ? '★' : '☆')).join('')}\nroll-up.junkdrawer.works`;
+  const run = streak > 1 ? ` · ${streak} days in a row` : '';
+  return `Roll Up · ${day} · ${score.toLocaleString('en-US')}${run}\n${marks.map(h => (h ? '★' : '☆')).join('')}\nfree-play.junkdrawer.works/roll-up/`;
 }

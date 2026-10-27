@@ -146,7 +146,7 @@ function endGame() {
     : tookMinor ? `A ticket for every floor, and 25 for stopping at the minor prize.`
     : built >= MINOR ? 'The 25 went with it, but every floor still pays a ticket.'
     : built ? 'A ticket for every floor.' : 'The first row has to land somewhere: try again.';
-  bestLine($('overBest'), isBest && ['Your highest yet!', `The old one was floor ${old}.`], `Highest: floor ${saved.best}`);
+  bestLine($('overBest'), isBest && ['Your highest yet!', `The old one was floor ${old}.`], `Highest: floor ${saved.best}.`);
   $('over').hidden = false;
   feeding();
   // the highest yet rings out once the tickets are out, not over them

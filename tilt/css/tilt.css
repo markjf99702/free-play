@@ -134,6 +134,7 @@ h2 { margin: 0; font: 30px/1.1 var(--disp); color: var(--amber); }
 .ghost:active { background: rgba(255, 255, 255, .06); }
 a.ghost { display: flex; align-items: center; justify-content: center; text-decoration: none; text-align: center; }
 .ghost.tix { color: #ffd36a; }
+.ghost .fp-tix { margin-right: 6px; }
 /* back to the arcade floor, at the top of the title card */
 /* 44 px tall to tap, and placed so its words sit where they did in a 25 px box */
 .floor {
