@@ -173,9 +173,14 @@ await page.click('#resume');
 await page.evaluate(() => Object.assign(hoops.saved, { best: 10, rounds: 2 }));
 const t0 = await tickets();
 await page.evaluate(() => { hoops.speed = 4; __sounds.length = 0; });
-let bonus = false;
+let bonus = false, lit = false, most = 0;
+const high = [];
 while (!(await court('over'))) {
   bonus ||= await page.evaluate(() => document.getElementById('worthBox').classList.contains('bonus'));
+  // the words over the hoop: no more than two at once, and none up on the scoreboard
+  const w = await page.evaluate(() => ({ n: hoops.pops.length, lamp: hoops.draw.lamps.bonus, ...hoops.draw.words }));
+  most = Math.max(most, w.n); lit ||= w.lamp;
+  for (const l of w.laid) if (l.top < w.foot) high.push(`${l.text} at ${l.top.toFixed(0)}, over ${w.foot.toFixed(0)}`);
   await page.evaluate(() => {
     const c = hoops.court;
     if (!c.pocket() || c.buzzer) return;
@@ -185,6 +190,12 @@ while (!(await court('over'))) {
   await page.waitForTimeout(40);
 }
 assert.ok(bonus, 'the deck says when a basket is worth 3');
+assert.ok(lit, 'and so does the 3 PTS lamp');
+assert.ok(most <= 2, `${most} words over the hoop at once`);
+assert.deepEqual(high, [], 'words up on the scoreboard');
+// After the buzzer the lamps go out: a basket is worth what the deck says again.
+await page.waitForTimeout(100);
+assert.deepEqual(await page.evaluate(() => ({ ...hoops.draw.lamps })), { bonus: false, hot: false }, 'the lamps are still lit after the buzzer');
 assert.equal(await page.evaluate(() => __sounds.filter(s => s[0] === 'count').length), 5, 'a beep for each of the last five seconds');
 const score = await court('score');
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });

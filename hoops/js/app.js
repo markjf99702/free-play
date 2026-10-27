@@ -69,6 +69,8 @@ let paused = false, timeScale = 1, hold = 0, demoIn = 1;
 let endIn = 0;                 // seconds from the last ball landing to the end card, on the round's clock (it waits while paused)
 let tickets = wallet.read().tickets; // the pocket, read again only when it changes (see the scoreboard)
 const pops = [];
+// Words rising off the hoop: no more than two at once, the newest lowest (js/draw.js stacks them under the scoreboard).
+function pop(p) { pops.push(p); while (pops.length > 2) pops.shift(); }
 const carded = () => !$('title').hidden || !$('over').hidden || !$('menu').hidden || counterOpen();
 
 function newRound() {
@@ -96,10 +98,10 @@ function throwIt(speed, aim) {
 // it had the phone redoing it for nothing.
 function happened() {
   const events = court.take();
-  for (const e of events) {
-    if (mode !== 'play') continue; // the machine playing by itself keeps quiet
-    if (e === 'slide') { sound.slide(); say('The hoop is on the move.'); pops.push({ text: 'On the move!', t: -0.2, y: 34 }); }
-    else if (e === 'bonus') { sound.bonus(); say('Last ten seconds: 3 points a basket.'); pops.push({ text: '3 points!', t: -0.2, y: 34, gold: true, big: true }); }
+  events.forEach((e, i) => {
+    if (mode !== 'play') return; // the machine playing by itself keeps quiet
+    if (e === 'slide') { sound.slide(); say('The hoop is on the move.'); pop({ text: 'On the move!', t: -0.2 }); }
+    else if (e === 'bonus') { sound.bonus(); say('Last ten seconds: 3 points a basket.'); pop({ text: '3 points!', t: -0.2, gold: true, big: true }); }
     else if (e === 'buzzer') { sound.buzzer(); say('Time.'); }
     else if (e === 'over') endIn = 0.7;
     else if (e.shot !== undefined) sound.shot();
@@ -109,13 +111,16 @@ function happened() {
     else if (e.knock !== undefined) sound.knock(e.knock);
     else if (e.basket !== undefined) {
       sound.basket(e.swish, e.gold);
-      const word = e.buzzer ? 'At the buzzer!' : e.swish ? 'Swish!' : e.bank ? 'Off the glass!' : null;
-      pops.push({ text: `+${e.points}`, t: 0, gold: e.gold || e.fire, big: e.points > 3 });
-      if (word) pops.push({ text: word, t: -0.05, y: 24, gold: e.buzzer, word: true });
+      // what it was worth, and a word for what it was: the rim catching alight (the next thing the court says) beats
+      // a swish or a bank
+      const lit = events[i + 1]?.fire === true;
+      const word = e.buzzer ? 'At the buzzer!' : lit ? 'On fire!' : e.swish ? 'Swish!' : e.bank ? 'Off the glass!' : null;
+      if (word) pop({ text: word, t: -0.05, gold: e.buzzer || lit, big: lit && !e.buzzer, word: !lit || e.buzzer });
+      pop({ text: `+${e.points}`, t: 0, gold: e.gold || e.fire, big: e.points > 3 });
       bump($('score'));
-    } else if (e.fire === true) { sound.fire(true); say('Three in a row: the rim is alight.'); pops.push({ text: 'On fire!', t: -0.15, y: 50, gold: true, big: true }); }
+    } else if (e.fire === true) { sound.fire(true); say('Three in a row: the rim is alight.'); }
     else if (e.fire === false) sound.fire(false);
-  }
+  });
   if (events.length) hud();
   // a beep for each of the last five seconds
   const s = Math.ceil(court.left);
@@ -352,6 +357,7 @@ window.hoops = {
   get court() { return court; },
   get mode() { return mode; },
   get saved() { return saved; },
+  get pops() { return pops; },
   start,
   shoot: throwIt,
   flick,

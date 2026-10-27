@@ -232,6 +232,7 @@ export function createDraw(canvas) {
       }
     });
   }
+  const lamps = { bonus: false, hot: false };
   function scoreboard(court, t) {
     plane(ctx, CAGE.back, 0, 202, g => {
       g.lineCap = 'round'; g.lineWidth = 3.4; g.shadowColor = `rgba(${C.led}, .9)`;
@@ -249,8 +250,11 @@ export function createDraw(canvas) {
         g.fillStyle = on ? col : 'rgba(255, 255, 255, .08)'; g.shadowColor = col; g.shadowBlur = on ? 8 : 0; g.fill(); g.shadowBlur = 0;
         g.fillStyle = on ? C.cream : 'rgba(255, 246, 230, .35)'; g.fillText(label, x, 6);
       };
-      lamp(16, court.bonus && (court.left > 0 || court.buzzer), '#ffd23f', '3 PTS');
-      lamp(-6, court.fire, '#ff7a1f', 'HOT');
+      // (lit while the round runs: after the buzzer a basket is worth what the deck says again)
+      const running = !court.buzzer && !court.over;
+      lamps.bonus = court.bonus && running; lamps.hot = court.fire && running;
+      lamp(16, lamps.bonus, '#ffd23f', '3 PTS');
+      lamp(-6, lamps.hot, '#ff7a1f', 'HOT');
     });
   }
 
@@ -396,23 +400,52 @@ export function createDraw(canvas) {
       ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 246, 230, .8)'; ctx.fill();
     }
     if (meter !== null) {
-      const a = P(V(LAUNCH.x + 30, LAUNCH.y, LAUNCH.z)), h = 70, w = 10;
-      rr(ctx, a.x, a.y - h, w, h, 4); ctx.fillStyle = 'rgba(5, 6, 12, .7)'; ctx.fill();
-      ctx.fillStyle = 'rgba(255, 210, 63, .35)'; ctx.fillRect(a.x, a.y - h * 0.565, w, h * 0.13);
-      ctx.fillStyle = C.orange; ctx.fillRect(a.x + 2, a.y - h * meter, w - 4, h * meter);
+      const a = P(V(LAUNCH.x + 30, LAUNCH.y, LAUNCH.z)), h = 110, w = 14;
+      rr(ctx, a.x, a.y - h, w, h, 5); ctx.fillStyle = 'rgba(5, 6, 12, .75)'; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255, 246, 230, .3)'; ctx.stroke();
+      ctx.fillStyle = C.orange; ctx.fillRect(a.x + 3, a.y - h * meter, w - 6, h * meter);
+      // the light, where to let go: drawn over the fill, so it shows wherever the fill has got to
+      ctx.save();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#ffe27a'; ctx.shadowColor = 'rgba(255, 210, 63, .9)'; ctx.shadowBlur = 6;
+      ctx.strokeRect(a.x - 1.5, a.y - h * 0.565, w + 3, h * 0.13);
+      ctx.restore();
     }
     // what a basket was worth, rising off the hoop
-    const at = P(V(hoop.x, HOOP.y + 30, HOOP.z));
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    for (const p of pops) {
-      ctx.globalAlpha = Math.max(0, Math.min(1, 1 - p.t));
-      const size = (p.big ? 22 : p.word ? 15 : 18) * Math.min(1.3, Math.max(0.8, at.k / 1.2));
-      ctx.font = `400 ${size}px Bungee, Impact, sans-serif`;
-      const y = at.y - (p.y || 0) - Math.max(0, p.t) * 36;
-      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(16, 20, 42, .85)'; ctx.strokeText(p.text, at.x, y);
-      ctx.fillStyle = p.gold ? '#ffd23f' : C.cream; ctx.fillText(p.text, at.x, y);
+    words(pops, hoop, now);
+  }
+
+  // The words rising off the hoop: the newest lowest, just over the rim, and an older one nudged up over it as a new
+  // one comes. They rise as they fade, but stop at the foot of the scoreboard, so they never land on its numbers.
+  let lastNow = 0;
+  const laid = [];
+  function words(pops, hoop, now) {
+    const dt = Math.min(0.1, Math.max(0, (now - lastNow) / 1000)); lastNow = now;
+    laid.length = 0;
+    const shown = pops.filter(p => p.t >= 0);
+    if (!shown.length) return;
+    const at = P(V(hoop.x, HOOP.y + 8, HOOP.z)), k = Math.min(1.3, Math.max(0.8, at.k / 1.2));
+    const ceil = P(V(0, 178, CAGE.back)).y + 3, gap = 2 * k;   // the scoreboard's lower edge, and a little room
+    const h = p => (p.big ? 22 : p.word ? 15 : 18) * k;
+    // where each goes: rising from the rim, the older over the newer, and none above the scoreboard's foot
+    const y = shown.map(p => at.y - h(p) / 2 - Math.min(1, p.t) * 36);
+    for (let i = shown.length - 2; i >= 0; i--) y[i] = Math.min(y[i], y[i + 1] - (h(shown[i]) + h(shown[i + 1])) / 2 - gap);
+    for (let i = 0; i < shown.length; i++) {
+      y[i] = Math.max(y[i], ceil + h(shown[i]) / 2);
+      if (i) y[i] = Math.max(y[i], y[i - 1] + (h(shown[i - 1]) + h(shown[i])) / 2 + gap);
     }
-    ctx.globalAlpha = 1;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, ceil - 3, W, H); ctx.clip();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    shown.forEach((p, i) => {
+      // eased toward its place, so one nudged up by a newer one moves up rather than jumping
+      p.at = p.at == null ? y[i] : p.at + (y[i] - p.at) * Math.min(1, dt * 16);
+      ctx.globalAlpha = Math.max(0, Math.min(1, 1 - p.t));
+      ctx.font = `400 ${h(p)}px Bungee, Impact, sans-serif`;
+      ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(16, 20, 42, .85)'; ctx.strokeText(p.text, at.x, p.at);
+      ctx.fillStyle = p.gold ? '#ffd23f' : C.cream; ctx.fillText(p.text, at.x, p.at);
+      laid.push({ text: p.text, top: p.at - h(p) / 2, bottom: p.at + h(p) / 2 });
+    });
+    ctx.restore();
   }
 
   // Where a flick on the screen is pointing at the hoop: from the ball in the pocket along (dx, dy), as far up the
@@ -424,5 +457,6 @@ export function createDraw(canvas) {
     return onDepth(a.x + dx * s, rim.y, HOOP.z).x;
   }
 
-  return { resize, repaint, frame, cabinet, aimAt, at: P };
+  // (for the tests: the lamps as last lit, and where the words were last drawn under the scoreboard's foot)
+  return { resize, repaint, frame, cabinet, aimAt, at: P, lamps, get words() { return { laid: [...laid], foot: P(V(0, 178, CAGE.back)).y }; } };
 }
