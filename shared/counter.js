@@ -152,10 +152,12 @@ export function shelve(el, prizes) {
     else if (OUTRIGHT.includes(p)) el.append(notYet(p));
   }
 }
-// How much of each set is on the shelf: '4 of 7 plush · 2 of Topple's 5 prizes · 1 of 8 trophies'.
+// How much of each set is on the shelf: '4 of 7 plush · 2 of Topple's 5 prizes · 1 of 8 trophies'. Each set's words
+// are held together, so a narrow phone breaks the line between sets, never leaving 'trophies' on a line of its own.
 export function collected(prizes) {
   const got = set => set.filter(p => prizes[p.id] > 0).length;
-  return `${got(PLUSH)} of ${PLUSH.length} plush · ${got(TRINKETS)} of Topple's ${TRINKETS.length} prizes · ${got(TROPHIES)} of ${TROPHIES.length} trophies`;
+  return [`${got(PLUSH)} of ${PLUSH.length} plush`, `${got(TRINKETS)} of Topple's ${TRINKETS.length} prizes`, `${got(TROPHIES)} of ${TROPHIES.length} trophies`]
+    .map(set => set.replaceAll(' ', '\u00a0')).join(' · ');
 }
 // Where each set is won, as a tap on its outline says.
 const WON_AT = p => PLUSH.includes(p)

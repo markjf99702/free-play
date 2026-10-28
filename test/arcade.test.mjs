@@ -179,9 +179,10 @@ test('the prize counter and the tables pay-outs', () => {
 
 test("the line under the shelf counts each set won outright: '4 of 7 plush'", async () => {
   const { collected } = await import('../shared/counter.js');
-  assert.equal(collected({}), "0 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
+  // (each set's words held together with no-break spaces, so a narrow phone breaks the line only between sets)
+  assert.deepEqual(collected({}).split(' '), ['0\u00a0of\u00a07\u00a0plush', '·', "0\u00a0of\u00a0Topple's\u00a05\u00a0prizes", '·', '0\u00a0of\u00a08\u00a0trophies']);
   const some = { 'plush-frog': 3, 'plush-star': 1, 'plush-bear': 1, 'plush-alien': 2, 'trinket-gem': 1, 'trophy-hoops': 4, lollipop: 9, giraffe: 1 };
-  assert.equal(collected(some), "4 of 7 plush · 1 of Topple's 5 prizes · 1 of 8 trophies", 'each counted once, however many, and what was traded for left out');
+  assert.equal(collected(some).replaceAll('\u00a0', ' '), "4 of 7 plush · 1 of Topple's 5 prizes · 1 of 8 trophies", 'each counted once, however many, and what was traded for left out');
   const { OUTRIGHT, SHELF, PRIZES } = await import('../shared/prizes.js');
   assert.deepEqual(OUTRIGHT, SHELF.filter(p => !PRIZES.includes(p)), 'everything on the shelf but what the counter sells');
   assert.deepEqual(OUTRIGHT.filter(p => p.rare).map(p => p.id), ['plush-star', 'trinket-gem'], "the rare ones, a '?' until won");

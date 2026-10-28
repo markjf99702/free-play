@@ -70,9 +70,11 @@ await page.evaluate(() => document.fonts.ready);
 assert.equal(await page.textContent('#tix'), '0');
 assert.equal(await page.locator('.cab').count(), 8);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
+// (the line under the shelf, its no-break spaces read as spaces: see collected() in shared/counter.js)
+const tally = async sel => (await page.textContent(sel)).replaceAll('\u00a0', ' ');
 assert.equal(await page.locator('#shelf .fp-item').count(), OUTRIGHT.length);
 assert.equal(await page.locator('#shelf .fp-yet').count(), OUTRIGHT.length, 'every one of them an outline');
-assert.equal(await page.textContent('#collected'), "0 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
+assert.equal(await tally('#collected'), "0 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
 // Each cabinet says what its machine is before it's been played: Hoops' hoop starts to slide 20 seconds in.
 assert.equal(await page.textContent('#hoopsStat'), 'Forty-five seconds. Twenty\u00a0in, the hoop starts to slide.');
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
@@ -519,7 +521,7 @@ assert.deepEqual(places.slice(0, 7), [
 ]);
 assert.deepEqual(places.slice(7, 12).map(p => p[0]), ['Plastic watch, not won yet', 'Toy car, not won yet', 'Lucky keyring, not won yet', 'Wind-up robot, not won yet', 'Something rare from Topple, not won yet']);
 assert.equal(places.length, OUTRIGHT.length);
-assert.equal(await page.textContent('#collected'), "2 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
+assert.equal(await tally('#collected'), "2 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
 assert.equal(await page.locator('#shelf .fp-rare').evaluateAll(els => els.map(e => e.textContent).join('')), '', "(a '?' that's drawn, so the shelf's words are its names)");
 for (const [label, said] of [
   ['Plush bear, not won yet', "Plush bear. Not won yet. It's in Clutch's heap."],
@@ -533,9 +535,9 @@ for (const [label, said] of [
 }
 await pocket({ tickets: 50, prizes: Object.fromEntries(OUTRIGHT.map(p => [p.id, 1])) });
 assert.equal(await page.locator('#shelf .fp-yet').count(), 0, 'with everything won, no outlines');
-assert.equal(await page.textContent('#collected'), "7 of 7 plush · 5 of Topple's 5 prizes · 8 of 8 trophies");
+assert.equal(await tally('#collected'), "7 of 7 plush · 5 of Topple's 5 prizes · 8 of 8 trophies");
 await page.click('#trade');
-assert.equal(await page.textContent('.fp-collected'), "7 of 7 plush · 5 of Topple's 5 prizes · 8 of 8 trophies", 'and the same in the counter');
+assert.equal(await tally('.fp-collected'), "7 of 7 plush · 5 of Topple's 5 prizes · 8 of 8 trophies", 'and the same in the counter');
 await page.click('.fp-x');
 
 // Scrolling the counter scrolls the counter, not the floor behind it: opened from the foot of the floor and scrolled
