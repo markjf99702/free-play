@@ -337,3 +337,37 @@ test("today's special: one machine a day, the same for everyone, every one in tu
   assert.ok(meets(t, { score: t.goal, table: t.table }));
   assert.ok(!meets(t, { score: t.goal * 10, table: other }), 'not on another table');
 });
+
+test("a trophy for each machine's hardest feat: on the shelf, together at the end, never at the counter", async () => {
+  const { TROPHIES, SHELF, PRIZES, trophy } = await import('../shared/prizes.js');
+  assert.deepEqual(TROPHIES.map(t => t.id), ['trophy-roll-up', 'trophy-tilt-classic', 'trophy-tilt-space', 'trophy-tilt-haunted', 'trophy-highrise', 'trophy-popgun', 'trophy-bonkers', 'trophy-hoops']);
+  assert.deepEqual(SHELF.slice(-TROPHIES.length), TROPHIES, 'together at the end of the shelf');
+  for (const t of TROPHIES) {
+    assert.ok(!PRIZES.includes(t) && !('cost' in t), `${t.name} isn't for sale`);
+    assert.match(t.say, /^the .+ trophy$/);
+    assert.match(t.plinth, /^#[0-9a-f]{6}$/, `${t.name} stands on a plinth in its machine's colours`);
+    assert.ok(t.feat && !/^TILT_/.test(t.feat), `${t.name} says what it's for`);
+    assert.equal(trophy(t.id), t);
+  }
+  assert.equal(new Set(SHELF.map(p => p.id)).size, SHELF.length, 'every id on the shelf is its own');
+  // what each machine's rules count as its feat
+  const { feat: popgun, FEAT: P } = await import('../popgun/js/gallery.js');
+  assert.ok(popgun({ over: true, shots: 23, hits: 23 }), 'every cork a hit, the bell among them');
+  assert.ok(!popgun({ over: true, shots: 20, hits: 20 }), 'twenty of twenty, without the bell, is not it');
+  assert.ok(!popgun({ over: true, shots: 26, hits: 25 }));
+  assert.ok(!popgun({ over: false, shots: 23, hits: 23 }), 'not until the round is over');
+  assert.equal(P.corks, 23);
+  const { feat: bonkers } = await import('../bonkers/js/burrow.js');
+  assert.ok(bonkers({ over: true, misses: 0, bonks: 40 }));
+  assert.ok(!bonkers({ over: true, misses: 0, bonks: 39 }), 'a round with no miss, but too few bonked');
+  assert.ok(!bonkers({ over: true, misses: 1, bonks: 52 }));
+  assert.ok(!bonkers({ over: true, misses: 0, bonks: 0 }), "a round with no swings isn't it");
+  const { feat: hoops } = await import('../hoops/js/court.js');
+  assert.ok(hoops({ over: true, baskets: 65 }));
+  assert.ok(!hoops({ over: true, baskets: 64 }));
+  const { nineCalls } = await import('../roll-up/js/daily.js');
+  const ball = hit => ({ value: 30, points: 60, hit });
+  assert.ok(nineCalls(Array.from({ length: 9 }, () => ball(true))));
+  assert.ok(!nineCalls([...Array.from({ length: 8 }, () => ball(true)), ball(false)]));
+  assert.ok(!nineCalls(Array.from({ length: 8 }, () => ball(true))), "eight balls rolled isn't nine calls");
+});

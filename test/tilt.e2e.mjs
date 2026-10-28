@@ -651,6 +651,26 @@ await page.waitForFunction(() => typeof window.tilt === 'object', null, { timeou
 await ctx.setOffline(false);
 down = false;
 
+// A table's hardest feat (here the rules are told it's done: their own tests do it for real) puts its trophy on the
+// shelf there and then, the backbox says so, and so does the end of the game.
+{
+  const tp = await ctx.newPage();
+  tp.on('pageerror', e => problems.push('trophy: ' + e.message));
+  await tp.goto(base + '?table=space');
+  await tp.waitForFunction(() => !!window.tilt);
+  await tp.click('#startBtn');
+  const had = await tp.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-tilt-space'] || 0);
+  await tp.evaluate(() => { window.tilt.game.feat('trophy-tilt-space'); window.tilt.game.feat('trophy-tilt-space'); });
+  assert.equal(await tp.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-tilt-space']), had + 1, 'once a game');
+  await tp.waitForFunction(() => document.getElementById('display').textContent === 'Trophy!', null, { timeout: 3000 });
+  await tp.evaluate(() => { window.tilt.game.score = 12340; });
+  await tp.click('#menuBtn');
+  await tp.evaluate(() => { document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
+  await tp.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+  assert.equal(await tp.textContent('#overFeat'), '🏆 The Tilt Space trophy is on your shelf.');
+  await tp.close();
+}
+
 // Today's special on its table, on a day that's Tilt's (Oct 29, 2026: 50,000 on Haunted House): the title card says
 // so, and a game there that makes it pays 25 more tickets with its own; on another table it doesn't.
 {

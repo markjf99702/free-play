@@ -351,6 +351,29 @@ down = false;
   await calm.close();
 }
 
+// All nine calls on today's card: the Roll Up trophy goes on the shelf, and the card says so. (Nine called balls, left
+// just before the card came up: it opens on the card's end.)
+{
+  const nine = await ctx.newPage();
+  nine.on('pageerror', e => problems.push('nine calls: ' + e.message));
+  await nine.goto(base + 'roll-up/');
+  await nine.evaluate(async () => {
+    const { cardFor, dayKey } = await import(new URL('js/daily.js', location.href).href);
+    const c = cardFor(dayKey());
+    const balls = c.calls.map((v, i) => ({ value: v, points: v * 2 * (i === c.golden ? 2 : 1), golden: i === c.golden, call: v, hit: true }));
+    const s = JSON.parse(localStorage.getItem('free-play.roll-up'));
+    delete s.daily;
+    localStorage.setItem('free-play.roll-up', JSON.stringify({ ...s, going: { key: c.key, score: balls.reduce((t, b) => t + b.points, 0), balls } }));
+  });
+  const had = await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up'] || 0);
+  await nine.reload();
+  await nine.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 10000 });
+  assert.equal(await nine.textContent('#overFeat'), '🏆 All nine calls! The Roll Up trophy is on your shelf.');
+  assert.equal(await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up']), had + 1);
+  assert.equal(await nine.evaluate(() => rollUp.saved.daily.trophy), true);
+  await nine.close();
+}
+
 // Three balls rolled too hard, over the rings into the 10: the end card says what to try next time.
 {
   const hard = await ctx.newPage();

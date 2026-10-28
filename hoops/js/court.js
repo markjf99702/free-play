@@ -334,6 +334,10 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
   };
 }
 
+// The trophy's feat: 65 baskets in a round.
+export const FEAT = { baskets: 65 };
+export const feat = c => c.over && c.baskets >= FEAT.baskets;
+
 // What the end card says to try next time, when it's plain from the round: most of three or more misses fell short, or
 // went long. Otherwise null.
 export function tipFor(c) {

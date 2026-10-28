@@ -13,6 +13,7 @@ import * as wallet from '../../shared/wallet.js';
 import { dayKey } from '../../shared/calendar.js';
 import { count } from '../../shared/records.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
+import { trophy } from '../../shared/prizes.js';
 import { openCounter, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
@@ -34,7 +35,20 @@ const out = {
   sound: (n, o) => play(n, o),
   show: (text, secs) => say(text, secs),
   over: g => gameOver(g),
+  feat: id => won(id),
 };
+// A table's hardest feat, done (see Game.feat()): its trophy goes on the shelf there and then, the backbox says so,
+// and the end of the game says so again.
+let trophies = [];
+function won(id) {
+  const t = trophy(id);
+  if (!t) return;
+  wallet.give(t);
+  trophies.push(t);
+  say('Trophy!', 2.4);
+  play('award');
+  speak(`The ${t.name} is on your shelf.`);
+}
 let paused = false;
 
 // ---------- saved things ----------
@@ -243,6 +257,7 @@ function startGame() {
   paused = false;
   msgs.length = 0; // nothing left over from the last game
   match = null;
+  trophies = [];
   games++;
   game.start('play');
   play('start');
@@ -332,6 +347,8 @@ function gameOver(g, { ended = false } = {}) {
   const bonus = claim('tilt', { score, table: Object.keys(TABLES).find(id => TABLES[id] === table) });
   $('overSpecial').textContent = endLine(bonus);
   $('overSpecial').hidden = !bonus;
+  $('overFeat').textContent = trophies.map(t => `🏆 The ${t.name} is on your shelf.`).join(' ');
+  $('overFeat').hidden = !trophies.length;
   stopFeed();
   setTimeout(() => {
     if (m?.matched) play('match');

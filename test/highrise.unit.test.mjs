@@ -79,7 +79,7 @@ test('a ticket a floor, the minor bonus if it was taken, and the major for the t
 test('the trophy has a place on the shelf', () => {
   const ids = [...PRIZES, ...PLUSH, ...TRINKETS, ...TROPHIES].map(p => p.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(TROPHIES[0].id, 'trophy-highrise');
+  assert.ok(TROPHIES.some(t => t.id === 'trophy-highrise'));
 });
 
 // How hard it is, pinned: Mark played it and signed it off. A player who presses with about 35 ms of spread (and 5 ms

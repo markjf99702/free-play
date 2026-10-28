@@ -150,9 +150,12 @@ export function shelfItem(p, n) {
     c.setAttribute('aria-hidden', 'true');
     b.append(c);
   }
+  // a trophy stands on a plinth in its machine's colours, and a tap says what it's for
+  if (p.plinth) { b.classList.add('fp-trophy'); b.style.setProperty('--plinth', p.plinth); }
+  const said = p.feat ? `${p.name}, for ${p.feat}` : p.name;
   b.addEventListener('click', () => {
     if (performance.now() - lastTrade < SAME_TAP) return;
-    toast(n > 1 ? `${p.name}. You have ${fmt(n)}.` : `${p.name}.`);
+    toast(n > 1 ? `${said}. You have ${fmt(n)}.` : `${said}.`);
   });
   return b;
 }

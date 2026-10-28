@@ -173,8 +173,10 @@ assert.ok(score > 200, `a quick hand scores (${score})`);
 assert.ok(await page.isHidden('#overTip'), 'a round of moles bonked when they were up has nothing to say about waiting');
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.match(await page.textContent('#overHow'), /^\d+ moles bonked in 45 seconds\. A ticket for every 15 points\.$/);
-await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.`, { timeout: 2000 }).catch(() => {});
-assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.`, 'what a screen reader hears at the end of the round');
+// (a hand steady enough for the trophy's feat wins it, and the screen reader hears that too)
+const heard = `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.` + (await page.isVisible('#overFeat') ? ' ' + (await page.textContent('#overFeat')).slice(3) : '');
+await page.waitForFunction(t => document.getElementById('live').textContent === t, heard, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), heard, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 15));
 assert.equal(await page.evaluate(() => bonkers.saved.best), score);
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.bonkers), 1, "the round is counted in the arcade's totals");
@@ -274,6 +276,16 @@ await page.evaluate(() => { bonkers.speed = 20; });
 await page.waitForSelector('#over:not([hidden])', { timeout: 20000 });
 assert.equal(await page.textContent('#overTip'), 'Wait for the whole mole: a nose is only a peek.');
 assert.ok(await page.isVisible('#overTip'));
+assert.ok(await page.isHidden('#overFeat'));
+
+// A round of forty moles bonked and not one miss (counted so here: the rules' own test checks the feat) puts the
+// Bonkers trophy on the shelf, and the end card says so.
+await page.click('#again');
+const trophies = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-bonkers'] || 0);
+await page.evaluate(() => { const b = bonkers.burrow; Object.defineProperty(b, 'misses', { get: () => 0 }); Object.defineProperty(b, 'bonks', { get: () => 40 }); bonkers.speed = 20; });
+await page.waitForSelector('#over:not([hidden])', { timeout: 20000 });
+assert.equal(await page.textContent('#overFeat'), '🏆 Forty moles and not one miss! The Bonkers trophy is on your shelf.');
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-bonkers'] || 0), trophies + 1);
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

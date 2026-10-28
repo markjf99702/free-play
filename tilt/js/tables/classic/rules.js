@@ -146,6 +146,8 @@ export class Classic extends Game {
           l.bumpersLit = true;
           this.show(l.mult + 'x bonus', 1.6);
           this.sound('award');
+          // the hardest feat on this table: the top lanes made four times on one ball, for the 5x bonus
+          if (l.mult === MULT_MAX) this.feat('trophy-tilt-classic');
           this.after(0.5, () => { l.lanes = [false, false, false]; });
         }
       } else if (o.id === 'saucer') {

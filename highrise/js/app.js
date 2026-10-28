@@ -7,7 +7,7 @@ import { createTower, payout, FLOORS, MINOR } from './tower.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { TROPHIES } from '../../shared/prizes.js';
+import { trophy } from '../../shared/prizes.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
@@ -144,7 +144,7 @@ function endGame() {
   const built = tower.built, top = built >= FLOORS, won = payout({ built, tookMinor });
   const first = !saved.games;
   wallet.pay(won);
-  if (top) wallet.give(TROPHIES[0]);
+  if (top) wallet.give(trophy('trophy-highrise'));
   saved.games++;
   count({ round: 'highrise' });
   // today's special: 25 more tickets, out of the slot with the rest
@@ -160,7 +160,7 @@ function endGame() {
   save();
   // the trophy, big, over a top-out's heading
   $('overTrophy').hidden = !top;
-  $('overTrophy').textContent = TROPHIES[0].emoji;
+  $('overTrophy').textContent = trophy('trophy-highrise').emoji;
   $('overT').textContent = top ? 'Topped out!' : tookMinor ? 'Floor 11, and the minor prize' : built >= MINOR ? `${words[built]}. So close.` : built ? words[built] : 'Not a floor';
   $('overHow').textContent = top ? 'All fifteen floors. The Highrise trophy is on your shelf.'
     : tookMinor ? `A ticket for every floor, and 25 for stopping at the minor prize.`

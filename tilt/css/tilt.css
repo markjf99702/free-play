@@ -223,4 +223,12 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
      and the gaps, over about 19 times the type's size) */
   #over .final { font-size: min(40px, calc((min(720px, 100vw - max(12px, env(safe-area-inset-left, 0px)) - max(12px, env(safe-area-inset-right, 0px))) - 86px) / 19)); }
   #over .row { flex-direction: column; }
+  /* (today's special and a table's trophy, on a narrow third of the card: smaller still, so the strip of tickets keeps
+     its room) */
+  #over .fp-special { font-size: 12px; line-height: 1.3; padding: 2px 8px; margin-bottom: 6px; }
+  /* (and with both up, they sit closer and the strip hangs shorter) */
+  #over .words:has(#overSpecial:not([hidden])):has(#overFeat:not([hidden])) .fp-special { margin-bottom: 4px; padding: 1px 8px; }
+  #over .words:has(#overSpecial:not([hidden])):has(#overFeat:not([hidden])) .note { margin-bottom: 6px; }
+  #over .words:has(#overSpecial:not([hidden])):has(#overFeat:not([hidden])) .fp-payout { min-height: 44px; margin-top: 4px; }
+  #over .words:has(#overSpecial:not([hidden])):has(#overFeat:not([hidden])) .fp-strip { max-height: 36px; }
 }

@@ -79,6 +79,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   transition: transform .12s ease;
 }
 .fp-item:active { transform: scale(.9); }
+/* a trophy: on a little plinth in its machine's colours */
+.fp-trophy::after {
+  content: ""; position: absolute; left: 2px; right: 2px; bottom: 1px; height: 5px; border-radius: 2px;
+  background: var(--plinth); box-shadow: 0 0 6px var(--plinth);
+}
+.fp-trophy sub { z-index: 1; } /* (its count over the plinth, not under it) */
 .fp-shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--fp-body); color: var(--fp-ink); background: var(--fp-red); border-radius: 999px; padding: 1px 5px; }
 /* Four prizes a row, on a phone as on a computer, so all sixteen fit on about one phone screen (see the phone's sizes
    below). */

@@ -1267,3 +1267,54 @@ test('Haunted: a tilt in the basement ends the ball with no bonus, and the next 
   assert.equal(g.floor, 0);
   assert.equal(g.score, score);
 });
+
+// Each table's hardest feat, for its trophy: the rules say so once a game, the moment it's done, and only in a game
+// being played (the demo behind the title card wins nothing).
+test("each table's trophy: Classic's 5x bonus, Space's five jackpots, Haunted House's door opened three times", () => {
+  const feats = [], out = { feat: id => feats.push(id) };
+  // Classic: the top lanes made four times on one ball
+  const lanes = g => { for (const i of [0, 1, 2]) g.event({ type: 'enter', obj: g.table.lanes[i], ball: g.world.balls[0], speed: 500 }); g.lamps.lanes = [false, false, false]; };
+  const c = new Classic({ ...NORMAL }, out);
+  c.start('play');
+  c.skillOn = false;
+  for (let k = 0; k < 3; k++) lanes(c);
+  assert.equal(c.lamps.mult, 4);
+  assert.deepEqual(feats, [], '4x is not yet the feat');
+  lanes(c);
+  assert.equal(c.lamps.mult, 5);
+  assert.deepEqual(feats, ['trophy-tilt-classic']);
+  lanes(c);
+  assert.deepEqual(feats, ['trophy-tilt-classic'], 'once a game');
+  const demo = new Classic({ ...NORMAL }, out);
+  demo.start('attract');
+  demo.skillOn = false;
+  for (let k = 0; k < 4; k++) lanes(demo);
+  assert.equal(demo.lamps.mult, 5);
+  assert.deepEqual(feats, ['trophy-tilt-classic'], 'the demo behind the title card won a trophy');
+  // Space: the fifth jackpot of the game
+  const s = new Space({ ...NORMAL }, out);
+  s.start('play');
+  s.state = 'live';
+  const [first] = startMultiball(s);
+  for (let k = 1; k <= 5; k++) {
+    rampShot(s, first);
+    assert.equal(s.jackpots, k, `jackpot ${k} counted`);
+    assert.deepEqual(feats.slice(1), k < 5 ? [] : ['trophy-tilt-space'], `after ${k} jackpots`);
+    intoDock(s, first);
+    first.held = null;
+  }
+  // Haunted House: the door opened a third time (two ghosts, then three, then four)
+  const h = new Haunted({ ...NORMAL }, out);
+  h.start('play');
+  const b = h.world.balls[0];
+  h.event({ type: 'cross', obj: h.table.laneExit, ball: b, dir: -1, speed: 1000 });
+  Object.assign(b, { x: HMID, y: 600, held: { until: Infinity } });
+  for (const need of [2, 3, 4]) {
+    for (let k = 0; k < need; k++) { glow(h, k); hitGhost(h, k, b); }
+    assert.ok(h.lamps.doorOpen);
+    assert.deepEqual(feats.slice(2), need < 4 ? [] : ['trophy-tilt-haunted'], `the door open ${h.doors} times`);
+    h.update(0);
+    b.held = null;
+    enter(h, h.table.trapdoor, b);
+  }
+});

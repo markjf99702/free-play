@@ -24,7 +24,8 @@ export class Haunted extends Game {
   reset() {
     super.reset();
     this.extraBallUsed = false;
-    this.opened = 0; // times the door has opened this game
+    this.opened = 0; // times the ball has gone through the door this game
+    this.doors = 0;  // times the door has opened this game: three is the table's hardest feat
     Object.assign(this.lamps, {
       lanes: [false, false, false], skillLane: -1, mult: 1, caught: 0, need: NEED[0], doorOpen: false, extraBallLit: false,
     });
@@ -151,6 +152,7 @@ export class Haunted extends Game {
       l.doorOpen = true; l.caught = 0;
       this.show('The door is open', 2);
       this.sound('award');
+      if (++this.doors === 3) this.feat('trophy-tilt-haunted');
     } else this.show('Ghost ' + fmt(points), 1.2);
   }
 

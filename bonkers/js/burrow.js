@@ -253,6 +253,10 @@ export function createBurrow({ random = Math.random } = {}) {
   };
 }
 
+// The trophy's feat: a round of 40 moles bonked, or more, and not one miss.
+export const FEAT = { bonks: 40 };
+export const feat = b => b.over && b.misses === 0 && b.bonks >= FEAT.bonks;
+
 // What the end card says to try next time, when it's plain from the round: three or more swings too soon, or at a
 // mole only peeking. Otherwise null.
 export const tipFor = b => (b.early >= 3 ? 'Wait for the whole mole: a nose is only a peek.' : null);

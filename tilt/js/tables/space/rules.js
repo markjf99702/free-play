@@ -11,6 +11,7 @@ export const SCORES = {
   bonusRamp: 2000, bonusOrbit: 1000,
 };
 const MULT_MAX = 5, PLANETS = 8;
+const FEAT_JACKPOTS = 5; // the table's hardest feat, for its trophy: five jackpots in a game
 const fmt = n => n.toLocaleString('en-US');
 
 export class Space extends Game {
@@ -23,6 +24,7 @@ export class Space extends Game {
     super.reset();
     this.extraBallUsed = false;
     this.jackpot = SCORES.jackpot; // what the next jackpot is worth; ramps raise it
+    this.jackpots = 0;             // jackpots scored this game: five is the table's hardest feat
     Object.assign(this.lamps, {
       lanes: [false, false, false], mult: 1, planets: 0, extraBallLit: false,
       lockLit: false, multiball: false, jackpotLit: false, skill: false,
@@ -166,6 +168,7 @@ export class Space extends Game {
       this.sound('jackpot');
       this.flasher = 1;
       this.stats.jackpots++;
+      if (++this.jackpots === FEAT_JACKPOTS) this.feat('trophy-tilt-space');
     }
   }
 

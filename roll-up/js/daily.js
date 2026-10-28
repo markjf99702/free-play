@@ -44,6 +44,9 @@ export function settle(s, today = dayKey()) {
   return { ...rest, games: (Number(s.games) || 0) + 1, longest: Math.max(Number(s.longest) || 0, streak), daily: { key: g.key, score, balls, won, streak, unfinished: true } };
 }
 
+// The trophy's feat: all nine calls hit on a day's card.
+export const nineCalls = balls => Array.isArray(balls) && balls.length === BALLS && balls.every(b => b && b.hit);
+
 // What a ball is worth: its hole, doubled for a called shot, doubled again for the golden ball.
 export function points(value, { call = null, golden = false } = {}) {
   const hit = call != null && value === call;

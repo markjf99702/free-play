@@ -2,13 +2,14 @@
 // tickets at the end. js/court.js has the balls, the hoop and the rules, js/draw.js draws the machine, and
 // js/sound.js makes the noises. Tickets go into the arcade's wallet (../shared/wallet.js) at the end of a round.
 
-import { createCourt, ticketsFor, tipFor, power, flickFor, readFlick, READ, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
+import { createCourt, ticketsFor, tipFor, power, flickFor, readFlick, READ, FLICK, SWEET, HOOP, LAUNCH, feat } from './court.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
+import { trophy } from '../../shared/prizes.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
@@ -157,6 +158,11 @@ function endRound() {
   wallet.pay(won);
   saved.rounds++;
   count({ round: 'hoops' });
+  // the trophy, for the machine's hardest feat: onto the shelf now
+  const feated = feat(court);
+  if (feated) wallet.give(trophy('trophy-hoops'));
+  $('overFeat').textContent = feated ? `🏆 Sixty-five baskets! The ${trophy('trophy-hoops').name} is on your shelf.` : '';
+  $('overFeat').hidden = !feated;
   // today's special: 25 more tickets, out of the slot with the rest
   const bonus = claim('hoops', { score });
   $('overSpecial').textContent = endLine(bonus);
@@ -176,7 +182,7 @@ function endRound() {
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}${swishes}. `
     + (won ? 'A ticket for every 4 points.' : shortOfATicket(score, 4));
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `${onList(rank)}Best: ${saved.best.toLocaleString('en-US')}.`);
-  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won + bonus)}.${bonus ? " Today's special!" : ''}`);
+  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won + bonus)}.${bonus ? " Today's special!" : ''}${feated ? ` ${$('overFeat').textContent.slice(3)}` : ''}`);
   $('over').hidden = false;
   feeding();
   // a new best rings out once the tickets are out, not over them

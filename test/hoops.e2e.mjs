@@ -262,8 +262,10 @@ assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')}
   const said = !sw ? '' : n === 1 ? ', a swish' : sw === n ? (n === 2 ? ', both of them swishes' : `, all ${n} of them swishes`) : sw === 1 ? ', 1 of them a swish' : `, ${sw} of them swishes`;
   assert.equal(await page.textContent('#overHow'), `${n} ${n === 1 ? 'basket' : 'baskets'} from ${shots} ${shots === 1 ? 'shot' : 'shots'}${said}. A ticket for every 4 points.`);
 }
-await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, { timeout: 2000 }).catch(() => {});
-assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, 'what a screen reader hears at the end of the round');
+// (a steady enough hand makes 65 baskets, and wins the trophy: the screen reader hears that too)
+const heard = `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.` + (await court('baskets') >= 65 ? ' Sixty-five baskets! The Hoops trophy is on your shelf.' : '');
+await page.waitForFunction(t => document.getElementById('live').textContent === t, heard, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), heard, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 4));
 assert.equal(await page.evaluate(() => hoops.saved.best), score);
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.hoops), 1, "the round is counted in the arcade's totals");
@@ -341,6 +343,15 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 20000 });
 assert.deepEqual(await page.evaluate(() => [hoops.court.misses, hoops.court.short]), [4, 4]);
 assert.equal(await page.textContent('#overTip'), 'Most fell short: flick a little harder.');
 assert.ok(await page.isVisible('#overTip'));
+assert.ok(await page.isHidden('#overFeat'));
+
+// A round of 65 baskets (counted so here) puts the Hoops trophy on the shelf, and the end card says so.
+await page.click('#again');
+const trophies = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-hoops'] || 0);
+await page.evaluate(() => { Object.defineProperty(hoops.court, 'baskets', { get: () => 65 }); hoops.speed = 20; });
+await page.waitForSelector('#over:not([hidden])', { timeout: 20000 });
+assert.equal(await page.textContent('#overFeat'), '🏆 Sixty-five baskets! The Hoops trophy is on your shelf.');
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-hoops'] || 0), trophies + 1);
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

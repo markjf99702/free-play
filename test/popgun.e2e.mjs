@@ -186,8 +186,10 @@ await countsAlong(await tickets(), Math.floor(score / 30));
 assert.ok(score > 100, `a steady hand scores (${score})`);
 assert.ok(await page.isHidden('#overTip'), 'a round led well has nothing to say about aiming ahead');
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
-await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, { timeout: 2000 }).catch(() => {});
-assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, 'what a screen reader hears at the end of the round');
+// (a hand steady enough for the trophy's feat wins it, and the screen reader hears that too)
+const heard = `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.` + (await page.isVisible('#overFeat') ? ' ' + (await page.textContent('#overFeat')).slice(3) : '');
+await page.waitForFunction(t => document.getElementById('live').textContent === t, heard, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), heard, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 30));
 assert.equal(await page.evaluate(() => popgun.saved.best), score);
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.popgun), 1, "the round is counted in the arcade's totals");
@@ -297,6 +299,20 @@ await page.evaluate(() => { window.__sounds.length = 0; popgun.speed = 10; });
 await page.waitForTimeout(6000);
 assert.deepEqual(await page.evaluate(() => window.__sounds.filter(([f]) => f === 'arrive').length), 0, 'arrivals chimed behind the end card');
 assert.ok(await page.isHidden('#overTip'), "corks at the moon weren't behind anything");
+assert.ok(await page.isHidden('#overFeat'), 'one hit from twenty won the trophy');
+
+// A round with every cork a hit, the bell among them (counted so here: the rules' own test plays the feat), puts the
+// Popgun trophy on the shelf, and the end card says so.
+await page.click('#again');
+const trophies = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-popgun'] || 0);
+await page.evaluate(() => { const g = popgun.gallery; Object.defineProperty(g, 'shots', { get: () => 23 }); Object.defineProperty(g, 'hits', { get: () => 23 }); popgun.speed = 10; });
+while (!(await page.evaluate(() => popgun.gallery.over))) {
+  await page.waitForFunction(() => popgun.gallery.ready || popgun.gallery.over);
+  await page.evaluate(() => popgun.fire(560 - 92, 70));
+}
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+assert.equal(await page.textContent('#overFeat'), '🏆 Every cork a hit! The Popgun trophy is on your shelf.');
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{}').prizes?.['trophy-popgun'] || 0), trophies + 1);
 
 // A round fired dead on the targets as they are: the corks land behind them, and the end card says to aim further ahead.
 await page.click('#again');

@@ -185,6 +185,10 @@ export function tipFor(g) {
   return g.behind >= 2 && g.behind * 2 >= misses ? 'Most corks landed just behind: aim further ahead.' : null;
 }
 
+// The trophy's feat: a round with every cork a hit, the bell among them (its three more corks too, so 23 or more).
+export const FEAT = { corks: CORKS + 3 };
+export const feat = g => g.over && g.shots >= FEAT.corks && g.hits === g.shots;
+
 // The tickets a round's score pays: one for every PER_TICKET points.
 export const PER_TICKET = 30;
 export const ticketsFor = score => Math.floor(score / PER_TICKET);

@@ -17,7 +17,7 @@ export const MATCH_TICKETS = 10;
 export class Game {
   constructor(settings, out = {}) {
     this.settings = settings;
-    this.out = out; // { sound(name, opts), show(text, secs), over(game) }
+    this.out = out; // { sound(name, opts), show(text, secs), over(game), feat(trophy id) }
     this.mode = 'attract';
     this.reset();
   }
@@ -28,6 +28,7 @@ export class Game {
     this.score = 0;
     this.ballNo = 0;
     this.extraBalls = 0;
+    this.feats = new Set(); // the table's hardest feat, once it's done this game (see feat())
     this.lamps = { shootAgain: false, ballSave: false };
     this.tiltMeter = 0;
     this.warnings = 0;
@@ -47,6 +48,13 @@ export class Game {
   wsecs(secs) { return secs * (this.settings.timeScale ?? 1); }
   sound(name, o) { this.out.sound?.(name, o); }
   show(text, secs = 1.6) { this.out.show?.(text, secs); }
+  // A table's hardest feat, done in a game being played (not the demo): once a game, it's that table's trophy, which
+  // the page puts on the shelf there and then.
+  feat(id) {
+    if (this.mode !== 'play' || this.feats.has(id)) return;
+    this.feats.add(id);
+    this.out.feat?.(id);
+  }
   after(secs, fn) { this.timers.push({ at: this.time + this.wsecs(secs), fn }); }
 
   start(mode = 'play') {
