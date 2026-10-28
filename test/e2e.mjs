@@ -752,10 +752,11 @@ for (const reducedMotion of ['no-preference', 'reduce']) {
   await c.close();
 }
 
-// In a Safari tab on an iPhone, a line under the pocket says to add Free Play to the Home Screen so Safari keeps the
-// tickets (Safari clears a site's saves after seven days of use without a visit; a Home Screen app keeps its own
-// count), with the row of machines still on the first screen, until its × puts it away for good. Not in the Home
-// Screen app, not in Chrome on an iPhone, and not here in Chromium.
+// In a Safari tab on an iPhone, a line under the pocket says to add Free Play to the Home Screen and play there, so
+// Safari can't clear the tickets (Safari clears a site's saves after seven days of use without a visit; a Home Screen
+// app keeps its own count), and that it starts there with an empty pocket (a Home Screen app has its own storage, so
+// what was won in the tab doesn't come along), with the row of machines still on the first screen, until its × puts it
+// away for good. Not in the Home Screen app, not in Chrome on an iPhone, and not here in Chromium.
 {
   assert.equal(await page.isHidden('#keep'), true, 'the Home Screen line shows in Chromium on a computer');
   const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
@@ -771,7 +772,7 @@ for (const reducedMotion of ['no-preference', 'reduce']) {
   };
   const tab = await phone(false);
   assert.equal(await tab.isVisible('#keep'), true, "in a Safari tab on an iPhone there's no line about the Home Screen");
-  assert.equal((await tab.textContent('#keep span')).replaceAll('\u00a0', ' '), 'Add Free Play to your Home Screen so Safari keeps your tickets.'); // ('Home Screen' kept together)
+  assert.equal((await tab.textContent('#keep span')).replaceAll('\u00a0', ' '), "Add Free Play to your Home Screen and play there, so Safari can't clear your tickets. It starts with an empty pocket."); // ('Home Screen' kept together)
   const row = await tab.locator('.aisle a').evaluateAll(els => Math.max(...els.map(a => a.getBoundingClientRect().bottom)));
   assert.ok(row <= 844, `with the Home Screen line, the row of machines runs ${Math.round(row - 844)} px below the first screen`);
   const x = await tab.locator('#keepX').boundingBox();

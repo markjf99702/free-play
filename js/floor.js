@@ -102,7 +102,10 @@ function special() {
 // Safari clears a site's saves, tickets and shelf and all, after seven days of using Safari without a visit to it, and
 // a Home Screen app keeps its own count of days and isn't expected to lose them (the WebKit blog, 'Full Third-Party
 // Cookie Blocking and More', 24 March 2020). So in a Safari tab on an iPhone or iPad, and never in the Home Screen app,
-// a line under the pocket says to add it there, until its × puts it away (free-play.home-screen, on this phone only).
+// a line under the pocket says to add it there and play there, until its × puts it away (free-play.home-screen, on this
+// phone only). It says the Home Screen one starts with an empty pocket: a Home Screen app has 'separate cookies and
+// storage from the browser', and 'local storage is not copied when a web app is created' (Apple, WWDC23, 'What's new
+// in web apps'), so tickets won in the tab don't come along.
 // (navigator.standalone is Safari's own on an iPhone and iPad: false in a tab, true in the Home Screen app, and not
 // there at all anywhere else. Chrome, Firefox and Edge there say who they are.)
 const AWAY = 'free-play.home-screen';
