@@ -77,6 +77,24 @@ for (const [i, name] of (await cabinetNames()).entries()) {
 assert.equal(await page.locator('.cab.roll-up').getAttribute('aria-describedby'), 'rollUpWhat');
 assert.equal(await nameOf(page.locator('#purse')), '0 tickets · Prize counter', "the purse's name");
 assert.equal(await page.textContent('#trade'), 'Trade tickets', "the booth's button with nothing to trade");
+// The pocket says to the eye too that it opens the counter. Under it, a row of the machines in the cabinets' order and
+// the prize counter, all on the first screen: a tap on one brings its cabinet to the top of the screen (the counter at
+// the foot of the floor, into view), the keyboard goes with it, and the address stays as it was.
+assert.ok((await page.locator('#purse .to').boundingBox())?.width > 50, "the pocket doesn't show that it opens the prize counter");
+const hops = await page.locator('.aisle a').evaluateAll(els => els.map(a => [a.textContent, a.getBoundingClientRect().bottom]));
+assert.deepEqual(hops.map(h => h[0]), [...MACHINES, 'Prize counter'], 'the row of machines under the pocket');
+assert.ok(Math.max(...hops.map(h => h[1])) <= 844, `the row of machines runs ${Math.round(Math.max(...hops.map(h => h[1])) - 844)} px below the first screen`);
+for (const [hop, sel] of [['hoops', '.cab.hoops'], ['topple', '.cab.topple'], ['counter', '.booth']]) {
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.tap(`.aisle a.${hop}`);
+  await until(() => page.evaluate(sel => {
+    const r = document.querySelector(sel).getBoundingClientRect();
+    return sel === '.booth' ? r.top >= 0 && r.bottom <= innerHeight : Math.abs(r.top - 14) < 2;
+  }, sel), 4000, `a tap on ${hop} in the row didn't bring it into view`);
+  assert.equal(page.url(), base, `a tap on ${hop} in the row changed the address`);
+  assert.ok(await page.evaluate(sel => document.activeElement === document.querySelector(sel), sel), `the keyboard didn't go with ${hop}`);
+}
+await page.evaluate(() => scrollTo(0, 0));
 
 // Roll Up: in from the floor, a game, and its tickets.
 await page.click('.cab.roll-up');

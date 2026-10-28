@@ -26,11 +26,22 @@
   <header class="door">
     <h1 class="sign" aria-label="Free Play"><span class="free">Free</span> <span class="play">Play</span></h1>
     <p class="lede">An arcade on your phone. Every machine is set to free play. The games pay out tickets for the prize counter, and the claw and the coin pusher pay out prizes straight onto your shelf.</p>
-    <button type="button" class="purse" id="purse"><svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg><b id="tix"></b> <span id="tixWord">tickets</span><span class="fp-sr"> · Prize counter</span></button>
+    <button type="button" class="purse" id="purse"><svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg><b id="tix"></b> <span id="tixWord">tickets</span><span class="to"> · Prize counter</span></button>
+    <nav class="aisle" aria-label="The machines">
+      <a class="hop roll-up" href="#roll-up"><span>Roll Up</span></a>
+      <a class="hop tilt" href="#tilt"><span>Tilt</span></a>
+      <a class="hop clutch" href="#clutch"><span>Clutch</span></a>
+      <a class="hop topple" href="#topple"><span>Topple</span></a>
+      <a class="hop highrise" href="#highrise"><span>Highrise</span></a>
+      <a class="hop popgun" href="#popgun"><span>Popgun</span></a>
+      <a class="hop bonkers" href="#bonkers"><span>Bonkers</span></a>
+      <a class="hop hoops" href="#hoops"><span>Hoops</span></a>
+      <a class="hop counter" href="#prize-counter"><span>Prize counter</span></a>
+    </nav>
   </header>
 
   <main class="floor">
-    <a class="cab roll-up" href="roll-up/" aria-labelledby="rollUpName rollUpStat" aria-describedby="rollUpWhat">
+    <a class="cab roll-up" id="roll-up" href="roll-up/" aria-labelledby="rollUpName rollUpStat" aria-describedby="rollUpWhat">
       <span class="marquee"><span id="rollUpName">Roll Up</span></span>
       <span class="screen"><img src="floor/roll-up.jpg" width="600" height="450" alt="Roll Up's skee-ball board: chrome rings on blue with lit 20, 30, 40 and 50 holes, 100 cups in the top corners, under a marquee of bulbs"></span>
       <span class="panel">
@@ -40,7 +51,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab tilt" href="tilt/" aria-labelledby="tiltName tiltStat" aria-describedby="tiltWhat">
+    <a class="cab tilt" id="tilt" href="tilt/" aria-labelledby="tiltName tiltStat" aria-describedby="tiltWhat">
       <span class="marquee"><span id="tiltName">Tilt</span></span>
       <span class="screen"><img src="floor/tilt.jpg" width="600" height="450" alt="A Tilt pinball table: top lanes A, B and C over the pop bumpers on a starry blue playfield"></span>
       <span class="panel">
@@ -50,7 +61,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab clutch" href="clutch/" aria-labelledby="clutchName clutchStat" aria-describedby="clutchWhat">
+    <a class="cab clutch" id="clutch" href="clutch/" aria-labelledby="clutchName clutchStat" aria-describedby="clutchWhat">
       <span class="marquee"><span id="clutchName">Clutch</span></span>
       <span class="screen"><img src="floor/clutch.jpg" width="600" height="450" alt="Clutch's glass box: the claw lifting a plush off a heap of bears, frogs, chicks, ghosts, penguins and aliens"></span>
       <span class="panel">
@@ -60,7 +71,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab topple" href="topple/" aria-labelledby="toppleName toppleStat" aria-describedby="toppleWhat">
+    <a class="cab topple" id="topple" href="topple/" aria-labelledby="toppleName toppleStat" aria-describedby="toppleWhat">
       <span class="marquee"><span id="toppleName">Topple</span></span>
       <span class="screen"><img src="floor/topple.jpg" width="600" height="450" alt="Topple's deck: a heap of silver coins, two gold ones and a prize on a red card, pushed towards the front edge by a chrome pusher"></span>
       <span class="panel">
@@ -70,7 +81,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab highrise" href="highrise/" aria-labelledby="highriseName highriseStat" aria-describedby="highriseWhat">
+    <a class="cab highrise" id="highrise" href="highrise/" aria-labelledby="highriseName highriseStat" aria-describedby="highriseWhat">
       <span class="marquee"><span id="highriseName">Highrise</span></span>
       <span class="screen"><img src="floor/highrise.jpg" width="600" height="450" alt="Highrise's tower against a night skyline, its lit windows stacked eight floors up, a row sliding along the next floor and a window falling off the side"></span>
       <span class="panel">
@@ -80,7 +91,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab popgun" href="popgun/" aria-labelledby="popgunName popgunStat" aria-describedby="popgunWhat">
+    <a class="cab popgun" id="popgun" href="popgun/" aria-labelledby="popgunName popgunStat" aria-describedby="popgunWhat">
       <span class="marquee"><span id="popgunName">Popgun</span></span>
       <span class="screen"><img src="floor/popgun.jpg" width="600" height="450" alt="Popgun's booth: tin rabbits and ducks running along brass rails under a red and cream awning, a star going down, and a cork on its way"></span>
       <span class="panel">
@@ -90,7 +101,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab bonkers" href="bonkers/" aria-labelledby="bonkersName bonkersStat" aria-describedby="bonkersWhat">
+    <a class="cab bonkers" id="bonkers" href="bonkers/" aria-labelledby="bonkersName bonkersStat" aria-describedby="bonkersWhat">
       <span class="marquee"><span id="bonkersName">Bonkers</span></span>
       <span class="screen"><img src="floor/bonkers.jpg" width="600" height="450" alt="Bonkers: a mole up out of its hole on a sunny lawn, and under it the ground in cross-section, with moles running through their tunnels and one asleep in its burrow"></span>
       <span class="panel">
@@ -100,7 +111,7 @@
         <span class="go">Play</span>
       </span>
     </a>
-    <a class="cab hoops" href="hoops/" aria-labelledby="hoopsName hoopsStat" aria-describedby="hoopsWhat">
+    <a class="cab hoops" id="hoops" href="hoops/" aria-labelledby="hoopsName hoopsStat" aria-describedby="hoopsWhat">
       <span class="marquee"><span id="hoopsName">Hoops</span></span>
       <span class="screen"><img src="floor/hoops.jpg" width="600" height="450" alt="Hoops: a ball dropping through the net of a basketball hoop with the rim on fire, and SWISH! and +3 rising off the backboard"></span>
       <span class="panel">
@@ -112,7 +123,7 @@
     </a>
   </main>
 
-  <section class="booth" aria-labelledby="boothH">
+  <section class="booth" id="prize-counter" tabindex="-1" aria-labelledby="boothH">
     <div class="booth-in">
       <h2 id="boothH">Prize counter</h2>
       <p class="booth-what">Every game pays into the same pocketful of tickets. Trade them for something to put on your shelf, next to anything the machines have given you.</p>

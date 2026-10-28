@@ -120,6 +120,20 @@ function backFrom() {
 }
 backFrom();
 
+// The row of machines under the pocket: a tap on one goes to its cabinet (or the prize counter at the back), gliding
+// there unless the phone is set to cut down motion, and leaves the address as it was, so the phone's Back still leaves
+// the floor. The keyboard goes with it, so Tab carries on from there. (Without this script they're plain links to the
+// same places.)
+for (const hop of document.querySelectorAll('.aisle a')) {
+  hop.addEventListener('click', e => {
+    const to = document.getElementById(hop.hash.slice(1));
+    if (!to) return;
+    e.preventDefault();
+    to.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    to.focus({ preventScroll: true });
+  });
+}
+
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

@@ -52,6 +52,34 @@ button { font: inherit; color: inherit; cursor: pointer; }
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .purse b { min-width: 1ch; font: 400 18px var(--disp); color: var(--gold); } /* sent empty: js/floor.js fills it */
+.purse .to { color: var(--ink3); }
+
+/* Under the pocket, a row of the machines, each in its sign's colours, and the prize counter: a tap goes straight to
+   its cabinet (js/floor.js), so the first screen on a phone shows all eight, and Hoops at the far end is one tap away. */
+/* (Each is 44 px tall to tap, with its sign 36 px tall in the middle of that.) */
+.aisle { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 8px; margin: 10px auto 0; }
+.hop {
+  --hop-bg: #19131f; --hop-edge: #f2c14e; --hop-ink: var(--ink); --hop-glow: none;
+  display: flex; min-height: 44px; padding: 4px 0; border-radius: 10px; text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.hop span {
+  display: flex; align-items: center; padding: 0 11px; border-radius: 8px;
+  background: var(--hop-bg); border: 2px solid var(--hop-edge); color: var(--hop-ink); text-shadow: var(--hop-glow);
+  font: 400 13px/1 var(--disp); letter-spacing: .03em;
+}
+.hop:active span { transform: translateY(1px); filter: brightness(1.15); }
+.hop.roll-up { --hop-bg: linear-gradient(#8e1c22, #55101a); --hop-glow: 0 2px 0 rgba(0, 0, 0, .35); }
+.hop.tilt { --hop-bg: #120a02; --hop-edge: #5a3410; --hop-ink: #ffa53a; --hop-glow: 0 0 6px rgba(255, 140, 30, .8); }
+.hop.clutch { --hop-bg: #170a26; --hop-edge: #ffd36a; --hop-ink: #ffd0e3; --hop-glow: 0 0 5px #ff5fa2, 0 0 12px rgba(255, 95, 162, .7); }
+.hop.topple { --hop-bg: #0b1d29; --hop-ink: #f2c14e; --hop-glow: 1px 1px 0 #ff6b57; }
+.hop.highrise { --hop-bg: #060a1e; --hop-ink: #dff4ff; --hop-glow: 0 0 5px #5cc8ff, 0 0 12px rgba(92, 200, 255, .6); }
+.hop.popgun { --hop-bg: #2a1a0c; --hop-ink: #fbeed2; --hop-glow: 1.5px 1.5px 0 #8f1f19; }
+.hop.bonkers { --hop-bg: #e2412f; --hop-edge: #ffc93c; --hop-ink: #ffc93c; --hop-glow: 1.5px 1.5px 0 #9a2216; }
+.hop.hoops { --hop-bg: #1d3fa8; --hop-edge: #ff8a1f; --hop-ink: #fff6e6; --hop-glow: 1.5px 1.5px 0 #c75a10; }
+.hop.counter { --hop-bg: #1a1233; --hop-edge: rgba(255, 211, 106, .55); --hop-ink: var(--gold); }
+/* where a tap on one of them lands: just clear of the top of the screen (and of a phone's notch) */
+.cab, .booth { scroll-margin-top: calc(14px + env(safe-area-inset-top, 0px)); }
+.booth:focus { outline: none; }
 
 /* ---------- the machines ---------- */
 .floor {

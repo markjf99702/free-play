@@ -5,7 +5,7 @@
 **An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; Popgun, a shooting gallery; Bonkers, a whack-a-mole; or Hoops, a basketball machine. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw and the coin pusher pay out prizes, straight onto the same shelf. There's room on the floor for more machines.
 
 <p align="center">
-  <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket, and the Roll Up cabinet with its red and gold marquee and its screen showing the ring board" width="250">
+  <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket beside the words Prize counter, a row of buttons for the eight machines and the prize counter, each in its sign's colours, and the Roll Up cabinet with its red and gold marquee and its screen showing the ring board" width="250">
   &nbsp;
   <img src="docs/phone-roll-up.png" alt="Roll Up pushed in on the board as a ball drops into the 50 cup: chrome rings on a blue board with lit numbers 20, 30, 40 and 50, 100 cups in both top corners, and +50 rising over the cup" width="250">
   &nbsp;
@@ -29,7 +29,7 @@
 
 ## How it plays
 
-- **The floor** has a cabinet for each machine, showing what you've done on it: your best, today's card and how many days in a row you've played it, a cup still on the go on Topple, the plush you've won. Tap one to play. Every machine has a way back to the floor.
+- **The floor** has a cabinet for each machine, showing what you've done on it: your best, today's card and how many days in a row you've played it, a cup still on the go on Topple, the plush you've won. Tap one to play. The row of buttons under your pocket goes straight to any machine's cabinet, or to the prize counter at the back. Every machine has a way back to the floor.
 - **Tickets.** Roll Up pays one for every 10 points, and a fair game earns about 25 to 35. Tilt pays one for every 5,000 on Classic and Space, and one for every 2,500 on Haunted House, the hard one, and a fair game earns about 50 to 70. They feed out of a slot at the end. Topple pays one for every two coins pushed over its front edge, about 8 to 18 a cup, Highrise one for every floor built, Popgun one for every 30 points, Bonkers one for every 15, and Hoops one for every 4.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush. Tapped the wrong one? For a few seconds after a trade, Undo gives the tickets back.
@@ -156,7 +156,7 @@ A machine is a folder with its own `index.html`. To put one on the floor:
 1. Load `../shared/carry.js` first in its `<head>` and `../shared/arcade.css` before its own styles, and point its icon, manifest and fonts at the arcade's (`../icon.svg`, `../manifest.webmanifest`, `../fonts/`).
 2. Pay tickets with `pay(n)` from `shared/wallet.js`, and show them coming out of the slot with `feed()` and `PAYOUT` from `shared/counter.js`; or, for a machine that pays in prizes the way Clutch does, put them on the shelf with `give(prize)` (and list them in `shared/prizes.js`). Open the prize counter with `openCounter()`. A machine with physics can use matter-js from `shared/matter.min.js`, as Clutch and Topple do.
 3. Keep its own saves under a key starting `free-play.` and its name, link back to the floor (`../`), and register `../sw.js` for offline.
-4. Give it a cabinet in `index.html` (a picture of it in `floor/`, which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list (bump `CACHE`, and set `FILES` to what `npm test` says), and give it a test.
+4. Give it a cabinet in `index.html` (with its folder's name as the cabinet's `id`, a button for it in the row under the pocket, in `css/floor.css` its sign's colours, and a picture of it in `floor/`, which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list (bump `CACHE`, and set `FILES` to what `npm test` says), and give it a test.
 
 ## Running it
 
@@ -174,7 +174,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 
 ### Files
 
-- `index.html`, `css/floor.css`, `js/floor.js`: the floor, with a cabinet for each machine and the prize counter at the back.
+- `index.html`, `css/floor.css`, `js/floor.js`: the floor, with a row of buttons to each machine, a cabinet for each, and the prize counter at the back.
 - `404.html`: the page for a mistyped address ("That machine isn't on the floor."), with the way to the floor and to each machine. GitHub Pages serves it for any address that isn't there, at any depth, and the offline copy does the same for a page it hasn't kept, so its styles are on the page and its links and fonts start from the site's root (`/hoops/`), the one place a path here isn't relative.
 - `shared/wallet.js`: the one pocket of tickets and shelf of prizes every machine pays into and the counter spends from.
 - `shared/counter.js`, `shared/arcade.css`: the prize counter, the ticket dispenser at the end of a game, and the toast, for every page.
