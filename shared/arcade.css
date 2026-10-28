@@ -213,3 +213,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 @keyframes fp-bump { 35% { transform: scale(1.1); } }
 
 @media (prefers-reduced-motion: reduce) { .fp-strip, .hud .tix.bump, .fp-big i { animation: none; } .fp-item { transition: none; } }
+
+/* ---------- between pages, and the cards ---------- */
+/* Between the floor and a machine (or Records), the pages crossfade over a fifth of a second in a browser that can
+   (Chrome 126 and Safari 18.2 on, in MDN's compatibility data: the rest cut straight across), and a machine's cards (its
+   title card, menu and end card) fade up over a sixth of a second as they come up. Neither, on a phone set to cut down
+   motion. A tap during the crossfade goes to the page coming in. The crossfade itself is a line of style on each page
+   (@view-transition, in its <head>): from here, Chrome crossfaded into a page only some of the time, as this sheet was
+   sometimes still loading when it looked. */
+@media (prefers-reduced-motion: no-preference) {
+  .card, .sheet { animation: fp-card-up .167s ease-out; }
+  .sheet > .card { animation: none; } /* (Tilt's cards come up on a sheet, which fades up with them on it) */
+}
+@keyframes fp-card-up { from { opacity: 0; } }

@@ -20,6 +20,9 @@
   <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../shared/arcade.css">
   <link rel="stylesheet" href="css/highrise.css">
+  <!-- the crossfade between the floor and the machines (see the end of shared/arcade.css): here on the page itself, as
+       a style sheet can still be on its way when the browser decides whether a page crossfades in -->
+  <style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } ::view-transition-group(root) { animation-duration: .2s; } ::view-transition { pointer-events: none; } }</style>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">

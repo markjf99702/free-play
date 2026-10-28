@@ -728,6 +728,30 @@ await tab.close();
   await page.evaluate(([keys, was]) => keys.forEach((k, i) => (was[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, was[i]))), [KEYS, was]);
 }
 
+// From the floor to a machine and back, the pages crossfade (a view transition, in a browser that has them), and the
+// machine's title card fades up; Tilt's on its sheet. On a phone set to cut down motion, neither: a plain cut.
+for (const reducedMotion of ['no-preference', 'reduce']) {
+  const c = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, reducedMotion, serviceWorkers: 'block' });
+  await c.addInitScript(() => addEventListener('pagereveal', e => { window.__crossfade = !!e.viewTransition; }));
+  const p = await c.newPage();
+  p.on('pageerror', e => problems.push(e.message));
+  await p.goto(base);
+  await p.waitForFunction(() => !!window.freePlay);
+  const fades = reducedMotion === 'no-preference';
+  for (const [m, hook, card] of [['hoops', 'hoops', '#title'], ['tilt', 'tilt', '#title']]) {
+    await p.click(`.cab.${m}`);
+    await p.waitForURL(base + m + '/');
+    await p.waitForFunction(h => !!window[h], hook);
+    assert.equal(await p.evaluate(() => window.__crossfade), fades, `in to ${m}, with ${reducedMotion} motion: ${fades ? 'no crossfade' : 'a crossfade'}`);
+    assert.equal(await p.evaluate(sel => getComputedStyle(document.querySelector(sel)).animationName, card), fades ? 'fp-card-up' : 'none', `${m}'s title card, with ${reducedMotion} motion`);
+    await p.click('#title .to-floor');
+    await p.waitForURL(base);
+    await p.waitForFunction(() => !!window.freePlay);
+    assert.equal(await p.evaluate(() => window.__crossfade), fades, `back from ${m}, with ${reducedMotion} motion`);
+  }
+  await c.close();
+}
+
 // In a Safari tab on an iPhone, a line under the pocket says to add Free Play to the Home Screen so Safari keeps the
 // tickets (Safari clears a site's saves after seven days of use without a visit; a Home Screen app keeps its own
 // count), with the row of machines still on the first screen, until its × puts it away for good. Not in the Home
