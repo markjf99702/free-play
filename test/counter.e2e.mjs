@@ -217,8 +217,8 @@ for (const [path, hook, opener] of [['', 'freePlay', '#purse'], ['hoops/', 'hoop
   await page.focus(opener);
   await page.keyboard.press('Enter');
   assert.ok(await page.isVisible('.fp-sheet'), `${where}: Enter opens the counter`);
-  // (once round every button in it: Close, the shelf and the prizes)
-  const outside = [], round = await page.locator('.fp-sheet button').count();
+  // (once round every button in it: Close, what's on the shelf and the prizes)
+  const outside = [], round = await page.locator('.fp-sheet button:not([tabindex="-1"])').count();
   for (let i = 1; i <= round; i++) { await page.keyboard.press('Tab'); if (!(await inSheet())) outside.push(i); }
   assert.deepEqual(outside, [], `${where}: Tabs that left the counter`);
   assert.equal(await focused(), 'fp-x', `${where}: Tab from the last prize goes round to Close`);

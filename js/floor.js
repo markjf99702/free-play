@@ -4,8 +4,7 @@
 // (../shared/wallet.js). Nothing here changes a machine's save; it only reads it.
 
 import * as wallet from '../shared/wallet.js';
-import { openCounter, shelfItem, fmt, tickets } from '../shared/counter.js';
-import { SHELF } from '../shared/prizes.js';
+import { openCounter, shelve, collected, fmt, tickets } from '../shared/counter.js';
 import { specialFor, madeToday, BONUS } from '../shared/special.js';
 import { dayKey, dayBefore } from '../shared/calendar.js';
 import { settle, BALLS } from '../roll-up/js/daily.js';
@@ -104,17 +103,9 @@ function pocket() {
   $('tixWord').textContent = w.tickets === 1 ? 'ticket' : 'tickets';
   // the booth's button says what there is to trade, once there's anything
   $('trade').textContent = w.tickets ? `Trade your ${tickets(w.tickets)}` : 'Trade tickets';
-  const shelf = $('shelf');
-  shelf.replaceChildren();
-  const owned = SHELF.filter(p => w.prizes[p.id]);
-  shelf.classList.toggle('empty', !owned.length);
-  if (!owned.length) {
-    const e = document.createElement('span');
-    e.className = 'empty';
-    e.textContent = 'Nothing on your shelf yet.';
-    shelf.append(e);
-  }
-  for (const p of owned) shelf.append(shelfItem(p, w.prizes[p.id]));
+  // the shelf, with a place for everything won outright, and how much of each set is on it
+  shelve($('shelf'), w.prizes);
+  $('collected').textContent = collected(w.prizes);
 }
 
 const counter = () => openCounter({ onClose: pocket });

@@ -193,7 +193,8 @@ assert.equal(await state(), 'ready');
 await page.click('#winShelf');
 assert.ok(await page.isHidden('#win'));
 assert.ok(await page.isVisible('.fp-sheet'));
-const shelf = await page.textContent('.fp-shelf');
+// (the plush won, not the faint outlines of the ones still to win)
+const shelf = (await page.locator('.fp-shelf .fp-item:not(.fp-yet)').allTextContents()).join('');
 assert.match(shelf, /[🐻🐥🐸👻🐧👽🌟]/u, 'the plush is on the shelf in the counter');
 await page.click('.fp-x');
 assert.ok(await page.isHidden('.fp-sheet'));
@@ -233,7 +234,7 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Back on the floor, Clutch's cabinet says what it's given you.
 await page.goto(base);
 assert.match(await page.textContent('#clutchStat'), new RegExp(`^${n} plush won`));
-assert.match(await page.textContent('#shelf'), /[🐻🐥🐸👻🐧👽🌟]/u);
+assert.match((await page.locator('#shelf .fp-item:not(.fp-yet)').allTextContents()).join(''), /[🐻🐥🐸👻🐧👽🌟]/u);
 
 // Back at the claw. (The machine's report of a go is held back here, to make the goes the test needs.)
 await page.goto(base + 'clutch/');

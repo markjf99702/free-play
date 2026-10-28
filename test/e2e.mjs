@@ -13,7 +13,7 @@ import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
-import { SHELF } from '../shared/prizes.js';
+import { SHELF, OUTRIGHT } from '../shared/prizes.js';
 
 const require = createRequire(import.meta.url);
 let pw;
@@ -65,11 +65,14 @@ const until = async (ok, ms, what) => {
 await page.goto(base);
 await page.evaluate(() => document.fonts.ready);
 
-// The floor: the sign, a cabinet for each machine, an empty pocket and an empty shelf.
+// The floor: the sign, a cabinet for each machine, an empty pocket, and a shelf with nothing on it but the outlines of
+// what's won outright, and a line under it saying none of it is won yet.
 assert.equal(await page.textContent('#tix'), '0');
 assert.equal(await page.locator('.cab').count(), 8);
 assert.match(await page.textContent('#rollUpStat'), /Today's card is ready/);
-assert.match(await page.textContent('#shelf'), /Nothing on your shelf/);
+assert.equal(await page.locator('#shelf .fp-item').count(), OUTRIGHT.length);
+assert.equal(await page.locator('#shelf .fp-yet').count(), OUTRIGHT.length, 'every one of them an outline');
+assert.equal(await page.textContent('#collected'), "0 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
 // Each cabinet says what its machine is before it's been played: Hoops' hoop starts to slide 20 seconds in.
 assert.equal(await page.textContent('#hoopsStat'), 'Forty-five seconds. Twenty\u00a0in, the hoop starts to slide.');
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the floor scrolls sideways on a phone');
@@ -357,8 +360,8 @@ assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'loll
 await page.click('.fp-x');
 assert.equal(await page.textContent('#tix'), '120');
 
-// The shelf, on the floor and in the counter: every row of prizes stands on a plank of its own, and an empty shelf has
-// none running through what it says. (Read off the pixels down the shelf's left edge, clear of the prizes.)
+// The shelf, on the floor and in the counter: every row of prizes stands on a plank of its own, the outlines of what's
+// still to win as well. (Read off the pixels down the shelf's left edge, clear of the prizes.)
 async function planks(sel) {
   const png = (await page.locator(sel).screenshot()).toString('base64');
   return page.evaluate(async ([sel, png]) => {
@@ -377,16 +380,16 @@ async function planks(sel) {
       if (bands.length && bands.at(-1)[1] >= y - 1) bands.at(-1)[1] = y;
       else bands.push([y, y]);
     }
-    const feet = [...new Set([...shelf.children].filter(e => !e.matches('.empty, .fp-empty')).map(e => Math.round(e.getBoundingClientRect().bottom - box.top)))];
+    const feet = [...new Set([...shelf.children].map(e => Math.round(e.getBoundingClientRect().bottom - box.top)))];
     return { feet, bands: bands.map(([a, b]) => [a / k, (b + 1) / k]) };
   }, [sel, png]);
 }
-for (const [kinds, rows] of [[0, 0], [3, 1], [10, 2], [SHELF.length, 4]]) {
+for (const [kinds, rows] of [[0, 3], [3, 3], [10, 4], [SHELF.length, 5]]) {
   await pocket({ tickets: 50, prizes: Object.fromEntries(SHELF.slice(0, kinds).map((p, i) => [p.id, (i % 3) + 1])) });
   for (const [where, sel] of [['the floor', '#shelf'], ['the counter', '.fp-shelf']]) {
     if (sel === '.fp-shelf') await page.click('#trade');
     const { feet, bands } = await planks(sel);
-    assert.ok(kinds ? feet.length >= rows : !feet.length, `${where}: ${kinds} kinds of prize on a phone take ${feet.length} rows`);
+    assert.ok(feet.length >= rows, `${where}: ${kinds} kinds of prize on a phone take ${feet.length} rows`);
     assert.equal(bands.length, feet.length, `${where}, ${feet.length} rows: ${bands.length} planks`);
     feet.forEach((foot, i) => assert.ok(bands[i][0] > foot - 12 && bands[i][1] < foot + 3, `${where}: row ${i + 1}, at ${foot} px, isn't on its plank (${bands[i]})`));
     if (sel === '.fp-shelf') await page.click('.fp-x');
@@ -395,15 +398,44 @@ for (const [kinds, rows] of [[0, 0], [3, 1], [10, 2], [SHELF.length, 4]]) {
 
 // A tap on a prize on the shelf says what it is, on the floor and in the counter.
 await pocket({ tickets: 50, prizes: { 'plush-frog': 3, 'plush-alien': 1 } });
-assert.deepEqual(await page.locator('#shelf button').evaluateAll(els => els.map(e => e.getAttribute('aria-label'))), ['Plush frog, 3', 'Plush alien']);
-await page.tap('#shelf button >> nth=0');
+assert.deepEqual(await page.locator('#shelf button:not(.fp-yet)').evaluateAll(els => els.map(e => e.getAttribute('aria-label'))), ['Plush frog, 3', 'Plush alien']);
+await page.tap('#shelf button:not(.fp-yet) >> nth=0');
 assert.equal(await page.textContent('.fp-toast'), 'Plush frog. You have 3.');
-await page.tap('#shelf button >> nth=1');
+await page.tap('#shelf button:not(.fp-yet) >> nth=1');
 assert.equal(await page.textContent('.fp-toast'), 'Plush alien.');
 await page.click('#trade');
-await page.tap('.fp-shelf button >> nth=1');
+await page.tap('.fp-shelf button:not(.fp-yet) >> nth=1');
 assert.equal(await page.textContent('.fp-toast'), 'Plush alien.');
 assert.ok(await page.isVisible('.fp-sheet .fp-toast'), 'in the counter, the name comes up at its foot');
+await page.click('.fp-x');
+
+// What's won outright has its place on the shelf from the start, in the order it sits there once won: a faint outline
+// until then (the rare ones a '?'), named as not won yet, and a tap says where it's won, or what a trophy is for. Tab
+// leaves the outlines out. The line under the shelf counts each set.
+const places = await page.locator('#shelf .fp-item').evaluateAll(els => els.map(e => [e.getAttribute('aria-label'), e.classList.contains('fp-yet'), e.tabIndex]));
+assert.deepEqual(places.slice(0, 7), [
+  ['Plush bear, not won yet', true, -1], ['Plush chick, not won yet', true, -1], ['Plush frog, 3', false, 0], ['Plush ghost, not won yet', true, -1],
+  ['Plush penguin, not won yet', true, -1], ['Plush alien', false, 0], ['Something rare from Clutch, not won yet', true, -1],
+]);
+assert.deepEqual(places.slice(7, 12).map(p => p[0]), ['Plastic watch, not won yet', 'Toy car, not won yet', 'Lucky keyring, not won yet', 'Wind-up robot, not won yet', 'Something rare from Topple, not won yet']);
+assert.equal(places.length, OUTRIGHT.length);
+assert.equal(await page.textContent('#collected'), "2 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
+assert.equal(await page.locator('#shelf .fp-rare').evaluateAll(els => els.map(e => e.textContent).join('')), '', "(a '?' that's drawn, so the shelf's words are its names)");
+for (const [label, said] of [
+  ['Plush bear, not won yet', "Plush bear. Not won yet. It's in Clutch's heap."],
+  ['Something rare from Clutch, not won yet', "Something rare. Not won yet. It turns up in Clutch's heap now and then."],
+  ['Toy car, not won yet', "Toy car. Not won yet. It turns up on Topple's deck."],
+  ['Something rare from Topple, not won yet', "Something rare. Not won yet. It turns up on Topple's deck now and then."],
+  ['Hoops trophy, not won yet', 'Hoops trophy, for 65 baskets in a round. Not won yet.'],
+]) {
+  await page.tap(`#shelf [aria-label="${label}"]`);
+  assert.equal(await page.textContent('.fp-toast'), said, `a tap on ${label}`);
+}
+await pocket({ tickets: 50, prizes: Object.fromEntries(OUTRIGHT.map(p => [p.id, 1])) });
+assert.equal(await page.locator('#shelf .fp-yet').count(), 0, 'with everything won, no outlines');
+assert.equal(await page.textContent('#collected'), "7 of 7 plush · 5 of Topple's 5 prizes · 8 of 8 trophies");
+await page.click('#trade');
+assert.equal(await page.textContent('.fp-collected'), "7 of 7 plush · 5 of Topple's 5 prizes · 8 of 8 trophies", 'and the same in the counter');
 await page.click('.fp-x');
 
 // Scrolling the counter scrolls the counter, not the floor behind it: opened from the foot of the floor and scrolled

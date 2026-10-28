@@ -177,6 +177,16 @@ test('the prize counter and the tables pay-outs', () => {
   assert.deepEqual(Object.fromEntries(Object.entries(TABLES).map(([id, t]) => [id, t.perTicket])), { classic: 5000, space: 5000, haunted: 2500 });
 });
 
+test("the line under the shelf counts each set won outright: '4 of 7 plush'", async () => {
+  const { collected } = await import('../shared/counter.js');
+  assert.equal(collected({}), "0 of 7 plush · 0 of Topple's 5 prizes · 0 of 8 trophies");
+  const some = { 'plush-frog': 3, 'plush-star': 1, 'plush-bear': 1, 'plush-alien': 2, 'trinket-gem': 1, 'trophy-hoops': 4, lollipop: 9, giraffe: 1 };
+  assert.equal(collected(some), "4 of 7 plush · 1 of Topple's 5 prizes · 1 of 8 trophies", 'each counted once, however many, and what was traded for left out');
+  const { OUTRIGHT, SHELF, PRIZES } = await import('../shared/prizes.js');
+  assert.deepEqual(OUTRIGHT, SHELF.filter(p => !PRIZES.includes(p)), 'everything on the shelf but what the counter sells');
+  assert.deepEqual(OUTRIGHT.filter(p => p.rare).map(p => p.id), ['plush-star', 'trinket-gem'], "the rare ones, a '?' until won");
+});
+
 test('above the enormous unicorn, a giant gorilla and a life-size giraffe to save up for', () => {
   assert.deepEqual(PRIZES.slice(-3).map(p => [p.id, p.emoji, p.name, p.cost]), [
     ['unicorn', '🦄', 'Enormous unicorn', 2500], ['gorilla', '🦍', 'Giant gorilla', 5000], ['giraffe', '🦒', 'Life-size giraffe', 10000],

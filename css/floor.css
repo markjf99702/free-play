@@ -198,16 +198,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .booth h2 { margin: 0; font: 400 24px var(--disp); }
 .booth-what { margin: 6px auto 14px; max-width: 32em; color: var(--ink2); font-size: 15px; text-wrap: balance; }
 /* Rows of prizes 40 px tall and 6 px apart, each standing on its own plank: a band repeating every 46 px from the top
-   of the first row, along the foot of each. An empty shelf has no plank, so nothing runs through what it says. */
+   of the first row, along the foot of each. (It's never empty: what's won outright has its place on it from the start.) */
 .shelf {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; min-height: 60px; padding: 10px 12px; margin: 0 0 14px; border-radius: 14px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; min-height: 60px; padding: 10px 12px; margin: 0; border-radius: 14px;
   background:
     repeating-linear-gradient(transparent 0 33px, rgba(120, 70, 30, .5) 33px 39px, transparent 39px 46px) 0 10px / 100% calc(100% - 10px) no-repeat,
     rgba(251, 238, 210, .04);
   border: 1px solid var(--line); font-size: 32px; line-height: 40px; align-items: flex-end;
 }
-.shelf.empty { background: rgba(251, 238, 210, .04); }
-.shelf .empty { font-size: 14px; line-height: 1.45; color: var(--ink3); align-self: center; }
+/* how much of each set is on it, under it */
+.collected { margin: 8px 0 14px; font-size: 13px; color: var(--ink3); }
 .shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--body); background: #c23a2e; border-radius: 999px; padding: 1px 5px; }
 .trade {
   min-height: 48px; padding: 6px 26px; border-radius: 999px; border: 1px solid rgba(255, 211, 106, .55);

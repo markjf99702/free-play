@@ -1,7 +1,7 @@
 // The prize counter, the ticket dispenser and a small toast, for every page on the floor.
 // The counter builds itself the first time it opens, so a page only needs shared/arcade.css and a button.
 
-import { PRIZES, SHELF } from './prizes.js';
+import { PRIZES, PLUSH, TRINKETS, TROPHIES, SHELF, OUTRIGHT } from './prizes.js';
 import { KEY, read, buy, refund } from './wallet.js';
 
 // A count as people write it: 1,234 tickets. Anything that isn't a number reads as 0.
@@ -46,6 +46,7 @@ function build() {
       </div>
       <h3>Your shelf</h3>
       <div class="fp-shelf"></div>
+      <p class="fp-collected"></p>
       <h3>Trade your tickets</h3>
       <div class="fp-grid"></div>
       <div class="fp-foot"></div>
@@ -61,7 +62,7 @@ function build() {
 function keys(e) {
   if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); closeCounter(); return; }
   if (e.key !== 'Tab') return;
-  const stops = [...sheet.querySelectorAll('button')].filter(b => !b.disabled && b.getClientRects().length);
+  const stops = [...sheet.querySelectorAll('button')].filter(b => !b.disabled && b.tabIndex >= 0 && b.getClientRects().length);
   if (!stops.length) return;
   const at = stops.indexOf(document.activeElement), to = e.shiftKey ? (at <= 0 ? stops.length - 1 : -1) : (at < 0 || at === stops.length - 1 ? 0 : -1);
   if (to < 0) return;
@@ -102,17 +103,8 @@ function render() {
   const w = read();
   sheet.querySelector('.fp-bal b').textContent = fmt(w.tickets);
   sheet.querySelector('.fp-bal span').textContent = w.tickets === 1 ? 'ticket' : 'tickets';
-  const shelf = sheet.querySelector('.fp-shelf');
-  shelf.replaceChildren();
-  const owned = SHELF.filter(p => w.prizes[p.id]);
-  shelf.classList.toggle('empty', !owned.length);
-  if (!owned.length) {
-    const e = document.createElement('span');
-    e.className = 'fp-empty';
-    e.textContent = w.tickets ? 'Nothing yet. Pick something below.' : 'Nothing yet. Win tickets on any machine, then trade them here.';
-    shelf.append(e);
-  }
-  for (const p of owned) shelf.append(shelfItem(p, w.prizes[p.id]));
+  shelve(sheet.querySelector('.fp-shelf'), w.prizes);
+  sheet.querySelector('.fp-collected').textContent = collected(w.prizes);
   const grid = sheet.querySelector('.fp-grid');
   // the grid is drawn afresh, so a prize picked with the keyboard keeps the focus
   const had = grid.contains(document.activeElement) ? document.activeElement.dataset.id : null;
@@ -132,6 +124,55 @@ function render() {
     grid.append(b);
     if (p.id === had) b.focus({ preventScroll: true });
   }
+}
+
+// A shelf, the floor's or the counter's, as the pocket has it. What's won outright (Clutch's plush, the prizes on
+// Topple's deck and the trophies) has its place on it from the start, as a faint outline until it's won, so there's
+// always something there to chase; what's traded for goes on once it's yours, since the counter lists the rest.
+export function shelve(el, prizes) {
+  el.replaceChildren();
+  for (const p of SHELF) {
+    if (prizes[p.id] > 0) el.append(shelfItem(p, prizes[p.id]));
+    else if (OUTRIGHT.includes(p)) el.append(notYet(p));
+  }
+}
+// How much of each set is on the shelf: '4 of 7 plush · 2 of Topple's 5 prizes · 1 of 8 trophies'.
+export function collected(prizes) {
+  const got = set => set.filter(p => prizes[p.id] > 0).length;
+  return `${got(PLUSH)} of ${PLUSH.length} plush · ${got(TRINKETS)} of Topple's ${TRINKETS.length} prizes · ${got(TROPHIES)} of ${TROPHIES.length} trophies`;
+}
+// Where each set is won, as a tap on its outline says.
+const WON_AT = p => PLUSH.includes(p)
+  ? { from: 'from Clutch', where: "It's in Clutch's heap", rare: "It turns up in Clutch's heap now and then" }
+  : { from: 'from Topple', where: "It turns up on Topple's deck", rare: "It turns up on Topple's deck now and then" };
+
+// A place on the shelf for something not won yet: a faint outline of it, or a '?' for the rare ones (the lucky star and
+// the giant gem), and a tap says where it's won (or, for a trophy, what it's for). It's left out of Tab's round, which
+// the counter's prizes have to themselves; the line under the shelf says how much of each set there is to win.
+function notYet(p) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'fp-item fp-yet';
+  b.tabIndex = -1;
+  let name = p.name, said;
+  if (p.feat) said = `${p.name}, for ${p.feat}. Not won yet.`;
+  else {
+    const at = WON_AT(p);
+    if (p.rare) name = `Something rare ${at.from}`;
+    said = p.rare ? `Something rare. Not won yet. ${at.rare}.` : `${p.name}. Not won yet. ${at.where}.`;
+  }
+  if (p.rare) {
+    b.classList.add('fp-rare');
+    b.append(document.createElement('span')); // (its '?' is drawn by the style)
+  } else b.textContent = p.emoji;
+  b.title = `${name}, not won yet`;
+  b.setAttribute('aria-label', `${name}, not won yet`);
+  if (p.plinth) { b.classList.add('fp-trophy'); b.style.setProperty('--plinth', p.plinth); }
+  b.addEventListener('click', () => {
+    if (performance.now() - lastTrade < SAME_TAP) return;
+    toast(said);
+  });
+  return b;
 }
 
 // A prize on a shelf, the floor's or the counter's: its emoji, with a badge for how many there are. A phone has no

@@ -256,7 +256,7 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Back on the floor, Highrise's cabinet has the highest floor and the top.
 await page.goto(base);
 assert.equal(await page.textContent('#highriseStat'), 'Highest: floor 15. Topped out once.');
-assert.match(await page.textContent('#shelf'), /🏆/);
+assert.equal(await page.getAttribute('#shelf .fp-trophy:not(.fp-yet)', 'aria-label'), 'Highrise trophy', 'the trophy on the shelf, not its outline');
 
 // Leaving while the tower falls, before its card, by the menu's Back to the arcade: the game is over all the same, and
 // it pays as the page goes.

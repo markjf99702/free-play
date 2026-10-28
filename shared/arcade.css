@@ -62,7 +62,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 .fp-sheet h3 { margin: 12px 2px 8px; font: 600 12px var(--fp-body); letter-spacing: .14em; text-transform: uppercase; color: var(--fp-ink3); }
 /* Rows of prizes 38 px tall and 6 px apart, each standing on its own plank: a band repeating every 44 px from the top
-   of the first row, along the foot of each. An empty shelf has no plank, so nothing runs through what it says. */
+   of the first row, along the foot of each. (It's never empty: what's won outright has its place on it from the start.) */
 .fp-shelf {
   display: flex; flex-wrap: wrap; gap: 6px; min-height: 58px; padding: 10px 12px; border-radius: 14px;
   background:
@@ -70,8 +70,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     rgba(251, 238, 210, .04);
   border: 1px solid var(--fp-line); font-size: 30px; line-height: 38px; align-items: flex-end;
 }
-.fp-shelf.empty { background: rgba(251, 238, 210, .04); }
-.fp-shelf .fp-empty { font-size: 14px; line-height: 1.45; color: var(--fp-ink3); align-self: center; }
+/* how much of each set is on it, under it */
+.fp-collected { margin: 6px 2px 0; font-size: 13px; color: var(--fp-ink3); }
 /* a prize on a shelf, the counter's or the floor's: just its emoji, and a tap names it */
 .fp-item {
   position: relative; margin: 0; padding: 0; border: 0; border-radius: 8px; background: none; color: inherit;
@@ -79,6 +79,16 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   transition: transform .12s ease;
 }
 .fp-item:active { transform: scale(.9); }
+/* Something won outright and not won yet: a faint outline of it, its shape picked out in the shelf's own light, and the
+   rare ones a '?' in a dashed outline of their own. */
+.fp-yet { filter: brightness(0) drop-shadow(1px 0 0 #d8cfee) drop-shadow(-1px 0 0 #d8cfee) drop-shadow(0 1px 0 #d8cfee) drop-shadow(0 -1px 0 #d8cfee); opacity: .3; }
+.fp-yet.fp-trophy::after { box-shadow: none; }
+.fp-rare { filter: none; opacity: 1; display: inline-flex; justify-content: center; width: 1.2em; padding-bottom: .14em; }
+.fp-rare span {
+  display: grid; place-items: center; width: .95em; height: .95em; border-radius: 30%;
+  border: 1.5px dashed rgba(251, 238, 210, .3); color: rgba(251, 238, 210, .4);
+}
+.fp-rare span::before { content: "?"; font: 400 .55em/1 var(--fp-disp); }
 /* a trophy: on a little plinth in its machine's colours */
 .fp-trophy::after {
   content: ""; position: absolute; left: 2px; right: 2px; bottom: 1px; height: 5px; border-radius: 2px;

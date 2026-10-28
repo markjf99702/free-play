@@ -22,7 +22,7 @@ export const PRIZES = [
 ];
 
 // The plush in Clutch, the claw machine. They're won outright, not traded for, so they sit on the shelf but not on the
-// counter. kind is the machine's name for each (clutch/js/machine.js).
+// counter. kind is the machine's name for each (clutch/js/machine.js); the lucky star turns up less often than the rest.
 export const PLUSH = [
   { id: 'plush-bear', kind: 'bear', emoji: '🐻', name: 'Plush bear', say: 'a plush bear' },
   { id: 'plush-chick', kind: 'chick', emoji: '🐥', name: 'Plush chick', say: 'a plush chick' },
@@ -30,7 +30,7 @@ export const PLUSH = [
   { id: 'plush-ghost', kind: 'ghost', emoji: '👻', name: 'Plush ghost', say: 'a plush ghost' },
   { id: 'plush-penguin', kind: 'penguin', emoji: '🐧', name: 'Plush penguin', say: 'a plush penguin' },
   { id: 'plush-alien', kind: 'alien', emoji: '👽', name: 'Plush alien', say: 'a plush alien' },
-  { id: 'plush-star', kind: 'star', emoji: '🌟', name: 'Lucky star', say: 'the lucky star' },
+  { id: 'plush-star', kind: 'star', emoji: '🌟', name: 'Lucky star', say: 'the lucky star', rare: true },
 ];
 
 // The prizes on Topple's deck, pushed off over the edge with the coins. Won outright too, like the plush.
@@ -61,3 +61,5 @@ export const trophy = id => TROPHIES.find(t => t.id === id);
 
 // Everything that can sit on the shelf, in the order it sits there.
 export const SHELF = [...PRIZES, ...PLUSH, ...TRINKETS, ...TROPHIES];
+// What's won outright rather than traded for at the counter: each has its place on the shelf from the start.
+export const OUTRIGHT = [...PLUSH, ...TRINKETS, ...TROPHIES];
