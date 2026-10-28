@@ -150,7 +150,7 @@ assert.equal(await page.evaluate(() => popgun.gallery.rows[0].targets[0].x), awa
 await hide(false);
 await page.click('#resume');
 
-// The rest of the corks, and the round's over: a ticket for every 20 points. (After rounds with a best of 40.)
+// The rest of the corks, and the round's over: a ticket for every 30 points. (After rounds with a best of 40.)
 await page.evaluate(() => Object.assign(popgun.saved, { best: 40, rounds: 2 }));
 const t0 = await tickets();
 await page.evaluate(() => { popgun.speed = 3; });
@@ -169,16 +169,16 @@ while (!(await page.evaluate(() => popgun.gallery.over))) {
 }
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const score = await page.evaluate(() => popgun.gallery.score);
-await countsAlong(await tickets(), Math.floor(score / 20));
+await countsAlong(await tickets(), Math.floor(score / 30));
 assert.ok(score > 100, `a steady hand scores (${score})`);
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
-await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 20)} tickets.`, { timeout: 2000 }).catch(() => {});
-assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 20)} tickets.`, 'what a screen reader hears at the end of the round');
-assert.equal(await tickets(), t0 + Math.floor(score / 20));
+await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, { timeout: 2000 }).catch(() => {});
+assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, 'what a screen reader hears at the end of the round');
+assert.equal(await tickets(), t0 + Math.floor(score / 30));
 assert.equal(await page.evaluate(() => popgun.saved.best), score);
 // a new best, said big and in gold, and the sign's bulbs blaze for it once the tickets are out
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 40.', big: true, size: '18px' });
-await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), Math.floor(score / 20), { timeout: 8000 });
+await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), Math.floor(score / 30), { timeout: 8000 });
 await page.waitForFunction(() => popgun.glow > 0, null, { timeout: 1000 });
 // A quick double tap on Another round starts it: the second tap lands on the booth where the button was, and doesn't
 // fire a cork.
@@ -250,7 +250,7 @@ const gap = await page.evaluate(() => ({ score: popgun.gallery.score, rounds: po
 const hadGap = await tickets();
 await page.click('#menu a.to-floor');
 await page.waitForSelector('#popgunStat');
-assert.equal(await tickets(), hadGap + Math.floor(gap.score / 20), 'a round left as its end card came still pays');
+assert.equal(await tickets(), hadGap + Math.floor(gap.score / 30), 'a round left as its end card came still pays');
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.popgun')).rounds), gap.rounds + 1, 'and counts');
 // (and back with the sound on, for listening behind the next end card)
 await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('free-play.popgun')); localStorage.setItem('free-play.popgun', JSON.stringify({ ...s, sound: true })); });
@@ -273,7 +273,7 @@ while (!(await page.evaluate(() => popgun.gallery.over))) {
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const [hit, scored] = await page.evaluate(() => [popgun.gallery.hits, popgun.gallery.score]);
 assert.deepEqual([hit, scored], [1, 10], 'one duck hit, and nothing else');
-assert.equal(await page.textContent('#overHow'), "1 hit from 20 corks. Ten more points and it's a ticket.");
+assert.equal(await page.textContent('#overHow'), "1 hit from 20 corks. Twenty more points and it's a ticket.");
 // Behind the end card the booth goes on turning, quietly: a golden duck or a bell coming round doesn't chime there.
 assert.equal(await page.evaluate(() => popgun.saved.sound), true, 'the sound is on');
 await page.evaluate(() => { window.__sounds.length = 0; popgun.speed = 10; });

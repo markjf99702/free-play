@@ -29,6 +29,8 @@ test("a round that paid nothing says how close it came: 'Two more points and it'
   assert.equal(shortOfATicket(0, 4), "Four more points and it's a ticket.");
   assert.equal(shortOfATicket(10, 20), "Ten more points and it's a ticket.");
   assert.equal(shortOfATicket(10, 15), "Five more points and it's a ticket.");
+  assert.equal(shortOfATicket(0, 30), "Thirty more points and it's a ticket.", "Popgun's round that missed every time");
+  assert.equal(shortOfATicket(5, 30), "Twenty-five more points and it's a ticket.");
   assert.equal(shortOfATicket(6450, 10000), "3,550 more points and it's a ticket.");
   assert.equal(shortOfATicket(0, 5000), "5,000 more points and it's a ticket.");
 });

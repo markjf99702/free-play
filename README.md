@@ -30,7 +30,7 @@
 ## How it plays
 
 - **The floor** has a cabinet for each machine, showing what you've done on it: your best, today's card and how many days in a row you've played it, a cup still on the go on Topple, the plush you've won. Tap one to play. Every machine has a way back to the floor.
-- **Tickets.** Roll Up pays one for every 10 points, and a fair game earns about 25 to 35. Tilt pays one for every 5,000 on Classic and Space, and one for every 2,500 on Haunted House, the hard one, and a fair game earns about 50 to 70. They feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 20 points, Bonkers one for every 15, and Hoops one for every 4.
+- **Tickets.** Roll Up pays one for every 10 points, and a fair game earns about 25 to 35. Tilt pays one for every 5,000 on Classic and Space, and one for every 2,500 on Haunted House, the hard one, and a fair game earns about 50 to 70. They feed out of a slot at the end. Topple pays one for every coin pushed over its front edge, about 15 to 35 a cup, Highrise one for every floor built, Popgun one for every 30 points, Bonkers one for every 15, and Hoops one for every 4.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush. Tapped the wrong one? For a few seconds after a trade, Undo gives the tickets back.
 - No account and no server. Your tickets, prizes and scores stay in your browser. It works offline (on a connection that isn't answering, a page opens from the offline copy after four seconds), and installs to a phone's home screen as one app.
@@ -121,7 +121,7 @@ A carnival shooting gallery: a booth with a striped awning, a painted night fair
 - **Tap where you want the cork to go** and the popgun on the counter fires it there. (With a mouse, the pointer becomes the sights; on a keyboard, the arrows move them and Space fires.) A round is 20 corks, and the gun takes a moment to reload between them.
 - **Aim ahead.** A cork takes about a third of a second to reach the back of the booth, and the targets keep moving, so a tap dead on a rabbit or a star lands behind it. Aim a little ahead of the ducks, half a rabbit ahead of the rabbits and a whole star ahead of the stars. The first few corks in a round that land just behind their target say so. Each row's motor surges a bit faster and a bit slower as it runs, so what worked a moment ago won't quite now.
 - **What they're worth.** Ducks along the pond at the bottom are 10, rabbits in the middle 20, and the small fast stars up top 30. Now and then a golden duck comes along, worth 100, and a bell, which wins three more corks. Five hits in a row are worth 50 more. A target knocked flat stands up again once it's been round the back of the conveyor.
-- A ticket for every 20 points, paid at the end of the round. (Try the moon.)
+- A ticket for every 30 points, paid at the end of the round. (Try the moon.)
 
 ## Bonkers
 

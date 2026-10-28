@@ -63,7 +63,7 @@ function machines() {
 
   // Popgun: the best round.
   const pg = readSave('free-play.popgun');
-  $('popgunStat').textContent = pg.rounds ? best(pg.best || 0) : 'Twenty corks. A ticket for every 20 points.';
+  $('popgunStat').textContent = pg.rounds ? best(pg.best || 0) : 'Twenty corks. A ticket for every 30 points.';
 
   // Bonkers: the best round.
   const bk = readSave('free-play.bonkers');

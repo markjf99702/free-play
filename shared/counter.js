@@ -11,7 +11,8 @@ export const tickets = n => `${fmt(n)} ${+n === 1 ? 'ticket' : 'tickets'}`;
 // What the end card says, in place of the rate, for a round that paid nothing, at a ticket for every `per` points: how
 // close it came. 'Two more points and it's a ticket.', '3,550 more points and it's a ticket.'
 const WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
-  'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
+  'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty', 'Twenty-one', 'Twenty-two',
+  'Twenty-three', 'Twenty-four', 'Twenty-five', 'Twenty-six', 'Twenty-seven', 'Twenty-eight', 'Twenty-nine', 'Thirty'];
 export function shortOfATicket(score, per) {
   const n = per - (Math.max(0, score) % per);
   return `${WORDS[n] || fmt(n)} more ${n === 1 ? 'point' : 'points'} and it's a ticket.`;

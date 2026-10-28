@@ -2,7 +2,7 @@
 // the score and the tickets at the end. js/gallery.js has the targets and the rules, js/draw.js draws the booth and
 // js/sound.js makes the noises. Tickets go into the arcade's wallet (../shared/wallet.js) at the end of a round.
 
-import { createGallery, ticketsFor, CORKS, W, H } from './gallery.js';
+import { createGallery, ticketsFor, PER_TICKET, CORKS, W, H } from './gallery.js';
 import { createDraw, MOON } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -151,7 +151,7 @@ function endRound() {
   // and with no ticket, how far off one it was
   const { hits, shots } = gallery;
   $('overHow').textContent = `${hits} ${hits === 1 ? 'hit' : 'hits'} from ${shots} ${shots === 1 ? 'cork' : 'corks'}. `
-    + (won ? 'A ticket for every 20 points.' : shortOfATicket(score, 20));
+    + (won ? `A ticket for every ${PER_TICKET} points.` : shortOfATicket(score, PER_TICKET));
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;

@@ -184,7 +184,7 @@ while (!(await page.evaluate(() => popgun.gallery.over))) {
 }
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const shot = await page.evaluate(() => popgun.gallery.score);
-assert.equal(await tickets(), beforePopgun + Math.floor(shot / 20), 'Popgun pays a ticket for every 20 points');
+assert.equal(await tickets(), beforePopgun + Math.floor(shot / 30), 'Popgun pays a ticket for every 30 points');
 await page.click('#over .back a');
 await page.waitForURL(base);
 

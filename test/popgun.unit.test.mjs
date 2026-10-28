@@ -140,8 +140,8 @@ test('a knocked-down target can\'t be hit again until it comes round', () => {
   assert.equal(d.t.hit, false, 'round the back, it stands up again');
 });
 
-test('a ticket for every 20 points', () => {
-  assert.deepEqual([0, 19, 20, 345, 880].map(ticketsFor), [0, 0, 1, 17, 44]);
+test('a ticket for every 30 points', () => {
+  assert.deepEqual([0, 19, 29, 30, 345, 880].map(ticketsFor), [0, 0, 0, 1, 11, 29]);
 });
 
 test('a golden duck or a bell coming round says so as it comes into view, once', () => {

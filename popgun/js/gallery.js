@@ -137,5 +137,6 @@ export function createGallery({ random = Math.random } = {}) {
   };
 }
 
-// The tickets a round's score pays.
-export const ticketsFor = score => Math.floor(score / 20);
+// The tickets a round's score pays: one for every PER_TICKET points.
+export const PER_TICKET = 30;
+export const ticketsFor = score => Math.floor(score / PER_TICKET);
