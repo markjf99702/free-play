@@ -9,7 +9,7 @@ import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, tic
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
-import { topFive, place, onList } from '../../shared/records.js';
+import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.roll-up';
@@ -69,11 +69,11 @@ function save() {
 function settleCard() {
   const s = settleOld(saved);
   if (s === saved) return;
-  const paid = s.daily !== saved.daily ? s.daily.won : 0;
+  const played = s.daily !== saved.daily;
   for (const k of Object.keys(saved)) delete saved[k];
   Object.assign(saved, s);
   save();
-  wallet.pay(paid);
+  if (played) { count({ round: 'roll-up' }); wallet.pay(s.daily.won); }
 }
 settleCard();
 sound.setEnabled(saved.sound);
@@ -248,6 +248,7 @@ function gameOver() {
   const result = { score: game.score, balls: game.balls, won };
   wallet.pay(won);
   saved.games++;
+  count({ round: 'roll-up' });
   if (game.card) {
     // today's card: kept for the title card and the share line, with the run of days played
     const key = game.card.key, prev = saved.daily;

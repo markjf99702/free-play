@@ -177,6 +177,7 @@ await page.waitForFunction(t => document.getElementById('live').textContent === 
 assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 30));
 assert.equal(await page.evaluate(() => popgun.saved.best), score);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.popgun), 1, "the round is counted in the arcade's totals");
 // a new best, said big and in gold, and the sign's bulbs blaze for it once the tickets are out
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 40.', big: true, size: '18px' });
 await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), Math.floor(score / 30), { timeout: 8000 });

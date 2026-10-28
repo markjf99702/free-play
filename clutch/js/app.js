@@ -10,6 +10,7 @@ import * as wallet from '../../shared/wallet.js';
 import { PLUSH } from '../../shared/prizes.js';
 import { openCounter, counterOpen, pocketButton, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.clutch';
@@ -134,7 +135,7 @@ function happened() {
   let ready = false;
   for (const e of machine.take()) {
     if (e === 'start') armed = false;
-    else if (e === 'drop') { aim = null; saved.goes++; save(); go = { slipped: false }; } // a go once the claw drops: a tap isn't one
+    else if (e === 'drop') { aim = null; saved.goes++; save(); count({ round: 'clutch' }); go = { slipped: false }; } // a go once the claw drops: a tap isn't one
     else if (e === 'short') { aim = null; nudge(); }
     else if (e === 'close') sound.close();
     else if (e === 'release') sound.open();

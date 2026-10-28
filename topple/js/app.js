@@ -13,7 +13,7 @@ import * as wallet from '../../shared/wallet.js';
 import { TRINKETS } from '../../shared/prizes.js';
 import { openCounter, counterOpen, toast, feed, bestLine, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
-import { topFive, place, onList } from '../../shared/records.js';
+import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.topple';
@@ -220,6 +220,7 @@ function endCup() {
   ended = true;
   done = { won: cup.won, prizes: cup.prizes, before: saved.best || 0, first: !saved.cups, top: topFive(saved), date: dayKey() };
   saved.cups = (saved.cups || 0) + 1;
+  count({ round: 'topple' });
   cup = null;
   showDone();
   say(`The cup's empty: ${tickets(done.won)}.`);

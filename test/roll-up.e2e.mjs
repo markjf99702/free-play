@@ -160,6 +160,7 @@ assert.equal(await page.locator('#tally .golden').count(), 1, 'the golden ball s
 const stored = await page.evaluate(() => ({ ...JSON.parse(localStorage.getItem('free-play.roll-up')), ...JSON.parse(localStorage.getItem('free-play.wallet')) }));
 assert.equal(stored.tickets, Math.floor(score / 10), "a ticket for every 10 points, into the arcade's wallet");
 assert.equal(stored.best, score);
+assert.deepEqual(await page.evaluate(() => { const t = JSON.parse(localStorage.getItem('free-play.totals') || '{}'); return [t.rounds, t.tickets]; }), [{ 'roll-up': 1 }, stored.tickets], "the game and its tickets are counted in the arcade's totals");
 await page.waitForFunction(t => document.querySelector('.fp-won b').textContent === String(t), stored.tickets, { timeout: 8000 });
 assert.ok(await page.evaluate(() => document.querySelector('.fp-strip').offsetHeight > 20), 'the tickets feed out of the slot');
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 50.', big: true, size: '18px' });

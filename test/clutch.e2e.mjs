@@ -101,6 +101,7 @@ assert.ok(Math.abs(dropped - slid) < 20, 'it drops where it was let go');
 await ready();
 assert.equal(await clawX(), home, 'the claw comes back over the chute');
 assert.equal(await page.evaluate(() => clutch.saved.goes), 1);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.clutch), 1, "the go is counted in the arcade's totals");
 
 // A tap too short to take the claw past the chute's wall isn't a go: it slides back, and the hint says to hold.
 await page.mouse.down(); await page.waitForTimeout(120); await page.mouse.up();

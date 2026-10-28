@@ -9,7 +9,7 @@
 // match (it says what to), which changes this file, so every copy is made whole again at once. Bump CACHE's number
 // as well when the list itself changes.
 const CACHE = 'free-play-v11';
-const FILES = '44cfefcb'; // test/arcade.test.mjs checks this
+const FILES = '7676bd6c'; // test/arcade.test.mjs checks this
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the page for an address that is not there

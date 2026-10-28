@@ -164,6 +164,7 @@ await page.waitForFunction(t => document.getElementById('live').textContent === 
 assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.`, 'what a screen reader hears at the end of the round');
 assert.equal(await tickets(), t0 + Math.floor(score / 15));
 assert.equal(await page.evaluate(() => bonkers.saved.best), score);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.bonkers), 1, "the round is counted in the arcade's totals");
 assert.deepEqual(await bestLine(), { text: `Best: ${score.toLocaleString('en-US')}.`, big: false, size: '13px' }, 'a first round is never a new best');
 // Behind the card the moles carry on, but the scoreboard keeps the round's score, whatever redraws it.
 await page.waitForTimeout(300);

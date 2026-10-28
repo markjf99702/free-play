@@ -262,3 +262,32 @@ test("each machine's top five: best first, with the day, from the best it kept b
   assert.equal(onList(4), 'Number 5 on your list. ');
   assert.equal(onList(-1), '');
 });
+
+test("the all-time totals count every ticket won, every trade and every round, in a save of their own", async () => {
+  const { readTotals, count, TOTALS } = await import('../shared/records.js');
+  const { dayKey } = await import('../shared/calendar.js');
+  kept.clear();
+  assert.deepEqual(readTotals(), { since: null, tickets: 0, traded: 0, rounds: {} });
+  wallet.pay(40); wallet.pay(12);
+  const lolly = PRIZES.find(p => p.id === 'lollipop');
+  wallet.buy(lolly); wallet.buy(lolly); wallet.refund(lolly);
+  wallet.merge(500, { duck: 1 }); // brought over from an old address: not won here
+  wallet.give(PLUSH[0]);
+  count({ round: 'hoops' }); count({ round: 'hoops' }); count({ round: 'tilt' });
+  assert.deepEqual(readTotals(), { since: dayKey(), tickets: 52, traded: 1, rounds: { hoops: 2, tilt: 1 } });
+  assert.equal(wallet.read().tickets, 547, 'the pocket is the pocket');
+  assert.equal(JSON.parse(kept.get('free-play.wallet')).traded, undefined, 'and the totals are not in it');
+  // the day it started counting stays the first one
+  kept.set(TOTALS, JSON.stringify({ ...JSON.parse(kept.get(TOTALS)), since: '2026-10-01' }));
+  count({ tickets: 3 });
+  assert.equal(readTotals().since, '2026-10-01');
+  // a meddled-with save counts from what it can read
+  for (const junk of ['nope', '[1]', '{"tickets":"lots","rounds":[3],"traded":-2}', '{"rounds":{"hoops":"4","x":-1}}']) {
+    kept.set(TOTALS, junk);
+    const t = readTotals();
+    assert.ok(Number.isInteger(t.tickets) && t.tickets >= 0 && Number.isInteger(t.traded) && t.traded >= 0 && typeof t.rounds === 'object', junk);
+  }
+  assert.deepEqual(readTotals().rounds, { hoops: 4 });
+  count({ traded: -1 });
+  assert.equal(readTotals().traded, 0, 'never fewer than none');
+});

@@ -9,7 +9,7 @@ import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
-import { topFive, place, onList } from '../../shared/records.js';
+import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.bonkers';
@@ -147,6 +147,7 @@ function endRound() {
   lastScore = score;
   wallet.pay(won);
   saved.rounds++;
+  count({ round: 'bonkers' });
   const old = saved.best, isBest = score > old && !first;
   // onto the top five, with the day
   const { list, rank, entry } = place(topFive(saved), score);

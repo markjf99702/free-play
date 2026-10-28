@@ -189,6 +189,7 @@ const missed = String((Number(final.replace(/,/g, '')) + 10) % 100).padStart(2, 
 assert.equal(await page.textContent('#live'), `Game over: ${final}, number 1 on your list, ${paid} ${paid === 1 ? 'ticket' : 'tickets'}. Match ${missed}.`);
 assert.equal(await page.getAttribute('#display', 'aria-live'), null, 'the score display is read out at every change');
 assert.equal(await page.locator('#scores li').count(), 1);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.tilt), 1, "the game is counted in the arcade's totals");
 
 await page.reload();
 await page.waitForFunction(() => window.tilt);

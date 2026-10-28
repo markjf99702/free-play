@@ -10,7 +10,7 @@ import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
-import { topFive, place, onList } from '../../shared/records.js';
+import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.highrise';
@@ -145,6 +145,7 @@ function endGame() {
   wallet.pay(won);
   if (top) wallet.give(TROPHIES[0]);
   saved.games++;
+  count({ round: 'highrise' });
   const old = saved.best, isBest = built > old && !first;
   // onto the top five, with the day
   const { list, rank, entry } = place(topFive(saved), built);

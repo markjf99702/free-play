@@ -1,7 +1,10 @@
 // Free Play's ticket booth: one balance of tickets and one shelf of prizes for every machine on the floor.
 // Each machine pays in at the end of a game (pay), and the prize counter (shared/counter.js) spends from it (buy).
 // It's read fresh every time, so a game in another tab never gets overwritten by a stale copy. It checks what it's
-// handed, too: a bad number or a nameless prize writes nothing, rather than wiping the pocket.
+// handed, too: a bad number or a nameless prize writes nothing, rather than wiping the pocket. The tickets won and the
+// trades made are counted in the arcade's all-time totals too (shared/records.js), which are kept apart from it.
+
+import { count } from './records.js';
 
 export const KEY = 'free-play.wallet';
 
@@ -38,6 +41,7 @@ export function pay(n) {
   if (!(Number.isFinite(k) && k > 0)) return read();
   const w = read();
   w.tickets += k;
+  count({ tickets: k });
   return write(w);
 }
 
@@ -48,6 +52,7 @@ export function buy(prize) {
   if (w.tickets < prize.cost) return null;
   w.tickets -= prize.cost;
   w.prizes[prize.id] = (w.prizes[prize.id] || 0) + 1;
+  count({ traded: 1 });
   return write(w);
 }
 
@@ -61,6 +66,7 @@ export function refund(prize) {
   w.tickets += prize.cost;
   if (n > 1) w.prizes[prize.id] = n - 1;
   else delete w.prizes[prize.id];
+  count({ traded: -1 });
   return write(w);
 }
 

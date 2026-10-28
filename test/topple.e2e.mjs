@@ -220,6 +220,7 @@ assert.ok(won >= mid);
 assert.equal(await page.textContent('#live'), `The cup's empty: ${won} ${won === 1 ? 'ticket' : 'tickets'}.`, 'what a screen reader hears as the cup ends');
 assert.ok(await tickets() >= won, 'the tickets are in the wallet');
 assert.equal(await page.evaluate(() => topple.saved.cups), 3);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.topple), 1, "the cup is counted in the arcade's totals");
 assert.deepEqual(await bestLine(), { text: 'A new best cup! The old one was 1 ticket.', big: true, size: '18px' });
 // the prize it pushed off mid-cup is on its card too
 const trinket = TRINKETS.find(t => t.kind === prize);

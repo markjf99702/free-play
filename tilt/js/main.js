@@ -11,6 +11,7 @@ import { play, unlock, setSound } from './sound.js';
 import { TABLES } from './tables.js';
 import * as wallet from '../../shared/wallet.js';
 import { dayKey } from '../../shared/calendar.js';
+import { count } from '../../shared/records.js';
 import { openCounter, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
@@ -312,6 +313,7 @@ function gameOver(g, { ended = false } = {}) {
   list.sort((a, b) => b.score - a.score);
   store[table.scoresKey] = list.slice(0, 5);
   save();
+  count({ round: 'tilt' });
   const rank = store[table.scoresKey].indexOf(entry);
   // The Match comes up on the backbox as the card does (see hud()). The machine pays out at once, the Match too, and
   // the tickets feed from the slot once the card is up. A game ended from the menu has no Match: a real machine's

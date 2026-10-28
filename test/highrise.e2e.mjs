@@ -148,6 +148,7 @@ assert.ok(await page.isVisible('#over'));
 await countsAlong(await tickets(), 36);
 assert.equal(await tickets(), t0 + 36);
 assert.match(await page.textContent('#overT'), /minor prize/);
+assert.ok(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.totals') || '{}').rounds?.highrise) >= 1, "the game is counted in the arcade's totals");
 assert.ok(await page.isHidden('#overTrophy'), 'the trophy is for a top-out');
 assert.deepEqual(await bestLine(), { text: 'Your highest yet! The old one was floor 6.', big: true, size: '18px' });
 
