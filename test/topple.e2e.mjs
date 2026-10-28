@@ -74,6 +74,15 @@ assert.equal(await page.textContent('#play'), 'Play');
 assert.equal(await page.textContent('#left'), '20', 'a full cup waits under the title card');
 assert.ok(await page.isDisabled('#drop'), 'Drop waits for Play');
 assert.equal(await page.textContent('.hud .score small'), 'Won this cup');
+// Behind the title card the deck waits, however long it's left (here at eight times speed): the pusher stays where it
+// is, and nothing goes over the edge into the pocket before a cup's begun.
+const still = () => page.evaluate(() => ({ lip: topple.machine.lip, falling: topple.machine.falling.length,
+  tickets: JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets }));
+await page.evaluate(() => { topple.speed = 8; });
+const waiting = await still();
+await page.waitForTimeout(600);
+assert.deepEqual(await still(), waiting, 'the deck ran on behind the title card');
+await page.evaluate(() => { topple.speed = 1; });
 await page.evaluate(() => { window.__downs = []; document.getElementById('stage').addEventListener('pointerdown', () => __downs.push(performance.now())); document.getElementById('play').addEventListener('click', () => { window.__play = performance.now(); }); });
 const play = await middle('#play');
 await tap(play);
@@ -167,7 +176,19 @@ assert.equal(await page.textContent('#play'), 'Carry on');
 assert.equal(await left(), 3);
 assert.ok(Math.abs(await page.evaluate(() => topple.machine.pieces.length) - pieces) <= 4, 'the coins on the deck came back');
 assert.deepEqual(await page.evaluate(() => topple.cup.prizes), [prize], 'and so did the prize the cup won');
+// Two coins left hanging over the edge behind the Carry on card wait there, and go over once the cup's carried on,
+// counting for it.
+const hanging = await page.evaluate(() => {
+  topple.speed = 8;
+  for (const [i, c] of topple.machine.pieces.filter(p => p.layer === 'deck' && p.kind === 'coin').slice(0, 2).entries()) window.Matter.Body.setPosition(c, { x: 130 + i * 40, y: 252 });
+  return topple.cup.won;
+});
+const carry = await still();
+await page.waitForTimeout(600);
+assert.deepEqual(await still(), carry, 'the deck ran on behind the Carry on card');
+await page.evaluate(() => { topple.speed = 1; });
 await page.click('#play');
+await page.waitForFunction(n => topple.cup.won > n, hanging, { timeout: 5000 });
 
 // The menu stops the shelf where it is.
 await page.keyboard.press('Escape');

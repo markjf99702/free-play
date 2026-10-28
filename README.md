@@ -104,7 +104,7 @@ A coin pusher, looking down through the glass: a chrome pusher sliding in and ou
 - **How it pushes.** Coins land on the pusher and ride in and out with it. As it slides back, the back wall holds them, and the ones at the front get scraped off its lip onto the deck. As it slides forward, its face shoves the deck's coins along, and the ones at the front go over. Every two coins over the front edge are a ticket, paid as the second one falls. The side walls stop short of the front, so coins pushed off the sides there go to the house.
 - **The bonus.** Every so often the lights along the back wall chase along the row of pockets and stop on one. Drop a coin through the lit pocket while it's lit for a shower of eight coins across the pusher, sometimes with a gold one.
 - **Gold coins** are worth ten tickets. **A prize** always sits on the deck somewhere, on a little card: push it over the edge and it goes on your shelf (a plastic watch, a toy car, a lucky keyring, a wind-up robot, or now and then a giant plastic gem). When one's gone, the attendant puts another on the pusher.
-- **The deck stays as you left it.** The coins are kept between visits, so a pile left hanging over the edge is still hanging there next time, and a cup you didn't finish is waiting.
+- **The deck stays as you left it.** The coins are kept between visits, so a pile left hanging over the edge is still hanging there next time, and a cup you didn't finish is waiting. The pusher waits behind the title card until you press Play or Carry on, so every coin that goes over counts for the cup you're playing.
 - **The keyboard works too.** ← and → move the chute; Space drops a coin.
 
 ## Highrise

@@ -355,11 +355,14 @@ addEventListener('pagehide', save);
 document.addEventListener('visibilitychange', () => { if (document.hidden) { save(); toggleMenu(true); } });
 
 // ---------- every frame ----------
+// Behind the title card the deck waits, as it does behind the menu, so whatever goes over the edge comes from a cup
+// being played and counts for it. (Behind the end card it runs on: what still goes over counts for the cup just done.)
 let last = performance.now(), owed = 0, lastLip = machine.lip;
 function tick(now) {
   const dt = Math.min(100, now - last);
   last = now;
-  if (!paused) {
+  const still = paused || !$('title').hidden;
+  if (!still) {
     owed = Math.min(owed + dt * timeScale, STEP * 6 * timeScale);
     while (owed >= STEP) { machine.step(); owed -= STEP; happened(); }
     if (keys.size) aim = clampAim(aim + (keys.has('ArrowRight') ? 1 : -1) * 190 * dt / 1000);
@@ -367,7 +370,7 @@ function tick(now) {
   }
   const speed = Math.min(1, Math.abs(machine.lip - lastLip) / (dt / 1000 || 1) / 60);
   lastLip = machine.lip;
-  sound.motor(paused ? 0 : speed);
+  sound.motor(still ? 0 : speed);
   for (const p of pops) p.t += dt / 1000;
   while (pops.length && pops[0].t > 1.1) pops.shift();
   glow = Math.max(0, glow - dt / 1000);
