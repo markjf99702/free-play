@@ -5,7 +5,7 @@
 **An arcade on your phone.** Walk onto the floor and pick a machine: Roll Up, a skee-ball lane; Tilt, three pinball tables; Clutch, a claw machine full of plush; Topple, a coin pusher; Highrise, a stacker; Popgun, a shooting gallery; Bonkers, a whack-a-mole; or Hoops, a basketball machine. Every machine is set to free play. The games pay out tickets into the same pocket, for the same prize counter at the back, and the claw and the coin pusher pay out prizes, straight onto the same shelf. There's room on the floor for more machines.
 
 <p align="center">
-  <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket beside the words Prize counter, a row of buttons for the eight machines and the prize counter, each in its sign's colours, and the Roll Up cabinet with its red and gold marquee and its screen showing the ring board" width="250">
+  <img src="docs/phone-floor.png" alt="The Free Play floor: FREE PLAY in pink and teal neon tubes over arcade carpet, 214 tickets in your pocket beside the words Prize counter, today's special under them (Tilt: score 100,000 on Classic for 25 more tickets), a row of buttons for the eight machines, the prize counter and Records, each in its sign's colours, and the Roll Up cabinet with its red and gold marquee and its screen showing the ring board" width="250">
   &nbsp;
   <img src="docs/phone-roll-up.png" alt="Roll Up pushed in on the board as a ball drops into the 50 cup: chrome rings on a blue board with lit numbers 20, 30, 40 and 50, 100 cups in both top corners, and +50 rising over the cup" width="250">
   &nbsp;
