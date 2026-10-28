@@ -109,6 +109,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .fp-prize .c { display: inline-flex; align-items: center; gap: 4px; font: 400 14px var(--fp-disp); color: var(--fp-gold); }
 .fp-prize.short { opacity: .55; }
 .fp-prize.short .c { color: var(--fp-ink3); }
+/* and under its price, how far off it is */
+.fp-prize .g { font-weight: 600; font-size: 12px; line-height: 1.2; color: var(--fp-ink); white-space: nowrap; }
 .fp-prize:not(.short):active { background: rgba(251, 238, 210, .14); }
 /* On a phone the four are narrower, with their names and prices a size down, and on the narrowest phones (under 350 px)
    they go three a row. */
@@ -116,6 +118,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .fp-grid { gap: 6px; }
   .fp-prize { padding: 10px 4px 8px; }
   .fp-prize .n, .fp-prize .c { font-size: 13px; }
+  .fp-prize .g { font-size: 11.5px; }
 }
 @media (max-width: 349.98px) { .fp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .fp-sheet button:focus-visible { outline: 2px solid var(--fp-gold); outline-offset: 3px; }

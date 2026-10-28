@@ -172,12 +172,13 @@ for (const [width, height] of [[360, 640], [390, 844]]) {
 }
 
 // The prizes stand four a row, on a phone as on a computer (and on Hoops' page as on the floor's), and three a row on
-// the narrowest phones, under 350 px. Each is a thumb's height to tap at least, with its name and price inside it.
+// the narrowest phones, under 350 px. Each is a thumb's height to tap at least, with its name and price inside it, and
+// with an empty pocket how far off it is too, up to the giraffe's '10,000 to go'.
 for (const [path, hook, opener] of [PAGES[0], PAGES[8]]) {
   for (const [width, height, across] of [[320, 640, 3], [349, 640, 3], [350, 640, 4], [360, 640, 4], [390, 844, 4], [430, 932, 4], [1280, 800, 4]]) {
     await page.setViewportSize({ width, height });
     await page.goto(base + path);
-    await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1320, prizes: {} })));
+    await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 0, prizes: {} })));
     await page.reload();
     await page.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
     await page.evaluate(() => document.fonts.ready);
@@ -187,11 +188,13 @@ for (const [path, hook, opener] of [PAGES[0], PAGES[8]]) {
       const out = [];
       tiles.forEach((t, i) => {
         if (boxes[i].height < 44) out.push(`${t.dataset.id} is ${Math.round(boxes[i].height)} px tall`);
-        for (const s of t.querySelectorAll('.n, .c')) {
+        if (!/^[\d,]+ to go$/.test(t.querySelector('.g')?.textContent)) out.push(`${t.dataset.id} doesn't say how far off it is`);
+        for (const s of t.querySelectorAll('.n, .c, .g')) {
           const r = s.getBoundingClientRect();
-          if (s.scrollWidth > s.clientWidth + 1 || r.left < boxes[i].left || r.right > boxes[i].right) out.push(`${t.dataset.id}'s ${s.className === 'n' ? 'name' : 'price'} runs out of it`);
+          if (s.scrollWidth > s.clientWidth + 1 || r.left < boxes[i].left || r.right > boxes[i].right) out.push(`${t.dataset.id}'s ${{ n: 'name', c: 'price', g: 'tickets to go' }[s.className]} runs out of it`);
         }
       });
+      if (tiles.at(-1).querySelector('.g')?.textContent !== '10,000 to go') out.push('the giraffe is not 10,000 to go');
       return { n: tiles.length, first: boxes.filter(b => Math.abs(b.top - boxes[0].top) < 2).length, rows: new Set(boxes.map(b => Math.round(b.top))).size, out };
     });
     const at = `${path || 'the floor'} at ${width} px`;

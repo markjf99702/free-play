@@ -117,7 +117,14 @@ function render() {
     b.querySelector('.e').textContent = p.emoji;
     b.querySelector('.n').textContent = p.name;
     b.querySelector('.c').append(fmt(p.cost));
-    // (dimmed when it's more than the pocket holds, and said so)
+    // (dimmed when it's more than the pocket holds, with how far off it is under its price: '180 to go')
+    if (w.tickets < p.cost) {
+      const g = document.createElement('span');
+      g.className = 'g';
+      g.textContent = `${fmt(p.cost - w.tickets)} to go`;
+      g.setAttribute('aria-hidden', 'true');
+      b.append(g);
+    }
     b.setAttribute('aria-label', `${p.name}, ${tickets(p.cost)}` + (w.tickets < p.cost ? `, ${fmt(p.cost - w.tickets)} more than you have` : ''));
     b.dataset.id = p.id;
     b.addEventListener('click', () => trade(p));

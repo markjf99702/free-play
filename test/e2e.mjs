@@ -283,11 +283,13 @@ assert.ok(await page.isHidden('.fp-sheet'));
 assert.equal(await page.textContent('#tix'), String(have - 15));
 assert.match(await page.textContent('#shelf'), /🎈/, 'the balloon is on the shelf');
 
-// A prize the pocket can't run to says how far short it is, to a screen reader too (it's only dimmed to the eye).
+// A prize the pocket can't run to is dimmed, and says how far off it is under its price ('3 to go'), and to a screen
+// reader too.
 const pocket = async w => { await page.evaluate(w => localStorage.setItem('free-play.wallet', JSON.stringify(w)), w); await page.reload(); };
 await pocket({ tickets: 7, prizes: {} });
 await page.click('#trade');
 assert.deepEqual(await page.locator('.fp-prize').evaluateAll(els => els.slice(0, 2).map(e => e.getAttribute('aria-label'))), ['Lollipop, 5 tickets', 'Spider ring, 10 tickets, 3 more than you have']);
+assert.deepEqual(await page.locator('.fp-prize').evaluateAll(els => els.map(e => e.querySelector('.g')?.textContent || '')).then(g => [g[0], g[1], g[15], g[17]]), ['', '3 to go', '2,493 to go', '9,993 to go']);
 await page.click('.fp-x');
 
 // One ticket is one ticket: one short of a lollipop, and one left in the pocket.
