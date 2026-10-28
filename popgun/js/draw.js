@@ -297,5 +297,6 @@ export function createDraw(canvas) {
     }
   }
 
-  return { resize, repaint, frame, cabinet, toBooth, at: P };
+  // (target is for test/popgun.e2e.mjs, which draws each one on a canvas of its own to check gallery.js's TIN)
+  return { resize, repaint, frame, cabinet, toBooth, at: P, target };
 }

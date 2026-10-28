@@ -280,6 +280,39 @@ await page.evaluate(() => { window.__sounds.length = 0; popgun.speed = 10; });
 await page.waitForTimeout(6000);
 assert.deepEqual(await page.evaluate(() => window.__sounds.filter(([f]) => f === 'arrive').length), 0, 'arrivals chimed behind the end card');
 
+// Each kind of target's hit shape (gallery.js's TIN) is its picture: drawn by the page's own drawing on a canvas of its
+// own, four times over, facing each way, every bit of painted tin counts as a hit and the shape holds no bare air.
+// (Its peg on the chain is left out, and so is the golden duck's twinkle: it's the duck's shape.)
+const fit = await page.evaluate(async () => {
+  const { TIN } = await import(new URL('js/gallery.js', location.href).href);
+  const S = 4, out = {};
+  for (const kind of ['duck', 'rabbit', 'star', 'bell']) for (const dir of [1, -1]) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 160 * S; canvas.height = 120 * S;
+    const c = canvas.getContext('2d');
+    c.setTransform(S, 0, 0, S, 80 * S, 100 * S); // its rail at (80, 100)
+    popgun.draw.target(c, kind, 0, 0, dir, 0, 0);
+    const px = c.getImageData(0, 0, canvas.width, canvas.height).data;
+    let painted = 0, bare = 0, tin = 0, air = 0;
+    // every other pixel, each read at its middle
+    for (let py = 0; py < canvas.height; py += 2) for (let qx = 0; qx < canvas.width; qx += 2) {
+      const x = (qx + 0.5) / S - 80, y = (py + 0.5) / S - 100;
+      if (Math.abs(x) <= 8 && y >= -7 && y <= 1) continue; // the peg
+      const on = px[(py * canvas.width + qx) * 4 + 3] >= 128;
+      const shape = TIN[kind](x * dir, y);
+      if (on) { painted++; if (!shape) bare++; }
+      if (shape) { tin++; if (!on) air++; }
+    }
+    out[`${kind}${dir < 0 ? ', facing left' : ''}`] = { painted, bare, tin, air };
+  }
+  return out;
+});
+for (const [kind, { painted, bare, tin, air }] of Object.entries(fit)) {
+  assert.ok(painted > 1000, `${kind}: drawn`);
+  assert.ok(bare / painted < 0.01, `${kind}: ${bare} of ${painted} points of painted tin aren't a hit`);
+  assert.ok(air / tin < 0.01, `${kind}: ${air} of ${tin} points of its hit shape are bare air`);
+}
+
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
 server.close();

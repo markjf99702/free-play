@@ -30,6 +30,43 @@ export const ROWS = [
   { rail: 300, dir: -1, speed: 112, gap: 124, kinds: [['rabbit', 1]] },
   { rail: 440, dir: 1, speed: 76, gap: 136, kinds: [['duck', 0.9], ['gold', 0.1]] },
 ];
+// Each target's painted tin, traced from js/draw.js's target(): in the target's own units, facing right with its rail
+// at y = 0, and taking in the ink line round its edge (3 wide, so half of it outside). test/popgun.e2e.mjs draws each
+// one and checks this against the picture, so a change to one needs the other.
+const LINE = 1.5;
+const inEllipse = (x, y, cx, cy, rx, ry, rot = 0, out = LINE) => {
+  const c = Math.cos(rot), s = Math.sin(rot), dx = x - cx, dy = y - cy, u = dx * c + dy * s, v = dy * c - dx * s;
+  return (u / (rx + out)) ** 2 + (v / (ry + out)) ** 2 <= 1;
+};
+// inside a polygon, or within the ink line of its edge
+const inPolygon = (x, y, P, out = LINE) => {
+  let inside = false;
+  for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+    const [xi, yi] = P[i], [xj, yj] = P[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    const l2 = (xj - xi) ** 2 + (yj - yi) ** 2, t = Math.max(0, Math.min(1, ((x - xi) * (xj - xi) + (y - yi) * (yj - yi)) / l2));
+    if (Math.hypot(x - xi - t * (xj - xi), y - yi - t * (yj - yi)) <= out) return true;
+  }
+  return inside;
+};
+const starPoints = (cx, cy, R, r, n = 5) => Array.from({ length: n * 2 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / n, d = i % 2 ? r : R; return [cx + Math.cos(a) * d, cy + Math.sin(a) * d]; });
+// the bell's outline is four curves: each one followed along in short straight steps
+const curve = (P, [x0, y0], [cx, cy], [x1, y1]) => { for (let i = 1; i <= 12; i++) { const t = i / 12, u = 1 - t; P.push([u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1]); } return P; };
+const BELL = [[-6, -50]];
+curve(BELL, [-6, -50], [-18, -46], [-18, -26]); curve(BELL, [-18, -26], [-18, -12], [-23, -8]);
+BELL.push([23, -8]);
+curve(BELL, [23, -8], [18, -12], [18, -26]); curve(BELL, [18, -26], [18, -46], [6, -50]);
+const STAR = starPoints(0, -25, 26, 11), BEAK = [[29, -45], [42, -40], [29, -36]];
+const duck = (x, y) => inEllipse(x, y, -6, -22, 30, 18) || inEllipse(x, y, 18, -42, 13, 13) || inPolygon(x, y, BEAK);
+export const TIN = {
+  duck,
+  gold: duck,
+  rabbit: (x, y) => inEllipse(x, y, 2, -66, 5, 14, -0.1) || inEllipse(x, y, 13, -66, 5, 14, 0.15) || inEllipse(x, y, -2, -22, 21, 21)
+    || inEllipse(x, y, 9, -46, 13, 13) || inEllipse(x, y, -22, -18, 6, 6),
+  star: (x, y) => inPolygon(x, y, STAR),
+  bell: (x, y) => inPolygon(x, y, BELL) || inEllipse(x, y, 0, -6, 5, 5, 0, 0), // and its clapper
+};
+
 const SURGE = 0.22;                 // how far a row's speed wanders either side of its average
 const MARGIN = 80; // how far past the booth's sides a target goes before it's round the back
 
@@ -72,14 +109,15 @@ export function createGallery({ random = Math.random } = {}) {
   }
   function renew(row, t) { t.kind = pick(row.kinds); t.hit = false; t.down = 0; t.coming = t.kind === 'gold' || t.kind === 'bell'; }
 
-  // The target (if any) a point on the back of the booth is on, right now: inside its cutout, near enough.
+  // The target (if any) a point on the back of the booth is on, right now: inside the box round the middle of its
+  // cutout, or anywhere on its painted tin (a duck's beak, a star's points, a rabbit's ears).
   function targetAt(x, y) {
     for (const row of rows) {
       for (const t of row.targets) {
         if (t.hit) continue;
-        // the tin itself, not the air round its edges
         const k = KINDS[t.kind];
         if (Math.abs(x - t.x) <= k.w * 0.4 && y <= row.rail - k.h * 0.06 && y >= row.rail - k.h * 0.92) return { row, t };
+        if (TIN[t.kind]((x - t.x) * row.dir, y - row.rail)) return { row, t };
       }
     }
     return null;
