@@ -18,7 +18,7 @@
   &nbsp;
   <img src="docs/phone-highrise.png" alt="Highrise, a stacker: HIGHRISE in blue neon over a tower against a night skyline, its windows lit eight floors up in warm amber, one window tumbling off the side and the next row sliding along floor 9, with a trophy marked at floor 15 and +25 at floor 11, over a big blue STOP button" width="250">
   &nbsp;
-  <img src="docs/phone-popgun.png" alt="Popgun, a carnival shooting gallery: POPGUN on a bulb-lit sign over a red and cream awning, tin stars, rabbits and ducks running along brass rails in front of a painted night fair with a moon, a rabbit going down with +20 rising off it, and a popgun on the red counter over a tray of 16 corks" width="250">
+  <img src="docs/phone-popgun.png" alt="Popgun, a carnival shooting gallery: POPGUN on a bulb-lit sign over a red and cream awning, tin stars, rabbits and ducks running along brass rails in front of a painted night fair with a moon, +30 and +10 rising where a star and a duck have been knocked flat, and a popgun on the red counter over a tray of 16 corks" width="250">
   &nbsp;
   <img src="docs/phone-bonkers.png" alt="Bonkers, a sunny yellow whack-a-mole cabinet: BONKERS on a red sign, two moles up out of their holes on a lawn under a blue sky, and below the lawn the ground in cross-section through glass, with moles running through brown tunnels between two cosy burrows, over a 45-second clock" width="250">
   &nbsp;
