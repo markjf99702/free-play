@@ -167,7 +167,8 @@ function won(w) {
   // today's special, on Clutch's day: the plush it names pays 25 tickets too, once, into the pocket
   const bonus = claim('clutch', { kind: w.kind });
   if (bonus) { paid += bonus; bump($('tixBtn')); }
-  say(`You won ${prize.say}!${bonus ? ` ${endLine(bonus)}` : ''}`);
+  // (said with every plush out of the door on this go, since only the last is heard when two come out at once)
+  say(`You won ${prize.say}!${paid ? ` ${endLine(paid)}` : ''}`);
   if (navigator.vibrate) try { navigator.vibrate([20, 50, 20]); } catch { /* not allowed */ }
   hud(true);
 }

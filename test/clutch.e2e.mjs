@@ -323,8 +323,8 @@ assert.equal(await page.textContent('#winHow'), "Three at once! They're on your 
     m.takeWon = () => { takeWon(); return __hand.won.splice(0); };
   });
   const pocket = () => sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
-  const win = async kind => {
-    await sp.evaluate(kind => { __hand.won.push({ kind, tone: 0.3 }); __hand.extra.push('ready'); }, kind);
+  const win = async (...kinds) => {
+    await sp.evaluate(kinds => { for (const kind of kinds) __hand.won.push({ kind, tone: 0.3 }); __hand.extra.push('ready'); }, kinds);
     await sp.waitForSelector('#win:not([hidden])', { timeout: 3000 });
   };
   const keepGoing = async () => { await sp.click('#more'); await sp.waitForTimeout(400); };
@@ -332,8 +332,12 @@ assert.equal(await page.textContent('#winHow'), "Three at once! They're on your 
   assert.ok(await sp.isHidden('#winSpecial'), "a frog isn't the day's plush");
   assert.equal(await pocket(), 0);
   await keepGoing();
-  await win('alien');
-  assert.equal(await sp.textContent('#winT'), 'You got a plush alien.');
+  // the alien and a ghost out of the door at once: a screen reader hears the last of them, and the special with it
+  await win('alien', 'ghost');
+  assert.equal(await sp.textContent('#winT'), 'You got a plush alien and a plush ghost.');
+  const heard = 'You won a plush ghost! Today\'s special! 25 more tickets.';
+  await sp.waitForFunction(t => document.getElementById('live').textContent === t, heard, { timeout: 2000 }).catch(() => {});
+  assert.equal(await sp.textContent('#live'), heard, 'what a screen reader hears');
   assert.equal(await sp.textContent('#winSpecial'), "Today's special! 25 more tickets.");
   assert.ok(await sp.isVisible('#winSpecial'));
   assert.equal(await pocket(), 25, 'into the pocket');
