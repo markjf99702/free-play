@@ -68,8 +68,9 @@ export function buildTable() {
   // ---- the feed lane and the upper flipper ----
   // The rail across the foot of the lane rolls the ball onto the upper flipper's face, not its pivot. The guide
   // leans in a little towards the foot: two balls side by side there can't wedge, one held up against the guide
-  // by the other on the rail.
-  chain([[444, 300], [428, 370], [431, 490]], { r: 4, e: 0.5, kind: 'guide' });
+  // by the other on the rail. Its top end is a short cap sloping down into the lane, low enough that a ball against
+  // it can't hold up another sitting on the post at the top of the shooter lane's wall: it rolls off into the lane.
+  chain([[436, 302], [440.8, 314], [428, 370], [431, 490]], { r: 4, e: 0.5, kind: 'guide' });
   seg(452, 528, PF_RIGHT, 494, { r: 4, e: 0.3, kind: 'rail' });
 
   // ---- left orbit ----

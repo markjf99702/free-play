@@ -686,6 +686,35 @@ test('Space: two balls in the feed lane don\'t wedge each other at its foot', ()
   }
 });
 
+test('Space: two balls can\'t wedge each other across the top of the feed lane', () => {
+  // In multiball two balls once came to rest there leaning on each other, in an autopilot game, and the ball never
+  // ended: one on the post at the top of the shooter lane's wall, the other against the top of the feed lane's guide.
+  // Put back as they were, and a millimetre off either way, they roll on down the lane with nobody flipping; so does
+  // any pair that starts there at rest, one on the post and the other touching it anywhere round its left side.
+  const JAM = [
+    { x: 484.51735793977053, y: 313.56967161670406, vx: 0.7099573897240811, vy: 1.759365074630956, wx: -0.8218971295199354, wy: 0.8218971295199358 },
+    { x: 461.4876452445861, y: 299.47599399894784, vx: -1.473765927302184, vy: 2.0298240161037873, wx: 0.08897631939892015, wy: 2.9861992360163008 },
+  ];
+  const clear = (t, b) => !t.walls.some(w => !w.level && (q => Math.hypot(b.x - q.x, b.y - q.y) < BALL_R + w.r)(closestOnSeg(b.x, b.y, w.ax, w.ay, w.bx, w.by))) &&
+    !t.circles.some(c => !c.level && Math.hypot(b.x - c.x, b.y - c.y) < BALL_R + c.r);
+  const pairs = [];
+  for (let dx = -1; dx <= 1; dx += 0.5) for (let dy = -1; dy <= 1; dy += 0.5) pairs.push(JAM.map((s, i) => ({ ...s, ...(i ? { x: s.x + dx, y: s.y + dy } : {}) })));
+  for (let lean = -25; lean <= 0; lean += 5) for (let round = 110; round <= 250; round += 10) {
+    const a = lean * Math.PI / 180, p = round * Math.PI / 180, one = { x: 486 + 16.55 * Math.sin(a), y: 330 - 16.55 * Math.cos(a) };
+    pairs.push([one, { x: one.x + 27.1 * Math.cos(p), y: one.y + 27.1 * Math.sin(p) }]);
+  }
+  let tried = 0;
+  for (const [k, pair] of pairs.entries()) {
+    const t = buildSpace(), w = new World(t, NORMAL), balls = pair.map(s => Object.assign(makeBall(0, 0), s));
+    if (k >= 25 && !balls.every(b => clear(t, b))) continue; // (the jam's own pairs were real, touching as they lay)
+    tried++;
+    w.balls.push(...balls);
+    run(w, 8000, () => { w.events.length = 0; });
+    assert.ok(balls.every(b => b.y > 400), `two balls stuck at ${balls.map(b => `${b.x.toFixed(0)}, ${b.y.toFixed(0)}`).join(' and ')}`);
+  }
+  assert.ok(tried > 70, `only ${tried} pairs fitted`);
+});
+
 test('Space: a soft launch comes down onto the upper flipper; a full one goes round the arch the other way from the orbit', () => {
   // The skill shot: launched softly with the right button held, the ball comes down the feed lane and stays on the
   // raised flipper.
