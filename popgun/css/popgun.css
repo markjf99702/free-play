@@ -110,6 +110,8 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .marquee h1 { margin: 6px 0 4px; font: 400 44px/1 var(--disp); letter-spacing: .04em; color: var(--ink); text-shadow: 3px 3px 0 var(--red2); }
 .lede { margin: 0 0 8px; font-weight: 600; text-wrap: balance; }
 .how { margin: 0 0 14px; font-size: 14px; color: var(--ink2); }
+/* (pretty: the end card's line doesn't leave its last word on a line of its own) */
+#overHow { text-wrap: pretty; }
 .best { margin: 12px 0 0; font-size: 13px; color: var(--ink3); min-height: 1em; }
 .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .col { display: grid; gap: 8px; margin-bottom: 14px; }
