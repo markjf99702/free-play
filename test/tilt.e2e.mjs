@@ -291,10 +291,14 @@ assert.deepEqual(asked, ['play', `End at ${asked[2].toLocaleString('en-US')}?`, 
 assert.ok(await page.isVisible('#pause'), 'one tap on End game put the pause card away');
 await page.waitForFunction(() => document.getElementById('quitBtn').textContent === 'End game', null, { timeout: 4000 });
 assert.equal(await page.evaluate(() => window.tilt.game.mode), 'play');
+const pocket = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets);
+const beforeEnded = await pocket();
 const ended = await page.evaluate(() => {
-  const g = window.tilt.game, score = g.score;
+  const g = window.tilt.game, score = g.score, own = Math.random;
+  Math.random = () => (score % 100) / 100 + 0.001; // were there a Match, it would be this score's
   document.getElementById('quitBtn').click();
   document.getElementById('quitBtn').click();
+  Math.random = own;
   for (let i = 0; i < 60; i++) { g.world.time += 0.1; g.update(0); }
   return { score, after: g.score };
 });
@@ -303,22 +307,32 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await page.textContent('#final'), ended.score.toLocaleString('en-US'));
 assert.equal(await page.evaluate(() => window.tilt.store.scores.length), listed + 1, 'End game saved the game more than once');
 assert.equal(await page.locator('#scores li').count(), listed + 1);
+// A game ended from the menu has no Match (launching a ball and ending at once would pay 10 tickets one time in ten):
+// it pays its points, and the backbox and the card say nothing of one.
+assert.equal(await pocket(), beforeEnded + Math.floor(ended.score / 5000), 'End game paid more than its points');
+await page.waitForFunction(() => document.getElementById('live').textContent.startsWith('Game over'), null, { timeout: 2000 });
+assert.deepEqual(await page.evaluate(() => [document.getElementById('ballNo').textContent, document.getElementById('display').classList.contains('lit'), /Match/.test(document.getElementById('overNote').textContent + document.getElementById('live').textContent)]),
+  ['Game over', false, false], 'a game ended from the menu came up with a Match');
 
-// The Match: as the game ends the backbox rolls through the numbers and stops on one, and keeps it while the end card
-// is up. One that's the score's last two digits lights up and pays 10 more tickets, at once and out of the slot with
-// the rest, and the end card and a screen reader say so. One that isn't pays nothing more. The next game puts the
-// backbox back to its ball.
-const pocket = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets);
+// The Match: as the last ball drains the backbox rolls through the numbers and stops on one, and keeps it while the
+// end card is up. One that's the score's last two digits lights up and pays 10 more tickets, at once and out of the
+// slot with the rest, and the end card and a screen reader say so. One that isn't pays nothing more. The next game
+// puts the backbox back to its ball.
 for (const [score, matched] of [[268550, true], [268540, false]]) {
   await page.tap('#againBtn');
   await page.waitForSelector('#launch:not([hidden])');
   const before = await pocket();
   const rolled = await page.evaluate(async s => {
-    const own = Math.random;
-    window.tilt.game.score = s;
-    Math.random = () => 0.55; // a Match of 50
-    document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click();
-    Math.random = own;
+    const g = window.tilt.game, b = g.world.balls[0], Game = Object.getPrototypeOf(Object.getPrototypeOf(g)), draw = Game.drawMatch;
+    Game.drawMatch = function () { // a Match of 50
+      const own = Math.random;
+      Math.random = () => 0.55;
+      try { return draw.call(this); } finally { Math.random = own; Game.drawMatch = draw; }
+    };
+    // the last ball, with no bonus to count, straight down the middle
+    g.settings.ballSave = 0; g.saveUntil = 0; g.ballNo = g.settings.balls; g.lamps.bonus = 0; g.score = s;
+    b.x = 243; b.y = 980; b.vx = 0; b.vy = 300; g.state = 'live';
+    for (const end = performance.now() + 10000; g.mode !== 'over' && performance.now() < end;) await new Promise(r => requestAnimationFrame(r));
     // what the backbox shows as it rolls
     const seen = new Set();
     for (const end = performance.now() + 700; performance.now() < end;) {
@@ -360,7 +374,6 @@ const west = await freshPage({ timezoneId: 'America/Los_Angeles' });
 await west.clock.setFixedTime(new Date('2026-10-14T00:30:00Z'));
 await west.goto(base);
 await west.waitForFunction(() => window.tilt);
-await noMatch(west);
 await west.tap('#startBtn');
 await west.evaluate(() => { window.tilt.game.score += 4321; });
 await west.tap('#menuBtn');
@@ -418,7 +431,6 @@ await short.addInitScript(() => localStorage.setItem('free-play.tilt', JSON.stri
 await short.goto(base);
 await short.waitForFunction(() => window.tilt);
 await short.evaluate(() => document.fonts.ready);
-await noMatch(short);
 await short.evaluate(() => { window.tilt.startGame(); window.tilt.game.score = 888880; document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
 await short.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await short.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '177', null, { timeout: 10000 });

@@ -266,7 +266,7 @@ $('quitBtn').addEventListener('click', () => {
   $('pause').hidden = true; paused = false;
   // The game ends here, at the score it has: the rest of the ball (a bonus still counting, the next ball) never comes.
   game.timers = [];
-  if (game.score > 0) gameOver(game); else toTitle();
+  if (game.score > 0) gameOver(game, { ended: true }); else toTitle();
 });
 // The arcade's prize counter, from the title card, the pause card or the end of a game.
 for (const id of ['prizesBtn', 'pausePrizes', 'overPrizes']) $(id).addEventListener('click', () => { unlock(); openCounter({ onBuy: () => play('award') }); });
@@ -301,7 +301,7 @@ function toTitle() {
 
 let stopFeed = () => {};
 $('payout').innerHTML = PAYOUT;
-function gameOver(g) {
+function gameOver(g, { ended = false } = {}) {
   const score = g.score;
   game.mode = 'over';
   const list = topFive();
@@ -314,23 +314,24 @@ function gameOver(g) {
   save();
   const rank = store[table.scoresKey].indexOf(entry);
   // The Match comes up on the backbox as the card does (see hud()). The machine pays out at once, the Match too, and
-  // the tickets feed from the slot once the card is up.
-  const m = g.drawMatch(), extra = m.matched ? MATCH_TICKETS : 0;
-  match = { ...m, at: performance.now() };
+  // the tickets feed from the slot once the card is up. A game ended from the menu has no Match: a real machine's
+  // game only ends when the last ball drains, and here launching a ball and ending at once would pay for nothing.
+  const m = ended ? null : g.drawMatch(), extra = m?.matched ? MATCH_TICKETS : 0;
+  match = m && { ...m, at: performance.now() };
   const won = Math.floor(score / table.perTicket);
   wallet.pay(won + extra);
   stopFeed();
   setTimeout(() => {
-    if (m.matched) play('match');
+    if (m?.matched) play('match');
     stopFeed = feed($('payout'), won + extra, { tick: () => play('rollover') });
   }, 900);
   $('final').textContent = fmt(score);
   const placed = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
   // with no ticket, how far off one it was, in place of the rate: '3,550 more points and it's a ticket.'
-  const matched = m.matched ? `Match ${two(m.number)}: ${MATCH_TICKETS} ${won ? 'more ' : ''}tickets.` : '';
+  const matched = m?.matched ? `Match ${two(m.number)}: ${MATCH_TICKETS} ${won ? 'more ' : ''}tickets.` : '';
   $('overNote').textContent = [placed, won ? rate(table) : shortOfATicket(score, table.perTicket), matched].filter(Boolean).join(' ');
   const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won + extra)}.` +
-    ` Match ${two(m.number)}${m.matched ? ', a match' : ''}.`;
+    (m ? ` Match ${two(m.number)}${m.matched ? ', a match' : ''}.` : '');
   $('scores').innerHTML = '';
   store[table.scoresKey].forEach(s => {
     const li = document.createElement('li');

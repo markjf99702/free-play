@@ -55,7 +55,7 @@ Three pinball tables. Classic is laid out and scored like an early-80s solid-sta
 - **Launch** by holding the Launch button and letting go: the longer you hold, the harder the shot. Keyboard: hold Space or ↓.
 - **Nudge** with a quick swipe up, or ↑ or Space with the ball in play. Nudge too often and you get two Danger warnings; once more and the machine tilts: the flippers go dead and nothing else scores on that ball, bonus included.
 - **The bonus** is counted, times the multiplier, when the ball drains. A ball that drains in the first few seconds is given back, once.
-- **The Match.** At game over the backbox rolls through the numbers and stops on one from 00 to 90, the way the machines of Classic's day end a game. If it's the last two digits of your score, that's 10 more tickets: about one game in ten.
+- **The Match.** When the last ball drains, the backbox rolls through the numbers and stops on one from 00 to 90, the way the machines of Classic's day end a game. If it's the last two digits of your score, that's 10 more tickets: about one game in ten. A game ended from the menu has no Match.
 - Each table keeps its own top five scores.
 
 ### Classic

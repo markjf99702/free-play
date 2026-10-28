@@ -210,11 +210,14 @@ async function rollUpBoard(page) {
   const page = await open('tilt/', { width: 390, height: 844 }, 2);
   await page.click('#startBtn');
   await page.waitForTimeout(400);
-  await page.evaluate(() => { tilt.game.score = 268550; });
-  await page.click('#menuBtn');
-  await page.click('#quitBtn'); // (End game asks first)
-  await page.click('#quitBtn');
-  // once the strip has fed out all 53 (and the Match, 80 here, has stopped on the backbox)
+  // the last ball drains with 268,550 and no bonus to count, and the Match comes up 80
+  await page.evaluate(() => {
+    const g = tilt.game, b = g.world.balls[0], Game = Object.getPrototypeOf(Object.getPrototypeOf(g)), draw = Game.drawMatch;
+    Game.drawMatch = function () { const own = Math.random; Math.random = () => 0.85; try { return draw.call(this); } finally { Math.random = own; } };
+    g.settings.ballSave = 0; g.saveUntil = 0; g.ballNo = g.settings.balls; g.lamps.bonus = 0; g.score = 268550;
+    b.x = 243; b.y = 980; b.vx = 0; b.vy = 300; g.state = 'live';
+  });
+  // once the strip has fed out all 53 (and the Match has stopped on the backbox)
   await page.waitForFunction(() => document.querySelector('#over .fp-won b')?.textContent === '53', null, { timeout: 15000 });
   await page.waitForTimeout(600);
   await page.screenshot({ path: join(root, 'docs/phone-tilt.png') });
