@@ -2,7 +2,7 @@
 // tickets at the end. js/court.js has the balls, the hoop and the rules, js/draw.js draws the machine, and
 // js/sound.js makes the noises. Tickets go into the arcade's wallet (../shared/wallet.js) at the end of a round.
 
-import { createCourt, ticketsFor, power, flickFor, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
+import { createCourt, ticketsFor, power, flickFor, readFlick, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -12,8 +12,6 @@ import { insets } from '../../shared/insets.js';
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.hoops';
 const STEP = 1 / 60;
-const WINDOW = 90;             // ms: how much of the end of a flick counts toward its speed
-const STROKE = 220;            // ms: and toward its direction, since a thumb tends to curl off to the side at the end
 
 // ---------- what's kept between visits ----------
 // Hoops' own: the best round, how many rounds, and the sound.
@@ -218,14 +216,10 @@ canvas.addEventListener('pointerup', e => {
 canvas.addEventListener('pointercancel', e => flicks.delete(e.pointerId));
 
 function flick(s) {
-  const last = s[s.length - 1];
-  const from = ms => { let i = s.length - 1; while (i > 0 && last.t - s[i - 1].t <= ms) i--; return s[i]; };
-  const first = from(WINDOW), dt = (last.t - first.t) / 1000;
-  if (dt <= 0.004 || last.y - first.y > -4) return dud(s);
+  const read = readFlick(s);
+  if (!read) return dud(s);
   const cab = draw.cabinet();
-  const speed = Math.hypot(last.x - first.x, last.y - first.y) / dt / (cab.bottom - cab.top);
-  // which way: the whole stroke, or the last part of a long one
-  const start = from(STROKE), dx = last.x - start.x, dy = last.y - start.y;
+  const speed = read.speed / (cab.bottom - cab.top), { dx, dy } = read;
   if (speed < FLICK.min || dy > -4 || Math.abs(dx) > -dy * 1.7) return dud(s);
   const across = draw.aimAt(dx, dy);
   if (across === null) return dud(s);

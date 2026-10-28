@@ -129,6 +129,18 @@ assert.equal(await page.textContent('#score'), String(await court('score')));
 await pocket();
 const right = await flickAt(2.4, 195, 640, 0.3);
 assert.ok(right.vx > 20, `aimed right, it goes right (${right.vx.toFixed(0)})`);
+// One that rests a fifth of a second before the finger lifts, trembling a pixel the way a resting thumb does, still
+// throws, as hard as the flick was.
+await pocket();
+const rested = await page.evaluate(() => {
+  const cab = hoops.draw.cabinet(), up = 2.4 * (cab.bottom - cab.top) * 0.09, s = [];
+  for (let i = 0; i <= 6; i++) s.push({ t: 1000 + i * 15, x: 195, y: 640 - up * i / 6 });
+  for (let k = 1; k <= 25; k++) s.push({ t: 1090 + k * 8, x: 195 + (k % 2 ? 1 : -1), y: 640 - up + (k % 3 ? 0 : 1) });
+  const b = hoops.flick(s);
+  return b && { speed: Math.hypot(b.vx, b.vy, b.vz), sweet: hoops.sweet() };
+});
+assert.ok(rested, 'a flick that rests before the finger lifts throws');
+assert.ok(Math.abs(rested.speed / rested.sweet - 1) < 0.02, `at ${rested.speed.toFixed(0)}, as the flick it was (${rested.sweet.toFixed(0)})`);
 await pocket();
 // A stroke up the screen too slow to throw drops the ball back with a thud, and the first two in a round say how.
 const duds = await page.evaluate(() => {

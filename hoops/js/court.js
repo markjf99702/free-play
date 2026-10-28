@@ -53,6 +53,28 @@ export const flickFor = v => {
   return FLICK.sweet * Math.exp(k / (k < 0 ? FLICK.soft : FLICK.hard));
 };
 
+// How a finger's path up the screen is read as a flick: points { t (ms), x, y (px) }, oldest first, ending where it
+// lifted. How hard is its fastest `window` ms in the last `rest` ms before it lifted, so a thumb that rests or trembles
+// for a moment before lifting still throws at the speed it reached; a clean flick, fastest at the end, is read from its
+// last `window` ms. Which way is the stroke up to the end of that stretch: the whole of it, or the last `stroke` ms of
+// a long one, since a thumb tends to curl off to the side at the end. Gives { speed (px a second), dx, dy }, or null
+// when no stretch of it moved up the screen.
+export const READ = { window: 90, rest: 250, stroke: 220 };
+export function readFlick(s) {
+  const back = (j, ms) => { let i = j; while (i > 0 && s[j].t - s[i - 1].t <= ms) i--; return i; };
+  const lift = s[s.length - 1].t;
+  let best = null;
+  for (let j = s.length - 1; j > 0 && lift - s[j].t <= READ.rest; j--) {
+    const i = back(j, READ.window), dt = (s[j].t - s[i].t) / 1000;
+    if (dt <= 0.004 || s[j].y - s[i].y > -4) continue;
+    const speed = Math.hypot(s[j].x - s[i].x, s[j].y - s[i].y) / dt;
+    if (!best || speed > best.speed * (1 + 1e-9)) best = { speed, j }; // a tie goes to the later stretch
+  }
+  if (!best) return null;
+  const k = back(best.j, READ.stroke);
+  return { speed: best.speed, dx: s[best.j].x - s[k].x, dy: s[best.j].y - s[k].y };
+}
+
 export function createCourt({ random = Math.random, timed = true } = {}) {
   let clock = 0, score = 0, streak = 0, fire = false, shots = 0, baskets = 0, swishes = 0;
   let sliding = false, bonus = false, buzzer = false, over = false, buzzedAt = 0;

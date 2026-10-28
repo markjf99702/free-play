@@ -1,7 +1,7 @@
 // Hoops' court on its own, without a browser:  node --test test/hoops.unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCourt, ticketsFor, power, flickFor, floorY, FLICK, SWEET, R, BALLS, ROUND, SLIDE, BONUS, CAGE, HOOP, RAMP, LAUNCH } from '../hoops/js/court.js';
+import { createCourt, ticketsFor, power, flickFor, readFlick, floorY, FLICK, SWEET, R, BALLS, ROUND, SLIDE, BONUS, CAGE, HOOP, RAMP, LAUNCH } from '../hoops/js/court.js';
 
 function seeded(a) {
   return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -174,6 +174,53 @@ test('wherever they go, the balls stay in the machine and always come back', () 
     run(c, 6);
     for (const b of c.balls) assert.ok(b.z < RAMP.z0 + 4 * 2 * R && Math.hypot(b.vx, b.vy, b.vz) < 20, `ball ${b.id} came back down (z ${b.z.toFixed(0)})`);
   }
+});
+
+// A finger's path up the screen: `ms` long, sampled every `every` ms, at `speed` px a second (times `grow` by the end,
+// speeding up), leaning `lean` px across for every px up.
+function stroke({ ms = 150, every = 8, speed = 1200, grow = 1, lean = 0, t0 = 1000, x = 195, y = 640 } = {}) {
+  const s = [{ t: t0, x, y }];
+  for (let t = every; t <= ms + 1e-9; t += every) {
+    const v = speed * (1 + (grow - 1) * t / ms), p = s[s.length - 1], up = v * every / 1000;
+    s.push({ t: t0 + t, x: p.x + lean * up, y: p.y - up });
+  }
+  return s;
+}
+// How the page read a flick before a rest before lifting counted: its last 90 ms, and the last 220 ms for its direction.
+function readBefore(s) {
+  const last = s[s.length - 1];
+  const from = ms => { let i = s.length - 1; while (i > 0 && last.t - s[i - 1].t <= ms) i--; return s[i]; };
+  const first = from(90), dt = (last.t - first.t) / 1000;
+  if (dt <= 0.004 || last.y - first.y > -4) return null;
+  const start = from(220);
+  return { speed: Math.hypot(last.x - first.x, last.y - first.y) / dt, dx: last.x - start.x, dy: last.y - start.y };
+}
+// A thumb resting on the glass for `ms` after a stroke, trembling a pixel, before it lifts.
+function rest(s, ms, every = 8) {
+  const out = [...s], end = s[s.length - 1];
+  for (let t = every, k = 0; t <= ms; t += every, k++) out.push({ t: end.t + t, x: end.x + (k % 2 ? 1 : -1), y: end.y + (k % 3 ? 0 : 1) });
+  return out;
+}
+
+test('a clean flick is read just as it always was: its last tenth of a second', () => {
+  for (const every of [4, 8, 16]) for (const grow of [1, 1.5, 3]) for (const lean of [0, 0.3, -0.5]) for (const ms of [60, 150, 400]) {
+    const s = stroke({ every, grow, lean, ms }), now = readFlick(s), was = readBefore(s);
+    assert.deepEqual(now, was, `a ${ms} ms flick every ${every} ms, ${grow}x faster by the end, leaning ${lean}`);
+  }
+  assert.equal(readFlick([{ t: 0, x: 195, y: 640 }]), null, 'a tap');
+  const drag = Array.from({ length: 13 }, (_, i) => ({ t: 5000 + i * 100, x: 195, y: 640 - i * 18 }));
+  assert.equal(readFlick(drag), null, 'a slow drag');
+});
+
+test('a flick that rests a moment before the finger lifts throws at the speed it reached', () => {
+  for (const ms of [40, 100, 160, 200]) {
+    const clean = stroke({ grow: 2 }), s = rest(clean, ms), now = readFlick(s), was = readBefore(s), want = readBefore(clean);
+    assert.ok(now && Math.abs(now.speed / want.speed - 1) < 0.02, `rested ${ms} ms: read at ${now?.speed.toFixed(0)} px/s, the flick was ${want.speed.toFixed(0)}`);
+    assert.ok(Math.abs(now.dx) < 2 && now.dy < -100, `and straight up the screen (${now.dx}, ${now.dy})`);
+    if (ms >= 100) assert.ok(!was || was.speed < want.speed / 4, `read the old way it was ${was ? was.speed.toFixed(0) + ' px/s' : 'nothing'}`);
+  }
+  // resting longer than a quarter of a second isn't a flick
+  assert.equal(readFlick(rest(stroke(), 400)), null, 'resting 400 ms');
 });
 
 test('a ticket for every 4 points', () => {
