@@ -1,7 +1,7 @@
 // Bonkers' burrow on its own, without a browser:  node --test test/bonkers.unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createBurrow, route, ticketsFor, HOLES, NODES, EDGES, ROUND, FRENZY, POINTS, MISS, RUN } from '../bonkers/js/burrow.js';
+import { createBurrow, route, ticketsFor, tipFor, HOLES, NODES, EDGES, ROUND, FRENZY, POINTS, MISS, RUN } from '../bonkers/js/burrow.js';
 
 function seeded(a) {
   return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -233,4 +233,24 @@ test('how hard it is: a good player (who reacts in half a second) averages about
   }
   const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
   assert.ok(mean >= 460 && mean <= 610, `a good player averaged ${mean.toFixed(0)}`);
+});
+
+test('the end card says to wait for the whole mole after three swings too soon or at a peek', () => {
+  const b = createBurrow({ random: seeded(9) });
+  const soon = () => b.moles.find(m => m.hole >= 0 && ((m.state === 'travel' && m.leg === m.path.length - 2 && m.along > 10) || m.state === 'peeking'));
+  for (let i = 0; i < 2; i++) {
+    let m;
+    while (!(m = soon())) b.step(1 / 60);
+    b.swing(HOLES[m.hole], -40);
+    b.step(0.5);
+  }
+  // a swing at an empty hole is a miss, but not one too soon
+  b.swing(HOLES[HOLES.findIndex((_, i) => !b.moles.some(x => x.hole === i))], -40);
+  assert.deepEqual([b.misses, b.early], [3, 2]);
+  assert.equal(tipFor(b), null, 'two too soon is not yet a pattern');
+  let m;
+  while (!(m = soon())) b.step(1 / 60);
+  b.swing(HOLES[m.hole], -40);
+  assert.deepEqual([b.misses, b.early], [4, 3]);
+  assert.equal(tipFor(b), 'Wait for the whole mole: a nose is only a peek.');
 });

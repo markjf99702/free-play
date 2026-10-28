@@ -165,6 +165,7 @@ assert.ok(await page.evaluate(() => document.querySelector('.fp-strip').offsetHe
 assert.deepEqual(await bestLine(), { text: 'A new best! Your old one was 50.', big: true, size: '18px' });
 assert.equal(await page.textContent('#overT'), `Nine balls ${score.toLocaleString('en-US')} points`);
 assert.equal(await page.textContent('#again'), 'Roll again');
+assert.ok(await page.isHidden('#overTip'), 'a game rolled about right has nothing to say about how to roll');
 assert.equal(await page.textContent('#live'), `Game over: ${score.toLocaleString('en-US')} points, ${Math.floor(score / 10)} tickets. A new best.`, 'what a screen reader hears at the end of the game');
 
 // The prize counter: buy the cheapest thing, and it goes on the shelf.
@@ -347,6 +348,23 @@ down = false;
   });
   assert.deepEqual(zooms, [0, 1], `with less motion asked for, the push-in passed through ${zooms.join(', ')}`);
   await calm.close();
+}
+
+// Three balls rolled too hard, over the rings into the 10: the end card says what to try next time.
+{
+  const hard = await ctx.newPage();
+  hard.on('pageerror', e => problems.push('too hard: ' + e.message));
+  await hard.goto(base + 'roll-up/');
+  await hard.evaluate(() => { rollUp.start(); rollUp.speed = 6; });
+  for (let i = 0; i < 9; i++) {
+    await hard.waitForFunction(() => rollUp.mode === 'aim', null, { timeout: 15000 });
+    await hard.evaluate(i => rollUp.roll(0, i < 3 ? 450 : 305, 0), i);
+  }
+  await hard.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 30000 });
+  assert.equal(await hard.evaluate(() => rollUp.game.balls.filter(b => b.hard).length), 3);
+  assert.ok(await hard.isVisible('#overTip'));
+  assert.equal(await hard.textContent('#overTip'), 'Gentler: the 50 wants a medium roll.');
+  await hard.close();
 }
 
 // Leaving after the ninth ball has dropped, before the game-over card, by the menu's Back to the arcade: the game is

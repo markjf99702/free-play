@@ -41,7 +41,7 @@
 Skee-ball, the boardwalk kind. Flick the ball up the lane, and it hops the ramp and drops into a ring worth 10 to 50, or a 100 up in the corners. A game is nine balls.
 
 - **Drag, then flick.** Put a finger on the lane, from your end to a little past the red line, and the ball moves with it, so you can line it up anywhere across. (A touch further up the lane says to start on the ball.) Flick it up the lane, before the red line, to roll it; a slow drag just moves it, and a ball pushed over the line without a flick goes back.
-- **How hard decides where it lands.** A gentle roll drops into the 20, firmer climbs to the 30, 40 and 50, and too hard sails over the rings into the 10. Too gentle and it doesn't make the jump at all, which scores nothing. A ball in the 10 says when it was too hard, or a bit soft.
+- **How hard decides where it lands.** A gentle roll drops into the 20, firmer climbs to the 30, 40 and 50, and too hard sails over the rings into the 10. Too gentle and it doesn't make the jump at all, which scores nothing. A ball in the 10 says when it was too hard, or a bit soft, and after three too hard in a game the end card says to roll gentler.
 - **The 100s want an angle.** They sit in the top corners: roll firmly and a little toward one.
 - **Real bounces.** The ball is simulated in 3D, so it rattles off the ring lips and can bounce out of a ring or into a better one.
 - **The golden ball.** One ball in every game is golden, and whatever it drops into scores double. You can see which one it is in the tray.
@@ -121,7 +121,7 @@ A stacker: a tower against a night skyline, its windows the grid, seven across a
 A carnival shooting gallery: a booth with a striped awning, a painted night fair behind, and three rows of tin targets running along brass rails, each row the other way from the one below.
 
 - **Tap where you want the cork to go** and the popgun on the counter fires it there. (With a mouse, the pointer becomes the sights; on a keyboard, the arrows move them and Space fires.) A round is 20 corks, and the gun takes a moment to reload between them.
-- **Aim ahead.** A cork takes about a third of a second to reach the back of the booth, and the targets keep moving, so a tap dead on a rabbit or a star lands behind it. Aim a little ahead of the ducks, half a rabbit ahead of the rabbits and a whole star ahead of the stars. The first few corks in a round that land just behind their target say so. Each row's motor surges a bit faster and a bit slower as it runs, so what worked a moment ago won't quite now.
+- **Aim ahead.** A cork takes about a third of a second to reach the back of the booth, and the targets keep moving, so a tap dead on a rabbit or a star lands behind it. Aim a little ahead of the ducks, half a rabbit ahead of the rabbits and a whole star ahead of the stars. The first few corks in a round that land just behind their target say so, and when most of a round's misses did, the end card says to aim further ahead. Each row's motor surges a bit faster and a bit slower as it runs, so what worked a moment ago won't quite now.
 - **What they're worth.** Ducks along the pond at the bottom are 10, rabbits in the middle 20, and the small fast stars up top 30. Now and then a golden duck comes along, worth 100, and a bell, which wins three more corks. Five hits in a row are worth 50 more. A target knocked flat stands up again once it's been round the back of the conveyor.
 - A ticket for every 30 points, paid at the end of the round. (Try the moon.)
 
@@ -131,7 +131,7 @@ Whack-a-mole, with the side of the cabinet made of glass. Five holes along a sun
 
 - **Tap a mole as it pops up** to bonk it (or press 1 to 5 for the holes from the left). A round is 45 seconds.
 - **Watch the tunnels.** Each mole picks a free hole and runs to it through the tunnels, stopping to sniff at the junctions, then climbs the shaft and pops up for a moment before ducking back down. You can see where they're going, if you can keep track of all of them.
-- **Some only peek:** a nose out, and back down. A swing at a peek, at an empty hole, or at a mole still on its way up, is a miss: it costs 5 and ends your run.
+- **Some only peek:** a nose out, and back down. A swing at a peek, at an empty hole, or at a mole still on its way up, is a miss: it costs 5 and ends your run. After three swings too soon or at a peek, the end card says to wait for the whole mole.
 - **A hard hat takes two bonks**, the first knocking it off, and is worth 30. **A golden mole** is worth 50, an ordinary one 10. Ten bonks in a row are worth 50 more.
 - **It gets busier**: more moles, faster tunnels and quicker pops as the round goes on, and the last ten seconds are a frenzy. A bonked mole goes home to its burrow to see stars for a bit.
 - A ticket for every 15 points, paid at the end of the round.
@@ -140,7 +140,7 @@ Whack-a-mole, with the side of the cabinet made of glass. Five holes along a sun
 
 The basketball machine from the end of the row: a wooden ramp inside a net cage, a backboard and hoop at the far end, and four balls that roll back down to a pocket at your end.
 
-- **Flick a ball up at the hoop** to shoot. How hard you flick is how far it goes, but it's forgiving: anything from a gentle flick to a brisk one goes about the right distance, and only well off either way falls short or flies long. Which way you flick is where it goes: point the flick at the hoop as you see it. (On a keyboard, the arrows aim and holding Space winds up a throw; let go when the meter's in the light.) A round is 45 seconds.
+- **Flick a ball up at the hoop** to shoot. How hard you flick is how far it goes, but it's forgiving: anything from a gentle flick to a brisk one goes about the right distance, and only well off either way falls short or flies long. When most of a round's misses fell short, or went long, the end card says so. Which way you flick is where it goes: point the flick at the hoop as you see it. (On a keyboard, the arrows aim and holding Space winds up a throw; let go when the meter's in the light.) A round is 45 seconds.
 - **Keep them coming.** The balls come back down the ramp and line up in the pocket, and you can throw the next as soon as it's there (a flick let go just before it arrives waits for it). A little long still drops in off the board; short or wide clanks off the rim.
 - **A basket is 2 points.** Twenty seconds in, the hoop starts to slide from side to side on its rail, so throw where it's going to be, and in the last ten seconds a basket is worth 3. A ball in the air when the buzzer goes still counts.
 - **The gold ball** is worth double. **Three in a row** set the rim alight: a point more a basket until you miss.

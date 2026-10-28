@@ -75,8 +75,18 @@ export function readFlick(s) {
   return { speed: best.speed, dx: s[best.j].x - s[k].x, dy: s[best.j].y - s[k].y };
 }
 
+// How far past the middle of the hoop a throw comes down through its height, in its flight, if nothing's in the way:
+// a miss that comes down short of `short` fell short (nothing that short goes in), and one past `long` went long, over
+// the rim and too hard off the board. (Everything between goes in, or misses by its aim.)
+export const REACH = { short: -15, long: 80 };
+export function reach(speed, aim = 0) {
+  const vy = speed * Math.sin(LAUNCH.angle), across = speed * Math.cos(LAUNCH.angle) * Math.cos(aim), d = vy * vy - 2 * G * (HOOP.y - LAUNCH.y);
+  return d < 0 ? -Infinity : LAUNCH.z + across * (vy + Math.sqrt(d)) / G - HOOP.z;
+}
+
 export function createCourt({ random = Math.random, timed = true } = {}) {
   let clock = 0, score = 0, streak = 0, fire = false, shots = 0, baskets = 0, swishes = 0;
+  let misses = 0, short = 0, long = 0; // shots that came down without a basket, and how many fell short or went long
   let sliding = false, bonus = false, buzzer = false, over = false, buzzedAt = 0;
   let events = [];
   const hoop = { x: 0, vx: 0, phase: 0, amp: 0, kick: 0, sway: 0 };
@@ -230,6 +240,8 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
     if (s.scored) return;
     if (fire) events.push({ fire: false });
     streak = 0; fire = false;
+    misses++;
+    if (s.reach < REACH.short) short++; else if (s.reach > REACH.long) long++;
     events.push({ miss: b.id });
   }
 
@@ -261,7 +273,7 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
       x: LAUNCH.x, y: LAUNCH.y, z: LAUNCH.z, inNet: false,
       vx: speed * c * Math.sin(a), vy: speed * Math.sin(LAUNCH.angle), vz: speed * c * Math.cos(a), spin: -speed * 0.5,
     });
-    b.shot = { at: clock, rim: false, board: false, scored: false, late: false };
+    b.shot = { at: clock, rim: false, board: false, scored: false, late: false, reach: reach(speed, a) };
     shots++;
     events.push({ shot: b.id });
     return b;
@@ -313,10 +325,20 @@ export function createCourt({ random = Math.random, timed = true } = {}) {
     get shots() { return shots; },
     get baskets() { return baskets; },
     get swishes() { return swishes; },
+    get misses() { return misses; },
+    get short() { return short; },
+    get long() { return long; },
     // what's happened since the last look: { shot }, { rim }, { board }, { thud }, { knock },
     // { basket, points, swish, bank, gold, fire, buzzer }, { miss }, { fire: true | false }, 'slide', 'bonus', 'buzzer', 'over'
     take() { const e = events; events = []; return e; },
   };
+}
+
+// What the end card says to try next time, when it's plain from the round: most of three or more misses fell short, or
+// went long. Otherwise null.
+export function tipFor(c) {
+  if (c.misses < 3) return null;
+  return c.short * 2 > c.misses ? 'Most fell short: flick a little harder.' : c.long * 2 > c.misses ? 'Most went long: flick a little softer.' : null;
 }
 
 export const ticketsFor = score => Math.floor(score / 4);

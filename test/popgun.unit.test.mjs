@@ -1,7 +1,7 @@
 // Popgun's gallery on its own, without a browser:  node --test test/popgun.unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGallery, ticketsFor, KINDS, ROWS, CORKS, FLIGHT, RELOAD, STREAK, W, TIN } from '../popgun/js/gallery.js';
+import { createGallery, ticketsFor, tipFor, KINDS, ROWS, CORKS, FLIGHT, RELOAD, STREAK, W, TIN } from '../popgun/js/gallery.js';
 
 function seeded(a) {
   return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -218,4 +218,27 @@ test('how hard it is: a good player averages about 315 a round', () => {
   }
   const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
   assert.ok(mean >= 265 && mean <= 365, `a good player averaged ${mean.toFixed(0)}`);
+});
+
+test("the end card says to aim further ahead when half or more of the misses (two at least) landed just behind", () => {
+  // a round fired dead on each star as it is: the corks land behind them, and the gallery counts them
+  const g = createGallery({ random: seeded(4) });
+  run(g, 0.5);
+  for (let i = 0; i < 4; i++) {
+    const star = lead(g, 'star');
+    g.fire(star.t.x, star.y);
+    run(g, Math.max(FLIGHT, RELOAD) + 0.02);
+  }
+  assert.equal(g.behind, 4);
+  assert.equal(g.shots - g.hits, 4);
+  assert.equal(tipFor(g), 'Most corks landed just behind: aim further ahead.');
+  // and the rest at the backdrop: four behind out of ten misses isn't most
+  for (let i = 0; i < 6; i++) { g.fire(5, 5); run(g, Math.max(FLIGHT, RELOAD) + 0.02); }
+  assert.equal(g.behind, 4);
+  assert.equal(tipFor(g), null);
+  // by the numbers: half is enough, but one miss behind isn't a pattern
+  assert.equal(tipFor({ shots: 20, hits: 12, behind: 4 }), 'Most corks landed just behind: aim further ahead.');
+  assert.equal(tipFor({ shots: 20, hits: 12, behind: 3 }), null);
+  assert.equal(tipFor({ shots: 20, hits: 19, behind: 1 }), null);
+  assert.equal(tipFor({ shots: 20, hits: 20, behind: 0 }), null);
 });

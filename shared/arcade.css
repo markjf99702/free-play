@@ -146,6 +146,13 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .fp-best b::before, .fp-best b::after { content: "★"; content: "★" / ""; display: inline-block; margin: 0 .45em; font-size: .75em; vertical-align: .12em; }
 .fp-best span { display: block; margin-top: 2px; }
 
+/* What to try next time, under a game-over card's heading, when the round makes it plain: a note, not a score. */
+.fp-tip {
+  width: fit-content; max-width: 100%; margin: -2px auto 12px; padding: 6px 12px; border-radius: 12px;
+  background: rgba(251, 238, 210, .08); border: 1px dashed rgba(251, 238, 210, .28);
+  font: 600 14px/1.35 var(--fp-body); color: var(--fp-ink); text-wrap: balance;
+}
+
 /* The pocket in a machine's corner counts along with the strip, and swells a moment as the last ticket goes in. */
 .hud .tix.bump { animation: fp-bump .45s ease-out; }
 @keyframes fp-bump { 35% { transform: scale(1.1); } }

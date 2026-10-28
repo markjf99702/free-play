@@ -1,7 +1,7 @@
 // Hoops' court on its own, without a browser:  node --test test/hoops.unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCourt, ticketsFor, power, flickFor, readFlick, floorY, FLICK, SWEET, R, BALLS, ROUND, SLIDE, BONUS, CAGE, HOOP, RAMP, LAUNCH } from '../hoops/js/court.js';
+import { createCourt, ticketsFor, tipFor, reach, REACH, power, flickFor, readFlick, floorY, FLICK, SWEET, R, BALLS, ROUND, SLIDE, BONUS, CAGE, HOOP, RAMP, LAUNCH } from '../hoops/js/court.js';
 
 function seeded(a) {
   return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -257,4 +257,29 @@ test('how hard it is: a steady player averages about 90 a round, whatever their 
   }
   const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
   assert.ok(mean >= 75 && mean <= 110, `a steady player averaged ${mean.toFixed(0)}`);
+});
+
+test('the end card says to flick harder when most misses fell short, and softer when most went long', () => {
+  // where a throw comes down through the hoop's height: the sweet one in the middle of it, softer short, harder long
+  assert.ok(Math.abs(reach(SWEET)) < 0.01);
+  assert.ok(reach(SWEET * 0.9) < REACH.short && reach(SWEET * 1.2) > REACH.long);
+  assert.equal(reach(SWEET * 0.3), -Infinity, "one that never gets as high as the hoop");
+  for (const [k, word, tip] of [[0.85, 'short', 'Most fell short: flick a little harder.'], [1.25, 'long', 'Most went long: flick a little softer.']]) {
+    const c = createCourt({ random: seeded(5) });
+    for (let i = 0; i < 3; i++) {
+      ready(c);
+      const b = c.shoot(SWEET * k, 0);
+      outcome(c, b);
+      assert.equal(c.misses, i + 1, `the ${word} throw ${i + 1} missed`);
+      assert.equal(tipFor(c), i < 2 ? null : tip, `after ${i + 1} ${word}`);
+    }
+    assert.equal(c[word], 3);
+  }
+  // misses on line, by their aim, are neither
+  const c = createCourt({ random: seeded(6) });
+  for (let i = 0; i < 3; i++) { ready(c); outcome(c, c.shoot(SWEET, 0.2)); }
+  assert.deepEqual([c.misses, c.short, c.long, tipFor(c)], [3, 0, 0, null]);
+  // most, by the numbers: two of four isn't
+  assert.equal(tipFor({ misses: 4, short: 2, long: 0 }), null);
+  assert.equal(tipFor({ misses: 5, short: 1, long: 3 }), 'Most went long: flick a little softer.');
 });

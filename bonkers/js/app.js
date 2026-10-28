@@ -3,7 +3,7 @@
 // ground in cross-section, and js/sound.js makes the noises. Tickets go into the arcade's wallet
 // (../shared/wallet.js) at the end of a round.
 
-import { createBurrow, ticketsFor, HOLES, ROUND } from './burrow.js';
+import { createBurrow, ticketsFor, tipFor, HOLES, ROUND } from './burrow.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -150,6 +150,7 @@ function endRound() {
   if (score > saved.best) saved.best = score;
   save();
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
+  tip(tipFor(burrow));
   // and with no ticket, how far off one it was
   $('overHow').textContent = `${burrow.bonks} ${burrow.bonks === 1 ? 'mole' : 'moles'} bonked in ${ROUND} seconds. `
     + (won ? 'A ticket for every 15 points.' : shortOfATicket(score, 15));
@@ -174,6 +175,8 @@ $('play').addEventListener('click', start);
 $('again').addEventListener('click', start);
 
 function say(text) { $('live').textContent = text; }
+// The end card's line on what to try next time, when the round makes it plain (or nothing).
+function tip(text) { $('overTip').hidden = !text; $('overTip').textContent = text || ''; }
 
 // ---------- the mallet ----------
 canvas.addEventListener('pointerdown', e => {

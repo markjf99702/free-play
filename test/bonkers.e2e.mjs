@@ -157,6 +157,7 @@ const score = await page.evaluate(() => bonkers.burrow.score);
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await countsAlong(await tickets(), Math.floor(score / 15));
 assert.ok(score > 200, `a quick hand scores (${score})`);
+assert.ok(await page.isHidden('#overTip'), 'a round of moles bonked when they were up has nothing to say about waiting');
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.match(await page.textContent('#overHow'), /^\d+ moles bonked in 45 seconds\. A ticket for every 15 points\.$/);
 await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.`, { timeout: 2000 }).catch(() => {});
@@ -245,6 +246,20 @@ assert.ok((await pocketNow())[1] < Math.floor(beat / 15), 'the strip was done be
 await page.click('#again');
 assert.equal((await pocketNow())[0], await tickets(), 'another round started part-way through the strip, and the pocket holds them all');
 assert.ok(await page.evaluate(() => document.getElementById('tixBtn').classList.contains('bump')));
+
+// Three swings too soon, or at a peek, and the end card says to wait for the whole mole.
+for (let n = 0; n < 3; n++) {
+  await page.waitForFunction(() => {
+    const m = bonkers.burrow.moles.find(m => m.hole >= 0 && ((m.state === 'travel' && m.leg === m.path.length - 2 && m.along > 10) || m.state === 'peeking'));
+    return m && !!bonkers.swing([50, 150, 250, 350, 450][m.hole], -40);
+  }, null, { timeout: 15000, polling: 'raf' });
+  await page.waitForTimeout(300);
+}
+assert.equal(await page.evaluate(() => bonkers.burrow.early), 3);
+await page.evaluate(() => { bonkers.speed = 20; });
+await page.waitForSelector('#over:not([hidden])', { timeout: 20000 });
+assert.equal(await page.textContent('#overTip'), 'Wait for the whole mole: a nose is only a peek.');
+assert.ok(await page.isVisible('#overTip'));
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

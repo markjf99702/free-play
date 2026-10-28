@@ -2,7 +2,7 @@
 // tickets at the end. js/court.js has the balls, the hoop and the rules, js/draw.js draws the machine, and
 // js/sound.js makes the noises. Tickets go into the arcade's wallet (../shared/wallet.js) at the end of a round.
 
-import { createCourt, ticketsFor, power, flickFor, readFlick, READ, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
+import { createCourt, ticketsFor, tipFor, power, flickFor, readFlick, READ, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -159,6 +159,7 @@ function endRound() {
   save();
   const n = court.baskets, swish = court.swishes;
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
+  tip(tipFor(court));
   // '1 basket from 18 shots, a swish.', '2 baskets from 9 shots, both of them swishes.', '5 baskets from 20 shots, 2 of
   // them swishes.' And with no ticket, how far off one it was.
   const swishes = !swish ? '' : n === 1 ? ', a swish' : swish === n ? (n === 2 ? ', both of them swishes' : `, all ${n} of them swishes`) : swish === 1 ? ', 1 of them a swish' : `, ${swish} of them swishes`;
@@ -185,6 +186,8 @@ $('play').addEventListener('click', start);
 $('again').addEventListener('click', start);
 
 function say(text) { $('live').textContent = text; }
+// The end card's line on what to try next time, when the round makes it plain (or nothing).
+function tip(text) { $('overTip').hidden = !text; $('overTip').textContent = text || ''; }
 
 // ---------- the flick ----------
 // Each finger down is a flick in the making; when it lifts, the last part of its path says how hard and which way.

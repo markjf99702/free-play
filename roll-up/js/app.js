@@ -186,6 +186,7 @@ function rollOut() {
 function scored() {
   const v = ball.value;
   const w = worth(v);
+  let hard = false; // in the 10 from rolling too hard: three of those in a game, and its end card says so
   if (!ball.hole) {
     // a hole already rang its bell and showed its number as the ball dropped in. One in the trough rises from the
     // lower board on its side, clear of the 10s printed along the bottom edge and of the numbers down the middle
@@ -198,6 +199,7 @@ function scored() {
       // and says why, when it's plain: it flew past the 50 (or into the net), or never got as far as the 20
       const [twenty, fifty] = [20, 50].map(v => phys.RINGS.find(r => r.value === v));
       const why = ball.net || ball.top > fifty.s + fifty.r ? 'too hard' : ball.top < twenty.s - twenty.r ? 'a bit soft' : null;
+      hard = why === 'too hard';
       if (why) { sub = sub ? `${sub}, ${why}` : why; subColor = w.sub ? subColor : null; }
     }
     pops.push({ text: v ? '+' + w.points : 'No jump', sub, subColor, ...at, age: 0, big: false });
@@ -205,7 +207,7 @@ function scored() {
     lights.mode = 'score'; lights.t = 0;
   }
   game.score += w.points;
-  game.balls.push({ value: v, points: w.points, golden: !!ball.golden, call: w.call, hit: w.hit });
+  game.balls.push({ value: v, points: w.points, golden: !!ball.golden, call: w.call, hit: w.hit, ...(hard && { hard }) });
   game.thrown++;
   if (game.card) keepCard();
   const left = BALLS - game.thrown;
@@ -289,6 +291,9 @@ function showOver(r, fresh) {
   const which = document.createElement('small');
   which.textContent = daily ? "Today's card" : 'Nine balls';
   $('overT').replaceChildren(which, ' ', `${fmt(r.score)} ${r.score === 1 ? 'point' : 'points'}`);
+  // what to try next time, when it's plain from the balls
+  $('overTip').hidden = r.balls.filter(b => b.hard).length < 3;
+  $('overTip').textContent = $('overTip').hidden ? '' : 'Gentler: the 50 wants a medium roll.';
   $('tally').replaceChildren(...r.balls.map(b => {
     const c = document.createElement('span');
     c.textContent = b.points;

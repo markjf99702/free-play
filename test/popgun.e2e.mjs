@@ -171,6 +171,7 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const score = await page.evaluate(() => popgun.gallery.score);
 await countsAlong(await tickets(), Math.floor(score / 30));
 assert.ok(score > 100, `a steady hand scores (${score})`);
+assert.ok(await page.isHidden('#overTip'), 'a round led well has nothing to say about aiming ahead');
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, { timeout: 2000 }).catch(() => {});
 assert.equal(await page.textContent('#live'), `${score.toLocaleString('en-US')} points. ${Math.floor(score / 30)} tickets.`, 'what a screen reader hears at the end of the round');
@@ -279,6 +280,24 @@ assert.equal(await page.evaluate(() => popgun.saved.sound), true, 'the sound is 
 await page.evaluate(() => { window.__sounds.length = 0; popgun.speed = 10; });
 await page.waitForTimeout(6000);
 assert.deepEqual(await page.evaluate(() => window.__sounds.filter(([f]) => f === 'arrive').length), 0, 'arrivals chimed behind the end card');
+assert.ok(await page.isHidden('#overTip'), "corks at the moon weren't behind anything");
+
+// A round fired dead on the targets as they are: the corks land behind them, and the end card says to aim further ahead.
+await page.click('#again');
+await page.evaluate(() => { popgun.speed = 3; });
+while (!(await page.evaluate(() => popgun.gallery.over))) {
+  await page.waitForFunction(() => popgun.gallery.ready || popgun.gallery.over);
+  await page.evaluate(() => {
+    const row = popgun.gallery.rows[0], star = row.targets.find(t => !t.hit && t.kind === 'star' && t.x > 60 && t.x < 500);
+    if (star) popgun.fire(star.x, row.rail - 22); else popgun.fire(560 - 92, 70);
+  });
+  await page.waitForTimeout(20);
+}
+await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+const behind = await page.evaluate(() => [popgun.gallery.behind, popgun.gallery.shots - popgun.gallery.hits]);
+assert.ok(behind[0] * 2 >= behind[1], `${behind[0]} of ${behind[1]} misses landed behind`);
+assert.ok(await page.isVisible('#overTip'));
+assert.equal(await page.textContent('#overTip'), 'Most corks landed just behind: aim further ahead.');
 
 // Each kind of target's hit shape (gallery.js's TIN) is its picture: drawn by the page's own drawing on a canvas of its
 // own, four times over, facing each way, every bit of painted tin counts as a hit and the shape holds no bare air.

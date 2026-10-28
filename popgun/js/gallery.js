@@ -81,6 +81,7 @@ export function createGallery({ random = Math.random } = {}) {
     return { ...row, loop, targets, now: row.speed, travel: 0, surge: { period: 5 + random() * 3, phase: random() * Math.PI * 2 } };
   });
   let clock = 0, reload = 0, corks = CORKS, score = 0, streak = 0, shots = 0, hits = 0, over = false;
+  let behind = 0;       // misses that landed just behind the tin they were fired at
   const flights = [];   // corks on their way: { from, to, t }
   let events = [];
 
@@ -140,8 +141,9 @@ export function createGallery({ random = Math.random } = {}) {
     const at = targetAt(f.to.x, f.to.y);
     if (!at) {
       streak = 0;
-      const behind = f.at && !f.at.hit && f.at.kind === f.kind ? f.kind : undefined;
-      events.push(behind ? { miss: true, x: f.to.x, y: f.to.y, behind } : { miss: true, x: f.to.x, y: f.to.y });
+      const ran = f.at && !f.at.hit && f.at.kind === f.kind ? f.kind : undefined;
+      if (ran) behind++;
+      events.push(ran ? { miss: true, x: f.to.x, y: f.to.y, behind: ran } : { miss: true, x: f.to.x, y: f.to.y });
       return;
     }
     const { t } = at, k = KINDS[t.kind];
@@ -166,6 +168,7 @@ export function createGallery({ random = Math.random } = {}) {
     get streak() { return streak; },
     get shots() { return shots; },
     get hits() { return hits; },
+    get behind() { return behind; },
     get ready() { return reload === 0 && corks > 0 && !over; },
     get over() { return over; },
     // what's happened since the last look: 'pop', { hit, x, y, points, corks, run }, { miss, x, y }, 'over', and
@@ -173,6 +176,13 @@ export function createGallery({ random = Math.random } = {}) {
     // the cork went, and has run on ahead of it, says which: { miss, x, y, behind: 'star' }.
     take() { const e = events; events = []; return e; },
   };
+}
+
+// What the end card says to try next time, when it's plain from the round: half or more of the misses (two at least)
+// landed just behind the tin they were fired at. Otherwise null.
+export function tipFor(g) {
+  const misses = g.shots - g.hits;
+  return g.behind >= 2 && g.behind * 2 >= misses ? 'Most corks landed just behind: aim further ahead.' : null;
 }
 
 // The tickets a round's score pays: one for every PER_TICKET points.

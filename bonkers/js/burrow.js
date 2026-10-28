@@ -71,6 +71,7 @@ const DUCK = 0.7;                            // a mole that's started to duck ca
 
 export function createBurrow({ random = Math.random } = {}) {
   let clock = 0, score = 0, run = 0, bonks = 0, swings = 0, over = false, frenzy = false;
+  let misses = 0, early = 0;   // swings at nothing, and the ones of them too soon or at a peek
   let events = [];
   const reserved = new Set();               // holes a mole is on its way to, or up in
 
@@ -207,9 +208,11 @@ export function createBurrow({ random = Math.random } = {}) {
       run = 0; score -= cost;
       const peeking = moles.some(m => m.hole === hole && m.state === 'peeking');
       // too soon: its mole is on the way up, climbing the shaft (or sniffing at the foot of it), or only just popping out
-      const early = moles.some(m => m.hole === hole && (
+      const soon = moles.some(m => m.hole === hole && (
         ((m.state === 'travel' || m.state === 'sniff') && m.leg >= m.path.length - 2) || (m.state === 'rising' && m.rise <= 0.4)));
-      events.push({ miss: hole, peeking, early, cost });
+      misses++;
+      if (soon || peeking) early++;
+      events.push({ miss: hole, peeking, early: soon, cost });
       return { hole, hit: false };
     }
     if (m.hat) {
@@ -241,11 +244,17 @@ export function createBurrow({ random = Math.random } = {}) {
     get run() { return run; },
     get bonks() { return bonks; },
     get swings() { return swings; },
+    get misses() { return misses; },
+    get early() { return early; },
     // what's happened since the last look: { pop, gold, hat }, { peek }, { bonk, kind, points, run }, { hat },
     // { miss, peeking, early, cost } (early: its mole was still coming up; cost: what it took off the score), { away },
     // 'frenzy', 'over'
     take() { const e = events; events = []; return e; },
   };
 }
+
+// What the end card says to try next time, when it's plain from the round: three or more swings too soon, or at a
+// mole only peeking. Otherwise null.
+export const tipFor = b => (b.early >= 3 ? 'Wait for the whole mole: a nose is only a peek.' : null);
 
 export const ticketsFor = score => Math.floor(score / 15);

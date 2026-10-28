@@ -2,7 +2,7 @@
 // the score and the tickets at the end. js/gallery.js has the targets and the rules, js/draw.js draws the booth and
 // js/sound.js makes the noises. Tickets go into the arcade's wallet (../shared/wallet.js) at the end of a round.
 
-import { createGallery, ticketsFor, PER_TICKET, CORKS, W, H } from './gallery.js';
+import { createGallery, ticketsFor, tipFor, PER_TICKET, CORKS, W, H } from './gallery.js';
 import { createDraw, MOON } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -148,6 +148,7 @@ function endRound() {
   save();
   sound.over();
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
+  tip(tipFor(gallery));
   // and with no ticket, how far off one it was
   const { hits, shots } = gallery;
   $('overHow').textContent = `${hits} ${hits === 1 ? 'hit' : 'hits'} from ${shots} ${shots === 1 ? 'cork' : 'corks'}. `
@@ -174,6 +175,8 @@ $('play').addEventListener('click', start);
 $('again').addEventListener('click', start);
 
 function say(text) { $('live').textContent = text; }
+// The end card's line on what to try next time, when the round makes it plain (or nothing).
+function tip(text) { $('overTip').hidden = !text; $('overTip').textContent = text || ''; }
 
 // ---------- aiming and firing ----------
 // A quick double tap on a card's button: the first tap closes the card, and the second lands on the booth where the

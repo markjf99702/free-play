@@ -241,6 +241,7 @@ const score = await court('score');
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await countsAlong(await tickets(), Math.floor(score / 4));
 assert.ok(score > 40, `a steady hand scores (${score})`);
+assert.ok(await page.isHidden('#overTip'), 'a round flicked about right has nothing to say about how hard');
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 // how it went, and the swishes among the baskets, said of the baskets: '1 basket from 18 shots, a swish.'
 {
@@ -312,6 +313,20 @@ for (const leave of ['Escape', 'hide']) {
   assert.equal(await tickets(), had + Math.floor(gap.score / 4), 'a round left as its end card came still pays');
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.hoops')).rounds), gap.rounds + 1, 'and counts');
 }
+
+// A round of soft flicks that fall short of the rim: the end card says to flick a little harder.
+await page.goto(base + 'hoops/');
+await page.click('#play');
+for (let n = 0; n < 4; n++) {
+  await page.waitForFunction(() => !!hoops.court.pocket(), null, { timeout: 8000, polling: 'raf' });
+  await page.evaluate(() => hoops.shoot(hoops.sweet() * 0.8, 0));
+  await page.waitForTimeout(400);
+}
+await page.evaluate(() => { hoops.speed = 20; });
+await page.waitForSelector('#over:not([hidden])', { timeout: 20000 });
+assert.deepEqual(await page.evaluate(() => [hoops.court.misses, hoops.court.short]), [4, 4]);
+assert.equal(await page.textContent('#overTip'), 'Most fell short: flick a little harder.');
+assert.ok(await page.isVisible('#overTip'));
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();
