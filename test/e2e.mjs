@@ -672,6 +672,31 @@ for (const [width, height, insets] of [[390, 844, { top: 47, bottom: 34, left: 0
 }
 await notch.close();
 
+// On a tall phone held upright, Bonkers and Popgun put about three quarters of the height they have to spare above the
+// cabinet and a quarter below the deck, so the lawn and the targets sit nearer the thumb, with the deck still clear of
+// the home indicator. (A tablet held upright, where the cabinet stops growing before it fills the width, keeps about
+// a third above.)
+const tall = await browser.newContext({ deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+const tp0 = await tall.newPage();
+tp0.on('pageerror', e => problems.push(e.message));
+const tallCdp = await tall.newCDPSession(tp0);
+for (const [width, height, insets, low] of [[390, 844, { top: 47, bottom: 34, left: 0, right: 0 }, true], [390, 844, { top: 0, bottom: 0, left: 0, right: 0 }, true], [430, 932, { top: 59, bottom: 34, left: 0, right: 0 }, true], [768, 1024, { top: 0, bottom: 0, left: 0, right: 0 }, false]]) {
+  await tp0.setViewportSize({ width, height });
+  await tallCdp.send('Emulation.setSafeAreaInsetsOverride', { insets });
+  for (const name of ['bonkers', 'popgun']) {
+    await tp0.goto(base + name + '/');
+    await tp0.waitForFunction(name => !!window[name], name, { timeout: 10000 });
+    const { above, below } = await tp0.evaluate(([name, bottom]) => {
+      const cab = window[name].draw.cabinet(), hud = document.querySelector('.hud').getBoundingClientRect(), deck = document.getElementById('deck').getBoundingClientRect();
+      return { above: cab.top - hud.bottom, below: innerHeight - bottom - deck.bottom };
+    }, [name, insets.bottom]);
+    const at = `${name} at ${width} x ${height}${insets.top ? ' under a notch' : ''}: ${Math.round(above)} px above the cabinet and ${Math.round(below)} px below the deck`;
+    assert.ok(below >= 0, at);
+    assert.ok(low ? above > 2 * below : above <= below + 1, at);
+  }
+}
+await tall.close();
+
 // Everything to tap on the floor and on every card is 44 px each way at least (Apple's Human Interface Guidelines,
 // and WCAG 2.2's 2.5.5): the way back to the floor, the links at the foot of each card, the counter's close. The
 // 40 px buttons along the top answer a tap a few px round them too (checked 2.5 px out). (The prizes on a shelf, a

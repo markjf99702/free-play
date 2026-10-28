@@ -24,10 +24,14 @@ export function createDraw(canvas) {
     dpr = ratio;
     canvas.width = back.width = front.width = Math.round(w * dpr);
     canvas.height = back.height = front.height = Math.round(h * dpr);
-    const cw = CAB.x1 - CAB.x0, ch = CAB.y1 - CAB.y0, room = h - top - bottom - 8;
-    k = Math.min((w - right - 12) / cw, room / ch, 1.15);
+    const cw = CAB.x1 - CAB.x0, ch = CAB.y1 - CAB.y0, room = h - top - bottom - 8, fit = (w - right - 12) / cw;
+    k = Math.min(fit, room / ch, 1.15);
     ox = (w - right - cw * k) / 2 - CAB.x0 * k;
-    oy = top + 4 + Math.max(0, room - ch * k) * 0.35 - CAB.y0 * k;
+    // Height to spare goes about a third above the cabinet and the rest below. On a tall phone held upright (the
+    // cabinet as wide as the screen, the deck under it) three quarters of it goes above instead, so the lawn sits
+    // lower, nearer the thumb, rather than leaving the bottom of the screen empty.
+    const above = k === fit && !right ? 0.75 : 0.35;
+    oy = top + 4 + Math.max(0, room - ch * k) * above - CAB.y0 * k;
     repaint();
   }
   const toBurrow = (px, py) => ({ x: (px - ox) / k, y: (py - oy) / k });
