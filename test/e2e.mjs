@@ -789,6 +789,22 @@ await sp.click('#quitBtn');
 await sp.click('#quitBtn');
 await ended();
 await sideways('tilt', 'over');
+// (an eight-digit score keeps to its own third of the card, clear of the top five's 1., on an iPhone 14 and an iPhone
+// SE, and on the biggest iPhone, 932 x 430 under its notch)
+await sp.evaluate(() => { document.getElementById('final').textContent = (98765430).toLocaleString('en-US'); });
+for (const [width, height, insets] of [...SIDEWAYS, [932, 430, { top: 0, bottom: 21, left: 59, right: 59 }]]) {
+  await sp.setViewportSize({ width, height });
+  await sideCdp.send('Emulation.setSafeAreaInsetsOverride', { insets });
+  await sp.waitForTimeout(100);
+  const past = await sp.evaluate(() => {
+    const f = document.getElementById('final'), range = document.createRange();
+    range.selectNodeContents(f);
+    return Math.round(range.getBoundingClientRect().right - f.closest('.words').getBoundingClientRect().right);
+  });
+  assert.ok(past <= 0, `at ${width} x ${height}, Tilt's eight-digit score runs ${past} px past its column, into the top five`);
+}
+await sp.setViewportSize({ width: 844, height: 390 });
+await sideCdp.send('Emulation.setSafeAreaInsetsOverride', { insets: SIDEWAYS[0][2] });
 // Clutch: its win card, as a go that wins puts it up.
 await openSideways('clutch/', 'clutch', '#play');
 await sp.evaluate(() => { document.getElementById('win').hidden = false; document.getElementById('winT').textContent = 'You got a lucky star!'; });

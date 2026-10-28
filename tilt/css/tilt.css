@@ -218,6 +218,8 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
   #over .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); column-gap: 20px; }
   #over .words { grid-row: auto; }
   #over .scores { order: 0; width: 100%; margin: 0; }
-  #over .final { font-size: min(40px, 4.6vw); } /* (an eight-digit score, in a third of an iPhone SE) */
+  /* (an eight-digit score keeps to its third of the card on any phone on its side: the card's width, less its padding
+     and the gaps, over about 19 times the type's size) */
+  #over .final { font-size: min(40px, calc((min(720px, 100vw - max(12px, env(safe-area-inset-left, 0px)) - max(12px, env(safe-area-inset-right, 0px))) - 86px) / 19)); }
   #over .row { flex-direction: column; }
 }
