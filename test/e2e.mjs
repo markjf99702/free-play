@@ -827,8 +827,18 @@ assert.deepEqual([...loaded].filter(f => f !== 'sw.js' && !shell.includes(f)), [
 const cdp = await ctx.newCDPSession(page);
 const { installabilityErrors } = await cdp.send('Page.getInstallabilityErrors');
 assert.deepEqual(installabilityErrors, [], 'Chrome says it can’t be installed');
-const { errors } = await cdp.send('Page.getAppManifest');
+const { errors, manifest } = await cdp.send('Page.getAppManifest');
 assert.deepEqual(errors, []);
+// Its id is fixed, and the same as the one Chrome gave it before it had one (its start), so a copy installed then is
+// the same app. A long press on the installed app's icon (on Android: Chrome there shows the first few), or a
+// right-click on a computer, lists the machines in the floor's order, each with an icon cut from its cabinet's picture.
+assert.equal(manifest.id, base, "the app's id");
+const shortcuts = JSON.parse(await readFile(join(root, 'manifest.webmanifest'), 'utf8')).shortcuts;
+assert.deepEqual(manifest.shortcuts.map(s => [s.name, s.url]), MACHINES.map(m => [m, base + m.toLowerCase().replace(' ', '-') + '/']), "the app's shortcuts");
+for (const s of shortcuts) {
+  const png = await readFile(join(root, s.icons[0].src));
+  assert.deepEqual([s.icons[0].sizes, png.readUInt32BE(16), png.readUInt32BE(20)], ['96x96', 96, 96], `${s.name}'s shortcut icon`);
+}
 
 // The floor on a wide screen: two rows of four from 1,180 px wide (a laptop's), and two by two below that (a
 // tablet's). The cabinets in a row end together, their Play buttons in a line (with the pointer away, so none is

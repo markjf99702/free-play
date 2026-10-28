@@ -2,6 +2,7 @@
   "name": "Free Play",
   "short_name": "Free Play",
   "description": "An arcade on your phone: eight machines on free play, and a prize counter.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -30,6 +31,112 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Roll Up",
+      "short_name": "Roll Up",
+      "description": "Skee-ball",
+      "url": "roll-up/",
+      "icons": [
+        {
+          "src": "roll-up/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Tilt",
+      "short_name": "Tilt",
+      "description": "Pinball, three tables",
+      "url": "tilt/",
+      "icons": [
+        {
+          "src": "tilt/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Clutch",
+      "short_name": "Clutch",
+      "description": "A claw machine full of plush",
+      "url": "clutch/",
+      "icons": [
+        {
+          "src": "clutch/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Topple",
+      "short_name": "Topple",
+      "description": "A coin pusher",
+      "url": "topple/",
+      "icons": [
+        {
+          "src": "topple/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Highrise",
+      "short_name": "Highrise",
+      "description": "A stacker",
+      "url": "highrise/",
+      "icons": [
+        {
+          "src": "highrise/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Popgun",
+      "short_name": "Popgun",
+      "description": "A shooting gallery",
+      "url": "popgun/",
+      "icons": [
+        {
+          "src": "popgun/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Bonkers",
+      "short_name": "Bonkers",
+      "description": "Whack-a-mole",
+      "url": "bonkers/",
+      "icons": [
+        {
+          "src": "bonkers/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Hoops",
+      "short_name": "Hoops",
+      "description": "A basketball machine",
+      "url": "hoops/",
+      "icons": [
+        {
+          "src": "hoops/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
