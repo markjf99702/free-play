@@ -146,6 +146,15 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .fp-best b::before, .fp-best b::after { content: "★"; content: "★" / ""; display: inline-block; margin: 0 .45em; font-size: .75em; vertical-align: .12em; }
 .fp-best span { display: block; margin-top: 2px; }
 
+/* Today's special, on the machine whose day it is: its goal on the title card, and on the end card that it's made. */
+.fp-special {
+  width: fit-content; max-width: 100%; margin: 0 auto 12px; padding: 5px 12px; border-radius: 14px;
+  background: rgba(255, 211, 106, .1); border: 1px solid rgba(255, 211, 106, .55);
+  font: 600 14px/1.35 var(--fp-body); color: var(--fp-gold); text-wrap: balance;
+}
+/* (on a phone on its side, where a card's two columns have little height to spare, a little smaller) */
+@media (orientation: landscape) and (max-height: 500px) { .fp-special { margin-bottom: 8px; padding: 3px 10px; font-size: 13px; } }
+
 /* What to try next time, under a game-over card's heading, when the round makes it plain: a note, not a score. */
 .fp-tip {
   width: fit-content; max-width: 100%; margin: -2px auto 12px; padding: 6px 12px; border-radius: 12px;

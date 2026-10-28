@@ -6,6 +6,7 @@
 import * as wallet from '../shared/wallet.js';
 import { openCounter, shelfItem, fmt, tickets } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
+import { specialFor, madeToday, BONUS } from '../shared/special.js';
 import { dayKey, dayBefore } from '../shared/calendar.js';
 import { settle, BALLS } from '../roll-up/js/daily.js';
 
@@ -79,6 +80,23 @@ function machines() {
   $('hoopsStat').textContent = hp.rounds ? best(hp.best || 0) : 'Forty-five seconds. Twenty\u00a0in, the hoop starts to slide.';
 }
 
+// Today's special, under the pocket: which machine, and its goal (or that it's made), and on that machine's cabinet the
+// badge says Special rather than Free play (and a screen reader hears the line with the cabinet).
+function special() {
+  const s = specialFor(), made = madeToday(), to = document.createElement('a');
+  to.href = `${s.machine}/`;
+  to.textContent = s.name;
+  const goal = s.goalText.charAt(0).toUpperCase() + s.goalText.slice(1);
+  $('today').replaceChildren("Today's special: ", to, made ? `. You made it: ${BONUS} more tickets. A new one tomorrow.` : `. ${goal} for ${BONUS} more tickets.`);
+  $('today').hidden = false;
+  for (const cab of document.querySelectorAll('.cab')) {
+    const on = cab.id === s.machine, coin = cab.querySelector('.coin');
+    coin.textContent = on ? 'Special' : 'Free play';
+    coin.classList.toggle('special', on);
+    cab.setAttribute('aria-describedby', on ? `${cab.querySelector('.what').id} today` : cab.querySelector('.what').id);
+  }
+}
+
 function pocket() {
   const w = wallet.read();
   $('tix').textContent = fmt(w.tickets);
@@ -103,12 +121,13 @@ $('trade').addEventListener('click', counter);
 $('purse').addEventListener('click', counter);
 addEventListener('free-play:wallet', pocket);
 // coming back from a machine (the browser may keep this page as it was): look again
-addEventListener('pageshow', () => { pocket(); machines(); });
+addEventListener('pageshow', () => { pocket(); machines(); special(); });
 // a machine played in another tab or window: its cabinet says so without a reload (the pocket hears about it from
 // ../shared/counter.js, as a free-play:wallet)
-addEventListener('storage', e => { if (e.key === null || e.key.startsWith('free-play.')) machines(); });
+addEventListener('storage', e => { if (e.key === null || e.key.startsWith('free-play.')) { machines(); special(); } });
 pocket();
 machines();
+special();
 
 // Back from a machine by one of its own links (there's no Back button on a phone's home-screen app), the floor opens
 // at that machine's cabinet rather than at the top of a long page. A reload, or Back and Forward, are left where the
@@ -143,4 +162,4 @@ if ('serviceWorker' in navigator && !('single' in document.documentElement.datas
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-window.freePlay = { pocket, machines };
+window.freePlay = { pocket, machines, special };

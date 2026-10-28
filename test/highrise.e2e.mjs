@@ -23,6 +23,19 @@ const server = createServer(async (req, res) => {
 const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
+// Today's special is made already in every page here, so its 25 tickets don't land on a round a test counts. (The
+// special has tests of its own, on a day of their own: openOn() opens a context without this.)
+const openOn = browser.newContext.bind(browser);
+browser.newContext = async (...a) => {
+  const c = await openOn(...a);
+  await c.addInitScript(() => {
+    try {
+      const d = new Date(), key = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+      if (!localStorage.getItem('free-play.special')) localStorage.setItem('free-play.special', JSON.stringify({ key, machine: 'made by the tests' }));
+    } catch { /* storage off */ }
+  });
+  return c;
+};
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const page = await ctx.newPage();
 // The pocket in the corner as a round's tickets feed out of the slot, and how many the strip has fed so far. It counts
@@ -260,6 +273,56 @@ await page.click('#menu a.to-floor');
 await page.waitForSelector('#highriseStat');
 assert.equal(await tickets(), t3 + 2, 'a game left as its tower fell still pays');
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')).games), gamesThen + 1, 'and counts');
+
+// Today's special, on a day that's Highrise's (Oct 27, 2026): the title card says the goal, ten floors; a game that
+// builds them pays 25 more tickets, out of the slot with the rest, and says so; and that's once a day.
+{
+  const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+  await sc.clock.setFixedTime(new Date(2026, 9, 27, 12));
+  const sp = await sc.newPage();
+  sp.on('pageerror', e => problems.push('special: ' + e.message));
+  await sp.goto(base + 'highrise/');
+  await sp.waitForFunction(() => !!window.highrise);
+  assert.equal(await sp.textContent('#titleSpecial'), "Today's special: build 10 floors for 25 more tickets.");
+  assert.ok(await sp.isVisible('#titleSpecial'));
+  const pocket = () => sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+  const ten = async () => {
+    await sp.evaluate(() => highrise.start());
+    while (await sp.evaluate(() => highrise.tower.built) < 10) { await sp.waitForFunction(() => highrise.ready, null, { timeout: 5000 }); await sp.evaluate(() => highrise.stopAt(3)); }
+    await sp.waitForFunction(() => highrise.ready, null, { timeout: 5000 });
+    await sp.evaluate(() => highrise.stopAt(0)); // floor 11 missed: ten floors
+    await sp.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+  };
+  // nine floors isn't it
+  await sp.evaluate(() => highrise.start());
+  while (await sp.evaluate(() => highrise.tower.built) < 9) { await sp.waitForFunction(() => highrise.ready, null, { timeout: 5000 }); await sp.evaluate(() => highrise.stopAt(3)); }
+  await sp.waitForFunction(() => highrise.ready, null, { timeout: 5000 });
+  await sp.evaluate(() => highrise.stopAt(0));
+  await sp.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+  assert.ok(await sp.isHidden('#overSpecial'), 'nine floors made the special');
+  assert.equal(await pocket(), 9);
+  const before = await pocket();
+  await ten();
+  assert.equal(await sp.textContent('#overSpecial'), "Today's special! 25 more tickets.");
+  assert.ok(await sp.isVisible('#overSpecial'));
+  assert.equal(await pocket(), before + 10 + 25, 'ten floors and the special');
+  await sp.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '35', null, { timeout: 5000 });
+  assert.deepEqual(await sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.special'))), { key: '2026-10-27', machine: 'highrise' });
+  // once a day
+  const then = await pocket();
+  await ten();
+  assert.ok(await sp.isHidden('#overSpecial'));
+  assert.equal(await pocket(), then + 10, 'the special pays once a day');
+  await sp.reload();
+  await sp.waitForFunction(() => !!window.highrise);
+  assert.equal(await sp.textContent('#titleSpecial'), "Today's special: made. A new one tomorrow.");
+  // and on another machine's day, Highrise's title card says nothing of it
+  await sc.clock.setFixedTime(new Date(2026, 9, 28, 12));
+  await sp.reload();
+  await sp.waitForFunction(() => !!window.highrise);
+  assert.ok(await sp.isHidden('#titleSpecial'), "the special's line shows on another machine's day");
+  await sc.close();
+}
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

@@ -40,6 +40,19 @@ const site = `http://localhost:${server.address().port}/`; // the arcade
 const base = site + 'tilt/';                                // Tilt's machine on its floor
 
 const browser = await pw.chromium.launch();
+// Today's special is made already in every page here, so its 25 tickets don't land on a round a test counts. (The
+// special has tests of its own, on a day of their own: openOn() opens a context without this.)
+const openOn = browser.newContext.bind(browser);
+browser.newContext = async (...a) => {
+  const c = await openOn(...a);
+  await c.addInitScript(() => {
+    try {
+      const d = new Date(), key = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+      if (!localStorage.getItem('free-play.special')) localStorage.setItem('free-play.special', JSON.stringify({ key, machine: 'made by the tests' }));
+    } catch { /* storage off */ }
+  });
+  return c;
+};
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
 const page = await ctx.newPage();
 const problems = [];
@@ -637,6 +650,36 @@ await page.reload();
 await page.waitForFunction(() => typeof window.tilt === 'object', null, { timeout: 10000 }).catch(() => assert.fail('the game did not start offline'));
 await ctx.setOffline(false);
 down = false;
+
+// Today's special on its table, on a day that's Tilt's (Oct 29, 2026: 50,000 on Haunted House): the title card says
+// so, and a game there that makes it pays 25 more tickets with its own; on another table it doesn't.
+{
+  const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, serviceWorkers: 'block' });
+  await sc.clock.setFixedTime(new Date(2026, 9, 29, 12));
+  const sp = await sc.newPage();
+  sp.on('pageerror', e => problems.push('special: ' + e.message));
+  const game = async (table, points) => {
+    await sp.goto(base + '?table=' + table);
+    await sp.waitForFunction(() => !!window.tilt);
+    await sp.click('#startBtn');
+    await sp.evaluate(points => { window.tilt.game.score = points; }, points);
+    await sp.click('#menuBtn');
+    await sp.evaluate(() => { document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
+    await sp.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+  };
+  const pocket = () => sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+  await sp.goto(base);
+  await sp.waitForFunction(() => !!window.tilt);
+  assert.equal(await sp.textContent('#titleSpecial'), "Today's special: score 50,000 on Haunted House for 25 more tickets.");
+  await game('classic', 60000);
+  assert.ok(await sp.isHidden('#overSpecial'), 'the special was made on Classic');
+  assert.equal(await pocket(), 12);
+  await game('haunted', 60000);
+  assert.equal(await sp.textContent('#overSpecial'), "Today's special! 25 more tickets.");
+  assert.equal(await pocket(), 12 + 24 + 25, "Haunted House's 24 tickets and the special's 25");
+  await sp.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '49', null, { timeout: 6000 });
+  await sc.close();
+}
 
 assert.deepEqual(problems.filter(p => !p.startsWith('failed:')), [], 'problems while using it');
 await browser.close();

@@ -291,3 +291,49 @@ test("the all-time totals count every ticket won, every trade and every round, i
   count({ traded: -1 });
   assert.equal(readTotals().traded, 0, 'never fewer than none');
 });
+
+test("today's special: one machine a day, the same for everyone, every one in turn, and 25 tickets once a day", async () => {
+  const { specialFor, claim, madeToday, meets, titleLine, endLine, MACHINES, GOALS, BONUS, KEY } = await import('../shared/special.js');
+  const { dayKey } = await import('../shared/calendar.js');
+  assert.deepEqual(MACHINES, ['tilt', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops'], "every machine with a round's score to set a goal on");
+  assert.deepEqual(specialFor('2026-10-28'), specialFor('2026-10-28'), 'the same for everyone');
+  // over two years: every run of six days from the first has each machine once, never the same two days running
+  let prev = null;
+  const seen = [];
+  for (let d = 0; d < 730; d++) {
+    const s = specialFor(dayKey(new Date(2026, 0, 5 + d, 12)));
+    assert.ok(MACHINES.includes(s.machine));
+    assert.notEqual(s.machine, prev, `the same two days running at day ${d}`);
+    prev = s.machine;
+    seen.push(s.machine);
+    if (s.machine === 'tilt') assert.equal(s.goal, GOALS.tilt[s.table]);
+    else assert.equal(s.goal, GOALS[s.machine]);
+  }
+  for (let i = 0; i + 6 <= seen.length; i += 6) assert.equal(new Set(seen.slice(i, i + 6)).size, 6, `days ${i} to ${i + 5}`);
+  // what it says
+  const on = m => { for (let d = 0; ; d++) { const k = dayKey(new Date(2026, 9, 1 + d, 12)); if (specialFor(k).machine === m) return k; } };
+  assert.equal(specialFor(on('bonkers')).goalText, 'score 250 in a round');
+  assert.equal(specialFor(on('topple')).goalText, 'win 12 tickets in one cup');
+  assert.equal(specialFor(on('highrise')).goalText, 'build 10 floors');
+  assert.match(specialFor(on('tilt')).goalText, /^score (100,000 on Classic|400,000 on Space|50,000 on Haunted House)$/);
+  // a round that makes it, on its day, pays once
+  kept.clear();
+  const day = on('bonkers');
+  assert.equal(claim('hoops', { score: 900 }, day), 0, "another machine's round, on Bonkers' day");
+  assert.equal(claim('bonkers', { score: 240 }, day), 0, 'short of the goal');
+  assert.equal(titleLine('bonkers', day), "Today's special: score 250 in a round for 25 more tickets.");
+  assert.equal(titleLine('hoops', day), '');
+  assert.equal(claim('bonkers', { score: 250 }, day), BONUS);
+  assert.equal(wallet.read().tickets, BONUS, 'into the pocket');
+  assert.deepEqual(JSON.parse(kept.get(KEY)), { key: day, machine: 'bonkers' }, 'in a save of its own');
+  assert.ok(madeToday(day));
+  assert.equal(claim('bonkers', { score: 800 }, day), 0, 'once a day');
+  assert.equal(wallet.read().tickets, BONUS);
+  assert.equal(titleLine('bonkers', day), "Today's special: made. A new one tomorrow.");
+  assert.equal(endLine(BONUS), "Today's special! 25 more tickets.");
+  assert.equal(endLine(0), '');
+  // Tilt's is on its table
+  const t = specialFor(on('tilt')), other = ['classic', 'space', 'haunted'].find(id => id !== t.table);
+  assert.ok(meets(t, { score: t.goal, table: t.table }));
+  assert.ok(!meets(t, { score: t.goal * 10, table: other }), 'not on another table');
+});

@@ -24,6 +24,19 @@ const server = createServer(async (req, res) => {
 const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
+// Today's special is made already in every page here, so its 25 tickets don't land on a round a test counts. (The
+// special has tests of its own, on a day of their own: openOn() opens a context without this.)
+const openOn = browser.newContext.bind(browser);
+browser.newContext = async (...a) => {
+  const c = await openOn(...a);
+  await c.addInitScript(() => {
+    try {
+      const d = new Date(), key = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+      if (!localStorage.getItem('free-play.special')) localStorage.setItem('free-play.special', JSON.stringify({ key, machine: 'made by the tests' }));
+    } catch { /* storage off */ }
+  });
+  return c;
+};
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 // The machine's own loop sound (its motor, or the rumble of the ball), as the page makes it, so the test can listen.
 await ctx.addInitScript(() => {

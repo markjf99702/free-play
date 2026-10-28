@@ -10,6 +10,7 @@ import * as wallet from '../../shared/wallet.js';
 import { TROPHIES } from '../../shared/prizes.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { claim, titleLine, endLine } from '../../shared/special.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
@@ -146,6 +147,10 @@ function endGame() {
   if (top) wallet.give(TROPHIES[0]);
   saved.games++;
   count({ round: 'highrise' });
+  // today's special: 25 more tickets, out of the slot with the rest
+  const bonus = claim('highrise', { score: built });
+  $('overSpecial').textContent = endLine(bonus);
+  $('overSpecial').hidden = !bonus;
   const old = saved.best, isBest = built > old && !first;
   // onto the top five, with the day
   const { list, rank, entry } = place(topFive(saved), built);
@@ -165,7 +170,7 @@ function endGame() {
   $('over').hidden = false;
   feeding();
   // the highest yet rings out once the tickets are out, not over them
-  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onCount: counting(won), onDone: () => { if (isBest) sound.best(); } });
+  feeding = feed($('payout'), won + bonus, { tick: () => sound.ticket(), onCount: counting(won + bonus), onDone: () => { if (isBest) sound.best(); } });
   $('again').focus({ preventScroll: true });
   hud();
 }
@@ -301,6 +306,12 @@ function tick(now) {
 
 hud();
 requestAnimationFrame(tick);
+
+// Today's special, when it's Highrise's day: its goal on the title card (or that it's made).
+function special() { const t = titleLine('highrise'); $('titleSpecial').textContent = t; $('titleSpecial').hidden = !t; }
+special();
+addEventListener('pageshow', special);
+addEventListener('storage', e => { if (e.key === null || e.key?.startsWith('free-play.')) special(); });
 
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {
   navigator.serviceWorker.register('../sw.js').catch(() => {});

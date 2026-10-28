@@ -12,6 +12,7 @@ import { TABLES } from './tables.js';
 import * as wallet from '../../shared/wallet.js';
 import { dayKey } from '../../shared/calendar.js';
 import { count } from '../../shared/records.js';
+import { claim, titleLine, endLine } from '../../shared/special.js';
 import { openCounter, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
@@ -137,8 +138,13 @@ function useTable(id) {
     } catch { /* an address it can't change: play on */ }
   }
   showBest();
+  special();
   resize();
 }
+// Today's special, when it's Tilt's day: its goal, on its table, on the title card (or that it's made).
+function special() { const t = titleLine('tilt'); $('titleSpecial').textContent = t; $('titleSpecial').hidden = !t; }
+addEventListener('pageshow', special);
+addEventListener('storage', e => { if (e.key === null || e.key?.startsWith('free-play.')) special(); });
 
 // The table a link names, else the one played last, else the first.
 const asked = new URLSearchParams(location.search).get('table');
@@ -322,18 +328,22 @@ function gameOver(g, { ended = false } = {}) {
   match = m && { ...m, at: performance.now() };
   const won = Math.floor(score / table.perTicket);
   wallet.pay(won + extra);
+  // today's special, on its table: 25 more tickets, out of the slot with the rest
+  const bonus = claim('tilt', { score, table: Object.keys(TABLES).find(id => TABLES[id] === table) });
+  $('overSpecial').textContent = endLine(bonus);
+  $('overSpecial').hidden = !bonus;
   stopFeed();
   setTimeout(() => {
     if (m?.matched) play('match');
-    stopFeed = feed($('payout'), won + extra, { tick: () => play('rollover') });
+    stopFeed = feed($('payout'), won + extra + bonus, { tick: () => play('rollover') });
   }, 900);
   $('final').textContent = fmt(score);
   const placed = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
   // with no ticket, how far off one it was, in place of the rate: '3,550 more points and it's a ticket.'
   const matched = m?.matched ? `Match ${two(m.number)}: ${MATCH_TICKETS} ${won ? 'more ' : ''}tickets.` : '';
   $('overNote').textContent = [placed, won ? rate(table) : shortOfATicket(score, table.perTicket), matched].filter(Boolean).join(' ');
-  const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won + extra)}.` +
-    (m ? ` Match ${two(m.number)}${m.matched ? ', a match' : ''}.` : '');
+  const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won + extra + bonus)}.` +
+    (m ? ` Match ${two(m.number)}${m.matched ? ', a match' : ''}.` : '') + (bonus ? " Today's special!" : '');
   $('scores').innerHTML = '';
   store[table.scoresKey].forEach(s => {
     const li = document.createElement('li');

@@ -36,6 +36,19 @@ const server = createServer(async (req, res) => {
 const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
+// Today's special is made already in every page here, so its 25 tickets don't land on a round a test counts. (The
+// special has tests of its own, on a day of their own: openOn() opens a context without this.)
+const openOn = browser.newContext.bind(browser);
+browser.newContext = async (...a) => {
+  const c = await openOn(...a);
+  await c.addInitScript(() => {
+    try {
+      const d = new Date(), key = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+      if (!localStorage.getItem('free-play.special')) localStorage.setItem('free-play.special', JSON.stringify({ key, machine: 'made by the tests' }));
+    } catch { /* storage off */ }
+  });
+  return c;
+};
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const page = await ctx.newPage();
 const problems = [], loaded = new Set();
@@ -537,6 +550,34 @@ await tab.close();
   await page.click('.to-floor');
   await page.waitForURL(base);
   await page.evaluate(([keys, was]) => keys.forEach((k, i) => (was[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, was[i]))), [KEYS, was]);
+}
+
+// Today's special under the pocket, on a day that's Tilt's (Oct 29, 2026, on Haunted House): which machine, its goal,
+// and the badge on its cabinet; and once it's made, that it's made. Tilt's title card says the goal too.
+{
+  const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+  await sc.clock.setFixedTime(new Date(2026, 9, 29, 12));
+  const sp = await sc.newPage();
+  sp.on('pageerror', e => problems.push('special: ' + e.message));
+  sp.on('request', r => { if (r.url().startsWith(base)) loaded.add(new URL(r.url()).pathname.slice(1) || './'); });
+  await sp.goto(base);
+  await sp.waitForFunction(() => !!window.freePlay);
+  assert.equal(await sp.textContent('#today'), "Today's special: Tilt. Score 50,000 on Haunted House for 25 more tickets.");
+  assert.equal(await sp.getAttribute('#today a', 'href'), 'tilt/');
+  const badges = await sp.evaluate(() => [...document.querySelectorAll('.cab')].map(c => [c.id, c.querySelector('.coin').textContent]));
+  assert.deepEqual(badges.filter(([, t]) => t !== 'Free play'), [['tilt', 'Special']], "the badge says Special on Tilt's cabinet only");
+  assert.equal(await sp.getAttribute('.cab.tilt', 'aria-describedby'), 'tiltWhat today', 'and a screen reader hears it with the cabinet');
+  const under = await sp.evaluate(() => [document.getElementById('purse').getBoundingClientRect().bottom, document.getElementById('today').getBoundingClientRect().top]);
+  assert.ok(under[1] >= under[0], 'the line is under the pocket');
+  await sp.click('#today a');
+  await sp.waitForURL(base + 'tilt/');
+  await sp.waitForFunction(() => !!window.tilt);
+  assert.equal(await sp.textContent('#titleSpecial'), "Today's special: score 50,000 on Haunted House for 25 more tickets.");
+  await sp.evaluate(() => localStorage.setItem('free-play.special', JSON.stringify({ key: '2026-10-29', machine: 'tilt' })));
+  await sp.goto(base);
+  await sp.waitForFunction(() => !!window.freePlay);
+  assert.equal(await sp.textContent('#today'), "Today's special: Tilt. You made it: 25 more tickets. A new one tomorrow.");
+  await sc.close();
 }
 
 // Every file the pages loaded is kept for offline.

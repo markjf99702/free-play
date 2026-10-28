@@ -13,6 +13,7 @@ import * as wallet from '../../shared/wallet.js';
 import { TRINKETS } from '../../shared/prizes.js';
 import { openCounter, counterOpen, toast, feed, bestLine, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { claim, titleLine, endLine } from '../../shared/special.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
@@ -222,18 +223,21 @@ function endCup() {
   saved.cups = (saved.cups || 0) + 1;
   count({ round: 'topple' });
   cup = null;
+  // today's special: 25 more tickets, out of the slot with the cup's (or with a late coin that makes it, below)
+  done.bonus = claim('topple', { score: done.won });
   showDone();
-  say(`The cup's empty: ${tickets(done.won)}.`);
+  say(`The cup's empty: ${tickets(done.won)}.${done.bonus ? " Today's special!" : ''}`);
   $('over').hidden = false;
   feeding();
-  feeding = feed($('payout'), done.won, { tick: () => sound.ticket(), onDone: cheer });
+  feeding = feed($('payout'), done.won + done.bonus, { tick: () => sound.ticket(), onDone: cheer });
   $('again').focus({ preventScroll: true });
 }
 function lateCoins(n) {
   done.won += n;
+  done.bonus ||= claim('topple', { score: done.won });
   showDone();
   feeding();
-  feeding = feed($('payout'), done.won, { fresh: false, onDone: cheer });
+  feeding = feed($('payout'), done.won + done.bonus, { fresh: false, onDone: cheer });
 }
 const newBest = () => done.won > done.before && !done.first;
 function showDone() {
@@ -244,6 +248,8 @@ function showDone() {
   if (won > (saved.best || 0)) saved.best = won;
   save();
   $('overT').textContent = `${CUP} coins, ${tickets(won)}`;
+  $('overSpecial').textContent = endLine(done.bonus);
+  $('overSpecial').hidden = !done.bonus;
   wonPrizes(done.prizes);
   bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${tickets(before)}.`], `${onList(rank)}Best cup: ${tickets(saved.best)}.`);
   hud();
@@ -386,6 +392,11 @@ function tick(now) {
 }
 
 hud();
+// Today's special, when it's Topple's day: its goal on the title card (or that it's made).
+function special() { const t = titleLine('topple'); $('titleSpecial').textContent = t; $('titleSpecial').hidden = !t; }
+special();
+addEventListener('pageshow', special);
+addEventListener('storage', e => { if (e.key === null || e.key?.startsWith('free-play.')) special(); });
 // Back to a cup whose last coin went down just before leaving: it's finished, so its card comes up instead of the
 // title card (and whatever the pile still pushes over counts for it).
 if (cup && cup.left === 0) { $('title').hidden = true; endCup(); }

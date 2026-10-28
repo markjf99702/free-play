@@ -8,6 +8,7 @@ import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { claim, titleLine, endLine } from '../../shared/special.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
@@ -145,6 +146,10 @@ function endRound() {
   wallet.pay(won);
   saved.rounds++;
   count({ round: 'popgun' });
+  // today's special: 25 more tickets, out of the slot with the rest
+  const bonus = claim('popgun', { score });
+  $('overSpecial').textContent = endLine(bonus);
+  $('overSpecial').hidden = !bonus;
   const old = saved.best, isBest = score > old && !first;
   // onto the top five, with the day
   const { list, rank, entry } = place(topFive(saved), score);
@@ -159,11 +164,11 @@ function endRound() {
   $('overHow').textContent = `${hits} ${hits === 1 ? 'hit' : 'hits'} from ${shots} ${shots === 1 ? 'cork' : 'corks'}. `
     + (won ? `A ticket for every ${PER_TICKET} points.` : shortOfATicket(score, PER_TICKET));
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `${onList(rank)}Best: ${saved.best.toLocaleString('en-US')}.`);
-  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
+  say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won + bonus)}.${bonus ? " Today's special!" : ''}`);
   $('over').hidden = false;
   feeding();
   // a new best rings out once the tickets are out, not over them, and the sign's bulbs blaze for it
-  feeding = feed($('payout'), won, { tick: () => sound.ticket(), onCount: counting(won), onDone: () => { if (isBest) { sound.best(); glow = 2.4; } } });
+  feeding = feed($('payout'), won + bonus, { tick: () => sound.ticket(), onCount: counting(won + bonus), onDone: () => { if (isBest) { sound.best(); glow = 2.4; } } });
   $('again').focus({ preventScroll: true });
   hud();
 }
@@ -322,6 +327,12 @@ function tick(now) {
 
 hud();
 requestAnimationFrame(tick);
+
+// Today's special, when it's Popgun's day: its goal on the title card (or that it's made).
+function special() { const t = titleLine('popgun'); $('titleSpecial').textContent = t; $('titleSpecial').hidden = !t; }
+special();
+addEventListener('pageshow', special);
+addEventListener('storage', e => { if (e.key === null || e.key?.startsWith('free-play.')) special(); });
 
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {
   navigator.serviceWorker.register('../sw.js').catch(() => {});
