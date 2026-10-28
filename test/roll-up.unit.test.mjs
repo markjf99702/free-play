@@ -175,6 +175,10 @@ test("today's card left part-way waits all day, and counts as played at midnight
   // a run of days starts again after a day missed, and a card with no balls rolled is played for nothing
   assert.equal(settle({ going, daily: { key: '2026-10-20', balls: [], streak: 6 } }, '2026-10-29').daily.streak, 1);
   assert.deepEqual(settle({ going: { key: '2026-10-27', balls: [] } }, '2026-10-28').daily, { key: '2026-10-27', score: 0, balls: [], won: 0, streak: 1, unfinished: true });
+  // eight calls hit before it was left: that's the trophy's eight of the nine, given as it pays
+  const called = Array.from({ length: 8 }, () => ({ value: 30, points: 60, golden: false, call: 30, hit: true }));
+  assert.equal(settle({ going: { key: '2026-10-27', balls: called } }, '2026-10-28').daily.trophy, true);
+  assert.equal(settle({ going: { key: '2026-10-27', balls: [...called.slice(1), ball(50)] } }, '2026-10-28').daily.trophy, undefined, 'seven is not');
   // one with no day, or a day already played, is dropped without counting
   for (const bad of [{ going: { balls: [] } }, { going: 'x' }, { going: { key: '2026-10-27', balls: [] }, daily: { key: '2026-10-27', balls: [] } }]) {
     const t = settle(bad, '2026-10-28');

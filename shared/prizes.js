@@ -46,9 +46,10 @@ export const TRINKETS = [
 // Trophies, one for each machine's hardest feat, won outright and never sold: each goes on the shelf the moment it's
 // earned (another one each time), and they stand together at the end of it, each on a plinth in its machine's colours.
 // feat is what it's for, as a tap on the shelf says. Each feat is one the best of the simulated players manages in
-// fewer than one round in 50, but for Hoops', set within reach of a casual player (see the README).
+// fewer than one round in 50, but for Hoops', set within reach of a casual player, and Roll Up's, on a card that comes
+// once a day (see the README).
 export const TROPHIES = [
-  { id: 'trophy-roll-up', machine: 'roll-up', emoji: '🏆', name: 'Roll Up trophy', say: 'the Roll Up trophy', plinth: '#c23a2e', feat: "all nine calls on today's card" },
+  { id: 'trophy-roll-up', machine: 'roll-up', emoji: '🏆', name: 'Roll Up trophy', say: 'the Roll Up trophy', plinth: '#c23a2e', feat: "eight of the nine calls on today's card" },
   { id: 'trophy-tilt-classic', machine: 'tilt', emoji: '🏆', name: 'Tilt Classic trophy', say: 'the Tilt Classic trophy', plinth: '#ffa53a', feat: 'a 5x bonus, the top lanes made four times on one ball' },
   { id: 'trophy-tilt-space', machine: 'tilt', emoji: '🏆', name: 'Tilt Space trophy', say: 'the Tilt Space trophy', plinth: '#8f7bff', feat: 'five jackpots in a game' },
   { id: 'trophy-tilt-haunted', machine: 'tilt', emoji: '🏆', name: 'Tilt Haunted House trophy', say: 'the Tilt Haunted House trophy', plinth: '#6fe3a2', feat: 'the front door opened three times in a game' },

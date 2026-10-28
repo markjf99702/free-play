@@ -5,7 +5,7 @@
 import * as phys from './physics.js';
 import { createScene } from './scene.js';
 import * as sound from './sound.js';
-import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, ticketsFor, nineCalls, BALLS } from './daily.js';
+import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, ticketsFor, feat, BALLS } from './daily.js';
 import { trophy } from '../../shared/prizes.js';
 import * as wallet from '../../shared/wallet.js';
 import { soundOn, switchSound } from '../../shared/sound.js';
@@ -75,7 +75,7 @@ function settleCard() {
   for (const k of Object.keys(saved)) delete saved[k];
   Object.assign(saved, s);
   save();
-  if (played) { count({ round: 'roll-up' }); wallet.pay(s.daily.won); }
+  if (played) { count({ round: 'roll-up' }); wallet.pay(s.daily.won); if (s.daily.trophy) wallet.give(trophy('trophy-roll-up')); }
 }
 settleCard();
 sound.setEnabled(soundOn(saved.sound));
@@ -256,8 +256,8 @@ function gameOver() {
     const key = game.card.key, prev = saved.daily;
     result.key = key;
     result.streak = prev && prev.key === dayBefore(key) ? (prev.streak || 1) + 1 : 1;
-    // all nine calls: the trophy, onto the shelf now
-    if (nineCalls(game.balls)) { result.trophy = true; wallet.give(trophy('trophy-roll-up')); }
+    // eight of the nine calls: the trophy, onto the shelf now
+    if (feat(game.balls)) { result.trophy = true; wallet.give(trophy('trophy-roll-up')); }
     saved.daily = result;
     saved.longest = Math.max(Number(saved.longest) || 0, result.streak); // the longest run of days, for the records
     delete saved.going;
@@ -302,9 +302,9 @@ function showOver(r, fresh) {
   const which = document.createElement('small');
   which.textContent = daily ? "Today's card" : 'Nine balls';
   $('overT').replaceChildren(which, ' ', `${fmt(r.score)} ${r.score === 1 ? 'point' : 'points'}`);
-  // the trophy, for all nine calls on today's card
+  // the trophy, for eight of the nine calls on today's card (or all nine)
   $('overFeat').hidden = !r.trophy;
-  $('overFeat').textContent = r.trophy ? `🏆 All nine calls! The ${trophy('trophy-roll-up').name} is on your shelf.` : '';
+  $('overFeat').textContent = r.trophy ? `🏆 ${r.balls.every(b => b.hit) ? 'All nine calls' : 'Eight of the nine calls'}! The ${trophy('trophy-roll-up').name} is on your shelf.` : '';
   // what to try next time, when it's plain from the balls
   $('overTip').hidden = r.balls.filter(b => b.hard).length < 3;
   $('overTip').textContent = $('overTip').hidden ? '' : 'Gentler: the 50 wants a medium roll.';

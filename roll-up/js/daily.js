@@ -29,7 +29,8 @@ export function cardFor(key) {
 // Roll Up's save once a card left part-way on an earlier day has counted as played that day, with the balls rolled
 // (going: { key, score, balls }, the card on the go). It's a card like any other from then on: it keeps the run of days
 // going, and it pays the tickets its balls scored (its daily.won: Roll Up pays them when it next opens and finds it;
-// the floor only reads this). Today's card on the go, or none, leaves the save as it is.
+// the floor only reads this), and the trophy if its balls hit eight calls (daily.trophy, given then too). Today's card
+// on the go, or none, leaves the save as it is.
 export function settle(s, today = dayKey()) {
   const g = s && s.going;
   if (!g || g.key === today) return s;
@@ -41,11 +42,14 @@ export function settle(s, today = dayKey()) {
   const prev = s.daily;
   const streak = prev && prev.key === dayBefore(g.key) && Array.isArray(prev.balls) ? (Number(prev.streak) || 1) + 1 : 1;
   const won = ticketsFor(score);
-  return { ...rest, games: (Number(s.games) || 0) + 1, longest: Math.max(Number(s.longest) || 0, streak), daily: { key: g.key, score, balls, won, streak, unfinished: true } };
+  const daily = { key: g.key, score, balls, won, streak, unfinished: true };
+  if (feat(balls)) daily.trophy = true; // eight calls hit before it was left: the trophy, given as it pays
+  return { ...rest, games: (Number(s.games) || 0) + 1, longest: Math.max(Number(s.longest) || 0, streak), daily };
 }
 
-// The trophy's feat: all nine calls hit on a day's card.
-export const nineCalls = balls => Array.isArray(balls) && balls.length === BALLS && balls.every(b => b && b.hit);
+// The trophy's feat: eight of the nine calls hit on a day's card (eight of eight on a card left part-way does it too).
+export const FEAT = { calls: 8 };
+export const feat = balls => Array.isArray(balls) && balls.slice(0, BALLS).filter(b => b && b.hit).length >= FEAT.calls;
 
 // What a ball is worth: its hole, doubled for a called shot, doubled again for the golden ball.
 export function points(value, { call = null, golden = false } = {}) {
