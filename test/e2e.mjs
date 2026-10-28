@@ -805,6 +805,12 @@ for (const [width, height, insets] of [...SIDEWAYS, [932, 430, { top: 0, bottom:
 }
 await sp.setViewportSize({ width: 844, height: 390 });
 await sideCdp.send('Emulation.setSafeAreaInsetsOverride', { insets: SIDEWAYS[0][2] });
+// (How to play, opened on the title card, runs down the right, and the title and the tables stay at the top)
+await sp.goto(base + 'tilt/');
+await sp.waitForFunction(() => !!window.tilt, null, { timeout: 10000 });
+await sp.click('#title summary');
+const howDown = await sp.evaluate(() => Math.round(document.querySelector('#title .words').getBoundingClientRect().top - document.querySelector('#title .card').getBoundingClientRect().top));
+assert.ok(howDown < 40, `with How to play open, Tilt's title starts ${howDown} px down its card, on a phone on its side`);
 // Clutch: its win card, as a go that wins puts it up.
 await openSideways('clutch/', 'clutch', '#play');
 await sp.evaluate(() => { document.getElementById('win').hidden = false; document.getElementById('winT').textContent = 'You got a lucky star!'; });

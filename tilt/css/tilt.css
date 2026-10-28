@@ -210,6 +210,7 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
   .acts { position: sticky; top: 0; }
   h1 { font-size: 44px; }
   .tables { margin-bottom: 0; }
+  #title .words { align-self: start; } /* (How to play, opened, runs down the right and leaves the title at the top) */
   #pause .card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (room for its buttons two a row) */
   #pause .words, #over .words { grid-row: 1 / span 2; }
   #pause .acts { grid-column: 2; grid-row: 1; }
