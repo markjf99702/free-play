@@ -24,7 +24,7 @@
   &nbsp;
   <img src="docs/phone-hoops.png" alt="Hoops, a royal blue and orange basketball machine seen from behind the player: HOOPS on an orange sign over a red scoreboard showing 11 points with 41 seconds left and the HOT lamp lit, the rim on fire as a ball drops through the net, SWISH! and +3 rising off the backboard, and a ball rolling back down a wooden ramp painted like a court to two more in the pocket, one of them gold" width="250">
   &nbsp;
-  <img src="docs/phone-counter.png" alt="The prize counter with 214 tickets: a shelf holding two lollipops, a spider ring, a rubber duck, a toy dinosaur, two plush frogs, a plush ghost and a toy car, above a grid of prizes from a 5-ticket lollipop up" width="250">
+  <img src="docs/phone-counter.png" alt="The prize counter with 214 tickets: a shelf holding two lollipops, a spider ring, a rubber duck, a toy dinosaur, two plush frogs, a plush ghost and a toy car among the faint outlines of the plush, prizes and trophies still to win, the line 2 of 7 plush, 1 of Topple's 5 prizes, 0 of 8 trophies under it, and a grid of prizes from a 5-ticket lollipop up, the fortune ball and the kite saying 86 and 186 to go" width="250">
 </p>
 
 ## How it plays
