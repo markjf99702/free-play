@@ -71,6 +71,9 @@ test('a ticket a floor, the minor bonus if it was taken, and the major for the t
   assert.equal(payout({ built: MINOR, tookMinor: true }), MINOR + MINOR_BONUS);
   assert.equal(payout({ built: 13 }), 13, 'kept going and stopped short: just the floors');
   assert.equal(payout({ built: FLOORS }), FLOORS + MAJOR_BONUS);
+  // 25 for stopping at floor 11, and 100 for the top
+  assert.deepEqual([MINOR_BONUS, MAJOR_BONUS], [25, 100]);
+  assert.equal(payout({ built: FLOORS }), 115);
 });
 
 test('the trophy has a place on the shelf', () => {

@@ -112,7 +112,7 @@ A stacker: a tower against a night skyline, its windows the grid, seven across a
 
 - **Stop the row.** A row of lit windows slides from side to side along the floor being built, setting off from somewhere new on each floor. Press **Stop** (or tap the tower, or press Space) to set it down. Windows with a lit window under them stay lit; the rest fall off, and the next row is only as wide as what stayed up.
 - **It gets harder as it climbs.** Each floor moves a little faster than the one below, from about six windows a second at the bottom to thirteen at the top. Rows are three windows wide to start, two at most from floor 6, and one from floor 11.
-- **Prizes.** Every floor built is a ticket. Floor 11 is the minor prize: take 25 more tickets and stop there, or keep going for the top. Build all fifteen and it pays 200 tickets and the Highrise trophy for your shelf. Keep going and stop short, and the 25 is gone (the floors still pay).
+- **Prizes.** Every floor built is a ticket. Floor 11 is the minor prize: take 25 more tickets and stop there, or keep going for the top. Build all fifteen and it pays 100 tickets and the Highrise trophy for your shelf. Keep going and stop short, and the 25 is gone (the floors still pay).
 
 ## Popgun
 

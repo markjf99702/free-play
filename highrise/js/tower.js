@@ -10,7 +10,7 @@ export const COLS = 7;
 export const FLOORS = 15;
 export const MINOR = 11;           // the minor prize floor: take the bonus and stop, or keep going for the top
 export const MINOR_BONUS = 25;     // tickets, on top of a ticket a floor
-export const MAJOR_BONUS = 200;    // tickets for topping out, with the trophy
+export const MAJOR_BONUS = 100;    // tickets for topping out, with the trophy
 
 // The widest row a floor allows, and how long the row takes to move one window along there (ms).
 export const most = floor => (floor <= 5 ? 3 : floor <= 10 ? 2 : 1);

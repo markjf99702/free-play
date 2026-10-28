@@ -171,7 +171,7 @@ await other.goto(base + 'highrise/');
 await other.waitForFunction(() => window.highrise);
 const gamesBefore = await page.evaluate(() => highrise.saved.games);
 
-// All fifteen: the trophy and 200 more.
+// All fifteen: the trophy and 100 more.
 const t2 = await tickets();
 await page.click('#again');
 await build(11);
@@ -186,7 +186,7 @@ assert.equal(await page.textContent('#overT'), 'Topped out!');
 // and the card has the trophy on it, big
 assert.deepEqual(await page.evaluate(() => { const e = document.getElementById('overTrophy'); return [e.hidden, e.textContent, getComputedStyle(e).fontSize]; }), [false, '🏆', '72px']);
 assert.deepEqual(await bestLine(), { text: 'Your highest yet! The old one was floor 11.', big: true, size: '18px' });
-assert.equal(await tickets(), t2 + 215);
+assert.equal(await tickets(), t2 + 115);
 const shelf = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes);
 assert.equal(shelf['trophy-highrise'], 1, 'the trophy is on the shelf');
 assert.deepEqual(await page.evaluate(() => [highrise.saved.best, highrise.saved.tops]), [15, 1]);
