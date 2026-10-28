@@ -108,6 +108,41 @@ test('a swing at a hole whose mole is still coming up its shaft is a miss that s
   assert.equal(e.cost, MISS);
 });
 
+test('a mole that has only just started to duck can still be bonked, and only gets away once it is most of the way down', () => {
+  const b = createBurrow({ random: seeded(6) });
+  const ducking = () => b.moles.find(m => m.state === 'sinking' && m.hole >= 0 && m.rise > 0.7 && !m.hat);
+  let m;
+  while (!(m = ducking())) { b.step(1 / 60); b.take(); }
+  const before = b.score, kind = m.gold ? 'gold' : m.wasHat ? 'hat' : 'mole';
+  const r = b.swing(HOLES[m.hole], -40);
+  assert.ok(r.hit, `a mole ${Math.round(m.rise * 100)}% up is a bonk`);
+  assert.equal(b.score - before, POINTS[kind]);
+  assert.equal(m.state, 'falling');
+  assert.ok(!b.take().some(e => e.away !== undefined), 'and it never got away');
+  // one that's ducked further is gone: a miss, and the raspberry comes as it drops past
+  let next;
+  while (!(next = b.moles.find(x => x.state === 'sinking' && x.hole >= 0 && x.rise > 0.7))) { b.step(1 / 60); b.take(); }
+  const hole = next.hole;
+  let away = false;
+  while (next.rise > 0.7) { b.step(1 / 60); away ||= b.take().some(e => e.away === hole); }
+  assert.ok(away, 'it got away as it ducked past 70%');
+  assert.equal(b.swing(HOLES[hole], -40).hit, false, `a mole ${Math.round(next.rise * 100)}% up and ducking is a miss`);
+});
+
+test('tapping every hole in turn, without looking, still scores almost nothing', () => {
+  for (const gap of [0.08, 0.25, 0.4]) {
+    const scores = [];
+    for (let s = 1; s <= 60; s++) {
+      const b = createBurrow({ random: seeded(s) });
+      let next = 0, i = 0;
+      while (!b.over) { b.step(1 / 60); b.take(); if (b.clock >= next) { b.swing(HOLES[i++ % 5], -40); next += gap; } }
+      scores.push(b.score);
+    }
+    const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
+    assert.ok(mean < 30, `a tap every ${gap} s averaged ${mean.toFixed(1)}, ${ticketsFor(mean)} tickets`);
+  }
+});
+
 test('a hard hat takes two bonks, and ten in a row are worth fifty more', () => {
   const b = createBurrow({ random: seeded(4) });
   let hat = null;
@@ -171,9 +206,9 @@ test('a mole popping up says whether it is golden, or in a hard hat', () => {
 // How hard it is, pinned: Mark played it and signed it off. The good player from the tuning bot he signed it off with
 // (bonkers-bot.mjs) notices a pop after half a second, a little sooner if they saw it coming up the tunnels, now and
 // then swings at a peek, and swings again straight away at a mole whose hat came off. Seeded, so it's the same 100
-// rounds every run. Today they average about 505 a round; a change to the pace, the pops or the points that moves that
-// by 75 or so shows up here.
-test('how hard it is: a good player (who reacts in half a second) averages about 500 a round', () => {
+// rounds every run. Today they average about 535 a round (505 before a mole only just ducking could still be bonked,
+// which Mark asked for); a change to the pace, the pops or the points that moves that by 75 or so shows up here.
+test('how hard it is: a good player (who reacts in half a second) averages about 535 a round', () => {
   const gauss = r => Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r());
   const pl = { react: 0.5, spread: 0.09, anticipate: 0.5, jumpy: 0.15, busy: 0.15 };
   const scores = [];
@@ -197,5 +232,5 @@ test('how hard it is: a good player (who reacts in half a second) averages about
     scores.push(b.score);
   }
   const mean = scores.reduce((a, c) => a + c, 0) / scores.length;
-  assert.ok(mean >= 430 && mean <= 580, `a good player averaged ${mean.toFixed(0)}`);
+  assert.ok(mean >= 460 && mean <= 610, `a good player averaged ${mean.toFixed(0)}`);
 });

@@ -67,6 +67,7 @@ const pace = (f, frenzy) => ({
   moles: frenzy ? 5 : f > 0.3 ? 5 : 4,
 });
 const RISE = 0.11;                           // seconds to pop up (or duck down)
+const DUCK = 0.7;                            // a mole that's started to duck can still be bonked while it's this far up
 
 export function createBurrow({ random = Math.random } = {}) {
   let clock = 0, score = 0, run = 0, bonks = 0, swings = 0, over = false, frenzy = false;
@@ -77,7 +78,7 @@ export function createBurrow({ random = Math.random } = {}) {
   const moles = Array.from({ length: 5 }, (_, i) => ({
     id: i, node: i % 2 ? 'b2' : 'b1', x: 0, y: 0, path: null, leg: 0, along: 0,
     state: 'rest', timer: 0.4 + i * 0.5 + random() * 0.4, hole: -1, rise: 0, hat: false, gold: false,
-    stars: 0, face: 1, active: i < 3, plan: null,
+    stars: 0, face: 1, active: i < 3, plan: null, ducking: false,
   }));
   for (const m of moles) [m.x, m.y] = NODES[m.node];
 
@@ -156,13 +157,17 @@ export function createBurrow({ random = Math.random } = {}) {
         m.rise = Math.min(top, m.rise + dt / RISE);
         m.timer -= dt;
         if (m.timer <= 0) {
-          if (m.state === 'rising') events.push({ away: m.hole }); // it got away
+          m.ducking = m.state === 'rising'; // still up enough to bonk for a frame or two
           m.state = 'sinking';
         }
         break;
       }
       case 'sinking': case 'falling': {
         m.rise = Math.max(0, m.rise - dt / (m.state === 'falling' ? RISE * 3 : RISE));
+        if (m.ducking && m.rise <= DUCK) {
+          m.ducking = false;
+          if (!over) events.push({ away: m.hole }); // it got away
+        }
         if (m.rise <= 0) {
           reserved.delete(m.hole);
           const dazed = m.state === 'falling';
@@ -185,7 +190,7 @@ export function createBurrow({ random = Math.random } = {}) {
     if (clock >= ROUND) {
       over = true;
       events.push('over');
-      for (const m of moles) if (m.state === 'rising' || m.state === 'peeking') m.state = 'sinking';
+      for (const m of moles) if (m.state === 'rising' || m.state === 'peeking') { m.state = 'sinking'; m.ducking = false; }
     }
   }
 
@@ -195,7 +200,8 @@ export function createBurrow({ random = Math.random } = {}) {
     const hole = HOLES.findIndex(h => Math.abs(x - h) <= REACH);
     if (hole < 0) return null;
     swings++;
-    const m = moles.find(m => m.hole === hole && m.state === 'rising' && m.rise > 0.4);
+    // up, or only just starting to duck back down
+    const m = moles.find(m => m.hole === hole && (m.state === 'rising' ? m.rise > 0.4 : m.state === 'sinking' && m.ducking));
     if (!m) {
       const cost = Math.min(MISS, score);
       run = 0; score -= cost;
@@ -207,7 +213,7 @@ export function createBurrow({ random = Math.random } = {}) {
       return { hole, hit: false };
     }
     if (m.hat) {
-      // the hat goes flying, and the mole stays up a moment longer, surprised
+      // the hat goes flying, and the mole stays up a moment longer, surprised (one already ducking keeps going)
       m.hat = false; m.wasHat = true; m.timer += 0.35;
       events.push({ hat: hole });
       return { hole, hit: true, hat: true };
@@ -218,7 +224,7 @@ export function createBurrow({ random = Math.random } = {}) {
     score += points;
     const bonus = run % RUN.every === 0;
     if (bonus) score += RUN.bonus;
-    m.state = 'falling'; m.stars = 2.4; m.wasHat = false;
+    m.state = 'falling'; m.stars = 2.4; m.wasHat = false; m.ducking = false;
     events.push({ bonk: hole, kind, points, run: bonus });
     return { hole, hit: true, kind, points };
   }
