@@ -103,6 +103,23 @@ export function launch(ball, vx, vz) {
   ball.t = 0;
 }
 
+// How a flick becomes a roll: the finger's velocity along the lane (cm/s, measured where the ball is) in, the ball's
+// out. The speed is eased, so the firmer rolls that reach the 40 and the 50 get a wider range of flicks than the 20
+// does. Past a flick of `knee`, a little more than the 50 needs, it keeps on getting faster at the pace it had there:
+// however hard a flick is, a harder one rolls harder, and sails on over the rings into the 10. The angle is the
+// finger's, a little less (`aim`), so a flick needn't be dead straight. It eases to half that only for a flick that's
+// mostly across the lane (past `wide`), and even then keeps growing, so the widest flicks vary as everyone's do. (A
+// limit that stopped them, or eased them sooner, made the hardest of them one roll that dropped in a 100.)
+export const FLICK = { window: 90, min: 70, top: 420, ease: 480, knee: 850, aim: 0.85, wide: Math.PI / 3 };
+const eased = s => FLICK.top * (1 - Math.exp(-s / FLICK.ease));
+export function flick(vx, vz) {
+  const s = Math.hypot(vx, vz), k = FLICK.knee;
+  const speed = s <= k ? eased(s) : eased(k) + (s - k) * FLICK.top / FLICK.ease * Math.exp(-k / FLICK.ease);
+  const a = Math.atan2(vx, vz), m = Math.abs(a);
+  const ang = Math.sign(a) * FLICK.aim * (m <= FLICK.wide ? m : FLICK.wide + (m - FLICK.wide) / 2);
+  return { vx: speed * Math.sin(ang), vz: speed * Math.cos(ang) };
+}
+
 export const STEP = 1 / 600;
 
 // Moves the ball on by dt seconds, in fixed small steps. Things it hit go in `hits`

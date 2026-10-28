@@ -1,7 +1,7 @@
 // Roll Up's physics and scoring on their own, without a browser:  node --test test/roll-up.unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { simulate, RINGS, HOLES, BOARD, R } from '../roll-up/js/physics.js';
+import { simulate, flick, newBall, launch, advance, ground, RINGS, HOLES, BOARD, R, STEP } from '../roll-up/js/physics.js';
 
 const still = () => 0.5; // the shake for a stuck ball, made predictable
 
@@ -43,12 +43,79 @@ test('every roll ends, with a score the machine has', () => {
   let seed = 3;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const allowed = new Set([0, 10, 20, 30, 40, 50, 100]);
-  for (let i = 0; i < 300; i++) {
-    const b = simulate((rnd() - 0.5) * 80, 120 + rnd() * 320, (rnd() - 0.5) * 40, rnd);
+  for (let i = 0; i < 400; i++) {
+    // the hardest flicks roll at 1,000 cm/s and more, and the widest go more across the lane than up it
+    const fast = i >= 300, sp = fast ? 400 + rnd() * 900 : 120 + rnd() * 320, a = (rnd() - 0.5) * (fast ? 2.4 : 0.5);
+    const b = simulate(sp * Math.sin(a), sp * Math.cos(a), (rnd() - 0.5) * 40, rnd);
     assert.equal(b.state, 'done', `roll ${i} never finished`);
     assert.ok(allowed.has(b.value), `roll ${i} scored ${b.value}`);
     assert.ok(b.t < 15, `roll ${i} took ${b.t.toFixed(1)}s`);
   }
+});
+
+// A flick as the finger makes it: `speed` cm/s along the lane, `angle` radians off straight up it.
+const flickAt = (speed, angle) => flick(speed * Math.sin(angle), speed * Math.cos(angle));
+// Rolled from where the finger let go of it: x across the lane, z up it.
+function rollFrom(v, x, z, random) {
+  const b = newBall(x);
+  b.z = z; b.y = ground(z) + R;
+  launch(b, v.vx, v.vz);
+  for (let i = 0; i < 20 * 600 && b.state !== 'done'; i++) advance(b, STEP, [], random);
+  return b;
+}
+const seeded = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+test('a flick up to what the 50 needs rolls just as it always has', () => {
+  // as it was: the speed eased toward 420, the angle 0.85 of the finger's (and no flick that rolls the 50 is wider)
+  for (let speed = 80; speed <= 850; speed += 10) for (let angle = -0.37; angle <= 0.37; angle += 0.037) {
+    const was = 420 * (1 - Math.exp(-speed / 480)), a = angle * 0.85, now = flickAt(speed, angle);
+    assert.ok(Math.abs(now.vx - was * Math.sin(a)) < 1e-9 && Math.abs(now.vz - was * Math.cos(a)) < 1e-9, `a ${speed} cm/s flick at ${angle.toFixed(2)}`);
+  }
+});
+
+test('a flick harder than the 50 needs rolls harder still, and sails over the rings into the 10', () => {
+  let last = 0;
+  for (let speed = 100; speed <= 6000; speed += 50) {
+    const v = Math.hypot(flickAt(speed, 0).vx, flickAt(speed, 0).vz);
+    assert.ok(v > last, `a ${speed} cm/s flick rolls at ${v.toFixed(0)}, no harder than one 50 slower`);
+    last = v;
+  }
+  const at = speed => Math.hypot(flickAt(speed, 0).vx, flickAt(speed, 0).vz);
+  assert.ok(at(2000) > 500 && at(4000) > 800, `flicks of 2,000 and 4,000 cm/s roll at ${at(2000).toFixed(0)} and ${at(4000).toFixed(0)}`);
+  // straight up the lane, from across it and from anywhere a flick lets go
+  const rnd = seeded(5);
+  let tens = 0, n = 0;
+  for (const speed of [1000, 1500, 2000, 3000, 4000]) for (const x of [-12, -6, 0, 6, 12]) for (const z of [18, 38, 58]) {
+    n++;
+    if (rollFrom(flickAt(speed, 0), x, z, rnd).value === 10) tens++;
+  }
+  assert.ok(tens >= n * 0.8, `${tens} of ${n} of the hardest straight flicks went in the 10`);
+});
+
+test('the widest flicks go as wide as the finger does, however wide', () => {
+  let last = -Infinity, least = Infinity;
+  for (let deg = -89; deg <= 89; deg += 1) {
+    const v = flickAt(1500, deg * Math.PI / 180), a = Math.atan2(v.vx, v.vz);
+    if (last > -Infinity) least = Math.min(least, (a - last) / (Math.PI / 180));
+    last = a;
+  }
+  assert.ok(least >= 0.4, `a degree more on the flick turned the roll by as little as ${least.toFixed(2)} of a degree`);
+});
+
+// The hardest flick used to be one roll: the speed eased to 420 cm/s and the angle stopped at a limit, so a flick as
+// hard and wide as it goes, from about 10 cm off the middle, banked off the wall into the far 100 nine times in nine.
+// Now a player flicking as hard as they can (anywhere from 2,000 to 4,000 cm/s), and as wide as they like, with a
+// natural wobble in the angle, doesn't get a 100 on more than about 2 rolls in 5 from anywhere on the lane.
+test('the hardest, widest flick is a long shot at a 100 from anywhere', () => {
+  const rnd = seeded(11), wobble = seeded(12);
+  const gauss = () => Math.sqrt(-2 * Math.log(wobble() + 1e-12)) * Math.cos(2 * Math.PI * wobble());
+  let worst = { p: 0 };
+  for (const z of [18, 38, 58]) for (const x of [-18, -10, -4, 4, 10, 18]) for (const angle of [0.4, 0.6, 0.8, 1]) {
+    let hits = 0; const N = 40;
+    for (let i = 0; i < N; i++) if (rollFrom(flickAt(2000 + rnd() * 2000, angle + gauss() * 2.5 * Math.PI / 180), x, z, rnd).value === 100) hits++;
+    if (hits / N > worst.p) worst = { p: hits / N, x, z, angle };
+  }
+  assert.ok(worst.p <= 0.4, `from x ${worst.x}, z ${worst.z} at ${worst.angle} the hardest flick dropped in a 100 ${(worst.p * 100).toFixed(0)}% of the time`);
 });
 
 test('each hole sits inside its own ring and clear of the ring inside it', () => {

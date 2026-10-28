@@ -18,11 +18,9 @@ const { LANE, R } = phys;
 // Asked for less motion (the system's setting, read each frame): the push-in onto the board cuts rather than glides.
 const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 
-// How a flick becomes a roll. The finger's speed along the lane (cm/s, measured where the ball is) is eased,
-// so the firmer rolls that reach the 40 and the 50 get a wider range of flicks than the 20 does,
-// and the hardest flick tops out a little past the 50, into the 10.
-const FLICK = { window: 90, min: 70, top: 420, ease: 480, aim: 0.85, maxAngle: 0.32 };
-const power = speed => FLICK.top * (1 - Math.exp(-speed / FLICK.ease));
+// How a flick becomes a roll is the physics' (phys.flick): the flick is the finger's last FLICK.window ms, and one
+// slower than FLICK.min up the lane isn't a roll.
+const { FLICK } = phys;
 // On a keyboard, Space held winds a meter up and down, and letting go rolls the ball straight up the lane, from 190 cm/s
 // with the meter empty to 510 full.
 const keyRoll = k => 190 + k * 320;
@@ -354,9 +352,8 @@ function release(over = false) {
   if (dt <= 0.004) return settle(over);
   const vx = (last.x - first.x) / dt, vz = (last.z - first.z) / dt;
   if (vz < FLICK.min) return settle(over);
-  const speed = power(Math.hypot(vx, vz));
-  const ang = Math.max(-FLICK.maxAngle, Math.min(FLICK.maxAngle, Math.atan2(vx, vz) * FLICK.aim));
-  throwBall(speed * Math.sin(ang), speed * Math.cos(ang));
+  const roll = phys.flick(vx, vz);
+  throwBall(roll.vx, roll.vz);
 }
 
 // A touch up the lane, past where a grab starts: the hint comes back for a moment saying to start on the ball, a ring
