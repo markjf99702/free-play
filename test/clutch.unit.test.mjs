@@ -99,6 +99,27 @@ test('aiming over the middle of a plush wins far more often than dropping anywhe
   assert.ok(aimed < gos * 0.85, `${aimed} wins in ${gos} goes is too easy for a claw machine`);
 });
 
+test('the claw\'s left arm never swings out through the chute\'s clear wall, dropped however close to it', () => {
+  // the wall, with its rounded cap on top; and the arm's foot: its hook, and the bottom of its shaft
+  const inWall = v => v.x > BOX.guard.x - 6 && v.x < BOX.guard.x + 6 && v.y > BOX.guard.top - 4;
+  const foot = arm => [...arm.parts[2].vertices, ...arm.parts[1].vertices.filter(v => v.y > arm.position.y)];
+  let beside = 0;
+  for (let s = 1; s <= 6; s++) {
+    const m = createMachine(Matter, { random: seeded(s * 7) });
+    for (const x of [172, 180, 190, 200, 212, 225]) {
+      let low = false;
+      go(m, x, m => {
+        const [left] = m.arms;
+        low ||= foot(left).some(v => v.y > BOX.guard.top);
+        const through = foot(left).find(inWall);
+        assert.ok(!through, `dropped at ${x} (seed ${s * 7}), the left arm's foot went through the wall at ${through?.x.toFixed(0)}, ${through?.y.toFixed(0)} in ${m.state}`);
+      });
+      if (low) beside++;
+    }
+  }
+  assert.ok(beside >= 12, `the arm only came down beside the wall in ${beside} goes`);
+});
+
 test('a plush is only won by falling down the chute, and it leaves the box when it is', () => {
   for (let s = 1; s <= 8; s++) {
     const m = createMachine(Matter, { random: seeded(s * 7) });

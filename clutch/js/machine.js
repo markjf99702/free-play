@@ -28,6 +28,9 @@ const EASE = [0.06, 0.14];                // how far the arms ease open on the w
 const SLIP = { base: 0.04, poor: 6 };
 const WEAK = { chance: 0.3, grip: 0.7 };  // now and then the claw just doesn't grip as hard, the way real ones are set
 const STEP = 1000 / 60;
+// The chute's clear wall, as the claw's left arm meets it: its far face and its top (with its rounded cap, and a hair to
+// spare), and how far above that the arm starts being pushed in as it comes down beside it.
+const WALL = { past: BOX.guard.x + 6 + 2, top: BOX.guard.top - 4 - 2, band: 15 };
 const DEEPEST = BOX.floor - ARM.drop - ARM.shaft - 8; // as low as the hub goes, hooks just off the floor
 
 // The plush, each a cluster of circles (cx, cy, r in mm, about its middle). draw.js gives each its face.
@@ -78,8 +81,23 @@ export function createMachine(Matter, { random = Math.random, plush = 14 } = {})
   const toys = []; // the plush in the box: matter bodies with .kind and .tone
   let state = 'ready', t = 0, ease = 1, won = [], events = [], restock = 0, steps = 0;
 
+  // The left arm can't swing out through the chute's clear wall. Coming down beside it, open too wide to pass on the
+  // heap's side, the arm is pushed in as its foot nears the wall's top (over the last few millimetres, so it closes in
+  // rather than jumping), and stays pushed in until it opens again over the chute.
+  function byTheWall() {
+    const px = claw.x - ARM.pivot, py = claw.y + ARM.drop, half = ARM.thick / 2, open = claw.angles[0];
+    // the widest the arm can be open with its outside edge past the wall all the way down
+    const widest = Math.asin(Math.max(-1, Math.min(1, (px - WALL.past) / Math.hypot(ARM.shaft, half)))) - Math.atan2(half, ARM.shaft);
+    if (open <= widest) return;
+    // how far its foot is above the wall's top, open as it is
+    const above = WALL.top - (py + ARM.shaft * Math.cos(open) + half * Math.abs(Math.sin(open)));
+    if (above >= WALL.band) return;
+    claw.angles[0] = widest + Math.max(0, above / WALL.band) * (open - widest);
+  }
+
   // Puts the hub and arms where claw says, moving them there (so whatever they push moves the right way).
   function pose() {
+    byTheWall();
     Body.setPosition(hub, { x: claw.x, y: claw.y }, true);
     arms.forEach((arm, i) => {
       const a = claw.angles[i] * -arm.side, c = Math.cos(a), s = Math.sin(a);
