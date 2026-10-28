@@ -296,7 +296,7 @@ await page.click('.fp-x');
 await pocket({ tickets: 4, prizes: {} });
 await page.click('#trade');
 await page.click('.fp-prize >> nth=0');
-assert.equal(await page.textContent('.fp-toast'), 'You need 1 more ticket for that.');
+assert.equal(await page.textContent('.fp-toast'), 'You need 1 more ticket for that. Save up for this');
 await page.click('.fp-x');
 await pocket({ tickets: 1, prizes: {} });
 assert.equal((await page.textContent('#purse')).trim(), '1 ticket · Prize counter', 'the purse at 1');
@@ -354,13 +354,73 @@ await page.keyboard.press('Enter');
 assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'lollipop', 'the keyboard stays on the prize');
 await page.focus('.fp-prize >> nth=17');
 await page.keyboard.press('Tab');
-assert.equal(await page.evaluate(() => document.activeElement.className), 'fp-undo', 'Tab from the last prize reaches Undo');
+assert.ok(await page.evaluate(() => document.activeElement.matches('.fp-undo')), 'Tab from the last prize reaches Undo');
 await page.waitForTimeout(800);
 await page.keyboard.press('Enter');
 assert.equal(await stored(), was, 'undone from the keyboard too');
 assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'lollipop', 'and the keyboard goes back to the prize');
 await page.click('.fp-x');
 assert.equal(await page.textContent('#tix'), '120');
+
+// Saving up for a prize. A tap on one the pocket can't run to says how far short it is, with a choice to save up for
+// it; once picked, it's in gold at the counter, and the floor's pocket says how far off it is in place of 'Prize
+// counter' (a screen reader still hears both), under the tickets on a phone. Once there's enough it says so, and
+// trading for it ends the saving up (Undo puts it back). A tap on it while it's still to go can stop the saving up.
+const goalSaved = () => page.evaluate(() => localStorage.getItem('free-play.goal'));
+await pocket({ tickets: 1320, prizes: {} });
+await page.click('#trade');
+await page.click('.fp-prize[data-id="bear"]');
+assert.equal(await page.textContent('.fp-toast'), 'You need 180 more tickets for that. Save up for this');
+assert.ok((await page.locator('.fp-toast .fp-act').boundingBox()).height >= 44, 'the choice is a thumb tall');
+await page.click('.fp-toast .fp-act');
+assert.equal(await goalSaved(), '{"id":"bear"}');
+assert.equal(await page.textContent('.fp-toast'), 'Saving up for the giant teddy bear: 180 to go.');
+assert.deepEqual(await page.locator('.fp-prize.goal').evaluateAll(els => els.map(e => [e.dataset.id, e.querySelector('.g').textContent, e.getAttribute('aria-label')])),
+  [['bear', '180 to go', 'Giant teddy bear, 1,500 tickets, 180 more than you have, saving up for it']]);
+await page.click('.fp-x');
+assert.equal(await page.textContent('#goal'), '180 to the giant teddy bear');
+assert.ok(await page.isVisible('#goal'), 'the pocket says how far off it is');
+assert.ok((await page.locator('#purse .to').boundingBox()).width <= 1, "in place of 'Prize counter'");
+assert.match(await page.locator('#purse').ariaSnapshot(), /^- button "1,320 tickets · Prize counter · 180 to the giant teddy bear"/, "the purse's name, saving up");
+for (const width of [320, 390, 1280]) {
+  await page.setViewportSize({ width, height: 844 });
+  const [purse, tix, goal] = await page.evaluate(() => ['purse', 'tix', 'goal'].map(id => document.getElementById(id).getBoundingClientRect().toJSON()));
+  assert.ok(purse.left >= 16 && purse.right <= width - 16, `at ${width} px, the pocket runs off the side`);
+  if (width < 560) assert.ok(goal.top >= tix.bottom - 4 && purse.height < 64, `at ${width} px, the goal goes under the tickets (${Math.round(purse.height)} px)`);
+  else assert.ok(Math.abs(goal.top - tix.top) < 12 && purse.height < 48, `at ${width} px, the goal is beside the tickets`);
+}
+await page.setViewportSize({ width: 390, height: 844 });
+await pocket({ tickets: 1500, prizes: {} });
+assert.equal(await page.textContent('#goal'), 'Enough for the giant teddy bear!');
+await page.click('#trade');
+assert.equal(await page.textContent('.fp-prize.goal .g'), 'Saved up!');
+await page.click('.fp-prize[data-id="bear"]');
+assert.equal(await goalSaved(), null, 'traded for, the saving up is done');
+assert.equal(await page.locator('.fp-prize.goal').count(), 0);
+await page.waitForTimeout(800);
+await page.click('.fp-undo');
+assert.equal(await goalSaved(), '{"id":"bear"}', 'and back with Undo');
+await pocket({ tickets: 1320, prizes: {} });
+await page.click('#trade');
+await page.click('.fp-prize[data-id="bear"]');
+assert.equal(await page.textContent('.fp-toast'), "You need 180 more tickets for the giant teddy bear. You're saving up for it. Stop saving");
+await page.click('.fp-toast .fp-act');
+assert.equal(await goalSaved(), null);
+assert.equal(await page.textContent('.fp-toast'), "You've stopped saving up for the giant teddy bear.");
+await page.click('.fp-prize[data-id="giraffe"]');
+await page.click('.fp-toast .fp-act');
+assert.equal(await goalSaved(), '{"id":"giraffe"}', 'another prize to save up for');
+await page.click('.fp-x');
+assert.equal(await page.textContent('#goal'), '8,680 to the life-size giraffe');
+// (picked in another tab, the pocket here says so)
+const other = await ctx.newPage();
+await other.goto(base);
+await other.evaluate(() => localStorage.setItem('free-play.goal', JSON.stringify({ id: 'unicorn' })));
+await until(async () => (await page.textContent('#goal')) === '1,180 to the enormous unicorn', 3000, 'a goal picked in another tab');
+await other.evaluate(() => localStorage.removeItem('free-play.goal'));
+await until(async () => await page.isHidden('#goal'), 3000, 'a goal dropped in another tab');
+assert.equal((await page.textContent('#purse')).trim(), '1,320 tickets · Prize counter');
+await other.close();
 
 // The shelf, on the floor and in the counter: every row of prizes stands on a plank of its own, the outlines of what's
 // still to win as well. (Read off the pixels down the shelf's left edge, clear of the prizes.)

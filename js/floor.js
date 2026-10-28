@@ -5,6 +5,7 @@
 
 import * as wallet from '../shared/wallet.js';
 import { openCounter, shelve, collected, fmt, tickets } from '../shared/counter.js';
+import { goal, goalShort } from '../shared/goal.js';
 import { specialFor, madeToday, BONUS } from '../shared/special.js';
 import { dayKey, dayBefore } from '../shared/calendar.js';
 import { settle, BALLS } from '../roll-up/js/daily.js';
@@ -101,6 +102,14 @@ function pocket() {
   const w = wallet.read();
   $('tix').textContent = fmt(w.tickets);
   $('tixWord').textContent = w.tickets === 1 ? 'ticket' : 'tickets';
+  // Saving up for a prize at the counter: the pocket says how far off it is, in place of 'Prize counter' (which it still
+  // says to a screen reader): '1,320 tickets · 180 to the giant teddy bear'.
+  const g = goal(), line = goalShort(w.tickets, g);
+  $('purse').classList.toggle('saving', !!g);
+  Object.assign($('goal'), { hidden: !g, textContent: line });
+  $('goal').classList.toggle('enough', !!g && w.tickets >= g.cost);
+  if (g) $('purse').setAttribute('aria-label', `${tickets(w.tickets)} · Prize counter · ${line}`);
+  else $('purse').removeAttribute('aria-label');
   // the booth's button says what there is to trade, once there's anything
   $('trade').textContent = w.tickets ? `Trade your ${tickets(w.tickets)}` : 'Trade tickets';
   // the shelf, with a place for everything won outright, and how much of each set is on it
@@ -112,6 +121,7 @@ const counter = () => openCounter({ onClose: pocket });
 $('trade').addEventListener('click', counter);
 $('purse').addEventListener('click', counter);
 addEventListener('free-play:wallet', pocket);
+addEventListener('free-play:goal', pocket);
 // coming back from a machine (the browser may keep this page as it was): look again
 addEventListener('pageshow', () => { pocket(); machines(); special(); });
 // a machine played in another tab or window: its cabinet says so without a reload (the pocket hears about it from

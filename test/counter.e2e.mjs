@@ -107,6 +107,24 @@ for (const [path, hook, tix, opener] of PAGES) {
   if (opener === '#tixBtn') assert.match(await page.locator(opener).ariaSnapshot(), /^- button "Prize counter, 1,234 tickets"/, `${where}: the ticket button's name`);
   await lollipop(where, tix, opener, 1234);
 
+  // Saving up for a prize: the end card on every machine that pays tickets says under its dispenser how far off it is
+  // (as feed() fills it at the end of a round), in gold once there's enough, and nothing at all with no goal.
+  if (path && hook !== 'clutch') {
+    const under = (tickets, goal) => page.evaluate(async ([tickets, goal]) => {
+      localStorage.setItem('free-play.wallet', JSON.stringify({ tickets, prizes: {} }));
+      if (goal) localStorage.setItem('free-play.goal', JSON.stringify({ id: goal })); else localStorage.removeItem('free-play.goal');
+      const { feed } = await import('../shared/counter.js');
+      feed(document.getElementById('payout'), 3, { fresh: false });
+      const el = document.querySelector('#payout + .fp-goal');
+      return el && [el.textContent, el.hidden, el.classList.contains('enough')];
+    }, [tickets, goal]);
+    assert.deepEqual(await under(1320, 'bear'), ['180 to go for the giant teddy bear', false, false], `${where}: the line under the dispenser`);
+    assert.deepEqual(await under(1500, 'bear'), ['Enough for the giant teddy bear!', false, true], `${where}: with enough`);
+    assert.deepEqual((await under(1500, null))?.[1], true, `${where}: with no goal`);
+    assert.equal(await page.locator('.fp-goal').count(), 1, `${where}: one line, however many rounds`);
+    await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1229, prizes: { lollipop: 1 } })));
+  }
+
   if (hook === 'tilt') {
     // Tilt's pause card has one too, and Escape there closes the counter and leaves the game paused.
     await page.click('#startBtn');

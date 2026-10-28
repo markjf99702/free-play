@@ -153,7 +153,9 @@ assert.equal(await page.evaluate(() => bonkers.burrow.clock), away, 'the moles r
 await hide(false);
 await page.click('#resume');
 
-// The rest of the round, quickly, and its tickets: one for every 15 points.
+// The rest of the round, quickly, and its tickets: one for every 15 points. (Saving up for the enormous unicorn at the
+// counter meanwhile: the end card says under the dispenser how far off it is now.)
+await page.evaluate(() => localStorage.setItem('free-play.goal', JSON.stringify({ id: 'unicorn' })));
 const t0 = await tickets();
 await page.evaluate(() => { bonkers.speed = 4; __sounds.length = 0; });
 let frenzy = false, shown = false;
@@ -173,6 +175,8 @@ assert.ok(score > 200, `a quick hand scores (${score})`);
 assert.ok(await page.isHidden('#overTip'), 'a round of moles bonked when they were up has nothing to say about waiting');
 assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')} points`);
 assert.match(await page.textContent('#overHow'), /^\d+ moles bonked in 45 seconds\. A ticket for every 15 points\.$/);
+assert.equal(await page.textContent('#payout + .fp-goal'), `${(2500 - await tickets()).toLocaleString('en-US')} to go for the enormous unicorn`, 'the line under the dispenser');
+await page.evaluate(() => localStorage.removeItem('free-play.goal'));
 // (a hand steady enough for the trophy's feat wins it, and the screen reader hears that too)
 const heard = `${score.toLocaleString('en-US')} points. ${Math.floor(score / 15)} tickets.` + (await page.isVisible('#overFeat') ? ' ' + (await page.textContent('#overFeat')).slice(3) : '');
 await page.waitForFunction(t => document.getElementById('live').textContent === t, heard, { timeout: 2000 }).catch(() => {});

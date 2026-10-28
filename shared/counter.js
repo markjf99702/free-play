@@ -3,6 +3,7 @@
 
 import { PRIZES, PLUSH, TRINKETS, TROPHIES, SHELF, OUTRIGHT } from './prizes.js';
 import { KEY, read, buy, refund } from './wallet.js';
+import { KEY as GOAL, goal, saveFor, goalLine } from './goal.js';
 
 // A count as people write it: 1,234 tickets. Anything that isn't a number reads as 0.
 export const fmt = n => (Number.isFinite(+n) ? +n : 0).toLocaleString('en-US');
@@ -109,23 +110,26 @@ function render() {
   // the grid is drawn afresh, so a prize picked with the keyboard keeps the focus
   const had = grid.contains(document.activeElement) ? document.activeElement.dataset.id : null;
   grid.replaceChildren();
+  const saving = goal();
   for (const p of PRIZES) {
-    const b = document.createElement('button');
+    const b = document.createElement('button'), mine = p === saving;
     b.type = 'button';
-    b.className = 'fp-prize' + (w.tickets < p.cost ? ' short' : '');
+    b.className = 'fp-prize' + (w.tickets < p.cost ? ' short' : '') + (mine ? ' goal' : '');
     b.innerHTML = `<span class="e" aria-hidden="true"></span><span class="n"></span><span class="c">${TICKET}</span>`;
     b.querySelector('.e').textContent = p.emoji;
     b.querySelector('.n').textContent = p.name;
     b.querySelector('.c').append(fmt(p.cost));
-    // (dimmed when it's more than the pocket holds, with how far off it is under its price: '180 to go')
-    if (w.tickets < p.cost) {
+    // (dimmed when it's more than the pocket holds, with how far off it is under its price: '180 to go'; the one being
+    // saved up for is picked out in gold, and once there's enough says so)
+    if (w.tickets < p.cost || mine) {
       const g = document.createElement('span');
       g.className = 'g';
-      g.textContent = `${fmt(p.cost - w.tickets)} to go`;
+      g.textContent = w.tickets < p.cost ? `${fmt(p.cost - w.tickets)} to go` : 'Saved up!';
       g.setAttribute('aria-hidden', 'true');
       b.append(g);
     }
-    b.setAttribute('aria-label', `${p.name}, ${tickets(p.cost)}` + (w.tickets < p.cost ? `, ${fmt(p.cost - w.tickets)} more than you have` : ''));
+    b.setAttribute('aria-label', `${p.name}, ${tickets(p.cost)}` + (w.tickets < p.cost ? `, ${fmt(p.cost - w.tickets)} more than you have` : '')
+      + (mine ? (w.tickets < p.cost ? ', saving up for it' : ', saved up for') : ''));
     b.dataset.id = p.id;
     b.addEventListener('click', () => trade(p));
     grid.append(b);
@@ -213,8 +217,11 @@ function trade(p) {
   const have = read().tickets;
   const w = buy(p);
   const short = p.cost - have;
-  if (!w) return toast(`You need ${fmt(short)} more ${short === 1 ? 'ticket' : 'tickets'} for that.`);
+  if (!w) return tooDear(p, short);
   lastTrade = performance.now();
+  // the prize saved up for is the goal no more, unless the trade is undone
+  const saved = goal() === p;
+  if (saved) saveFor(null);
   opts.onBuy?.(p);
   const n = w.prizes[p.id];
   // Only the latest trade can be undone, and only once: its Undo goes when the toast does, or the next one comes.
@@ -224,7 +231,9 @@ function trade(p) {
     toastUndo = null;
     lastTrade = performance.now(); // and a double tap on Undo doesn't trade whatever is under it once it's gone
     const focused = toastEl.contains(document.activeElement);
-    toast(refund(p) ? `Traded back. Your ${fmt(p.cost)} tickets are back in your pocket.` : `There's no ${p.name.toLowerCase()} on your shelf to trade back.`);
+    const back = refund(p);
+    if (back && saved && !goal()) saveFor(p);
+    toast(back ? `Traded back. Your ${fmt(p.cost)} tickets are back in your pocket.` : `There's no ${p.name.toLowerCase()} on your shelf to trade back.`);
     if (!counterOpen()) return;
     render();
     // the Undo button has gone: the keyboard goes back to the prize
@@ -232,6 +241,28 @@ function trade(p) {
   };
   toast(`You got ${p.say}.${n > 1 ? ` That's ${n} on your shelf.` : ''}`, { undo });
   render();
+}
+
+// A prize the pocket can't run to yet: how far short it is, and a choice to save up for it (or, for the one being saved
+// up for, to stop). The floor's pocket and every end card then say how far off it is.
+function tooDear(p, short) {
+  const need = `You need ${fmt(short)} more ${short === 1 ? 'ticket' : 'tickets'}`;
+  const choose = (text, to) => {
+    const fn = () => {
+      if (toastUndo !== fn) return; // (the toast has gone, or it's been tapped already)
+      toastUndo = null;
+      const focused = toastEl.contains(document.activeElement);
+      saveFor(to);
+      toast(text);
+      if (!counterOpen()) return;
+      render();
+      // the button has gone: the keyboard goes back to the prize
+      if (focused) sheet.querySelector(`.fp-prize[data-id="${p.id}"]`)?.focus({ preventScroll: true });
+    };
+    return fn;
+  };
+  if (goal() === p) return toast(`${need} for the ${p.name.toLowerCase()}. You're saving up for it.`, { act: choose(`You've stopped saving up for the ${p.name.toLowerCase()}.`, null), label: 'Stop saving' });
+  toast(`${need} for that.`, { act: choose(`Saving up for the ${p.name.toLowerCase()}: ${fmt(short)} to go.`, p), label: 'Save up for this' });
 }
 
 // opts.onBuy(prize): a page's sound for a trade. opts.onClose(): back to the game.
@@ -268,13 +299,15 @@ export const counterOpen = () => !!sheet && !sheet.hidden;
 // Tickets won or spent in another tab or window of the arcade: this page hears about it as it does about its own
 // (free-play:wallet, which every page's ticket count listens for), and an open counter shows the pocket as it is now.
 globalThis.addEventListener?.('storage', e => {
+  if (e.key === GOAL) { dispatchEvent(new CustomEvent('free-play:goal', { detail: goal() })); if (counterOpen()) render(); return; }
   if (e.key !== KEY && e.key !== null) return; // (null: the whole of storage was cleared)
   dispatchEvent(new CustomEvent('free-play:wallet', { detail: read() }));
   if (counterOpen()) render();
 });
 
 // A line at the foot of the screen (or of the counter, while it's open) for a moment. With undo, it carries an Undo
-// button for a few seconds longer.
+// button for a few seconds longer; with act, a button that says label ('Save up for this'), for as long. Either goes
+// when the counter closes.
 let toastEl = null, toastTimer = 0, toastUndo = null;
 function toastBox() {
   if (!toastEl) {
@@ -286,22 +319,22 @@ function toastBox() {
   }
   return toastEl;
 }
-export function toast(text, { undo } = {}) {
-  const el = toastBox();
+export function toast(text, { undo, act, label = 'Undo' } = {}) {
+  const el = toastBox(), fn = undo || act;
   el.textContent = text;
-  toastUndo = undo || null;
-  el.classList.toggle('undoable', !!undo);
-  if (undo) {
+  toastUndo = fn || null;
+  el.classList.toggle('undoable', !!fn);
+  if (fn) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'fp-undo';
-    b.textContent = 'Undo';
-    b.addEventListener('click', undo);
+    b.className = undo ? 'fp-act fp-undo' : 'fp-act';
+    b.textContent = undo ? 'Undo' : label;
+    b.addEventListener('click', fn);
     el.append(' ', b);
   }
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; toastUndo = null; }, undo ? 5000 : 2400);
+  toastTimer = setTimeout(() => { el.hidden = true; toastUndo = null; }, fn ? 5000 : 2400);
 }
 
 // The tickets coming out of the machine's slot at the end of a game: the count climbs and the strip grows.
@@ -310,6 +343,7 @@ export function toast(text, { undo } = {}) {
 // when it isn't a fresh payout), for the page's cheer. Returns a function that stops it (another round, or leaving):
 // the strip and onCount go straight to all n, and there's no onDone.
 export function feed(box, n, { tick, fresh = true, onCount, onDone } = {}) {
+  goalUnder(box);
   const strip = box.querySelector('.fp-strip'), count = box.querySelector('.fp-won b'), word = box.querySelector('.fp-won span');
   word.textContent = n === 1 ? 'ticket' : 'tickets';
   const show = k => {
@@ -330,6 +364,18 @@ export function feed(box, n, { tick, fresh = true, onCount, onDone } = {}) {
   };
   timer = setTimeout(step, 500);
   return () => { clearTimeout(timer); if (!out) { out = true; show(n); } };
+}
+
+// The line under the dispenser, for the prize being saved up for at the counter, with the round's tickets in the
+// pocket: '180 to go for the giant teddy bear', or 'Enough for the giant teddy bear!' (none, with no goal).
+function goalUnder(box) {
+  if (!box.insertAdjacentElement) return; // (a stand-in for the box, in the tests)
+  let el = box.nextElementSibling;
+  if (!el?.classList.contains('fp-goal')) el = box.insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { className: 'fp-goal' }));
+  const g = goal(), have = read().tickets;
+  el.textContent = goalLine(have, g);
+  el.classList.toggle('enough', !!g && have >= g.cost);
+  el.hidden = !g;
 }
 
 // A quick swell: the pocket in a machine's corner, as the last of a round's tickets go into it.

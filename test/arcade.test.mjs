@@ -187,6 +187,37 @@ test("the line under the shelf counts each set won outright: '4 of 7 plush'", as
   assert.deepEqual(OUTRIGHT.filter(p => p.rare).map(p => p.id), ['plush-star', 'trinket-gem'], "the rare ones, a '?' until won");
 });
 
+test("saving up for a prize: kept under its own key, and said as '180 to go for the giant teddy bear'", async () => {
+  const goals = await import('../shared/goal.js');
+  const bear = PRIZES.find(p => p.id === 'bear'), events = [];
+  globalThis.dispatchEvent = e => { events.push([e.type, e.detail?.id ?? null]); return true; };
+  kept.clear();
+  assert.equal(goals.goal(), null, 'none picked');
+  assert.equal(goals.goalLine(1320), '', 'and nothing said');
+  assert.equal(goals.saveFor(bear), bear);
+  assert.equal(kept.get('free-play.goal'), '{"id":"bear"}', 'its own key, apart from the pocket');
+  assert.deepEqual(events, [['free-play:goal', 'bear']], 'every page hears about it');
+  assert.equal(goals.goal(), bear);
+  assert.equal(goals.goalLine(1320), '180 to go for the giant teddy bear');
+  assert.equal(goals.goalShort(1320), '180 to the giant teddy bear');
+  assert.equal(goals.goalLine(1499), '1 to go for the giant teddy bear');
+  assert.equal(goals.goalLine(1500), 'Enough for the giant teddy bear!');
+  assert.equal(goals.goalShort(99999), 'Enough for the giant teddy bear!');
+  assert.equal(goals.goalLine(0, PRIZES.find(p => p.id === 'giraffe')), '10,000 to go for the life-size giraffe');
+  // the pocket's payouts leave it alone
+  wallet.pay(50); wallet.buy(PRIZES[0]);
+  assert.equal(goals.goal(), bear, 'through a payout and a trade');
+  goals.saveFor(null);
+  assert.equal(kept.has('free-play.goal'), false, 'dropped');
+  assert.equal(goals.goal(), null);
+  for (const junk of ['nope', '[1]', '{"id":"plush-frog"}', '{"id":"no-such-prize"}', '{}', 'null']) {
+    kept.set('free-play.goal', junk);
+    assert.equal(goals.goal(), null, `${junk} is no goal`);
+  }
+  assert.equal(goals.saveFor(PLUSH[0]), null, "a plush can't be saved up for: it isn't sold");
+  globalThis.dispatchEvent = () => true;
+});
+
 test('above the enormous unicorn, a giant gorilla and a life-size giraffe to save up for', () => {
   assert.deepEqual(PRIZES.slice(-3).map(p => [p.id, p.emoji, p.name, p.cost]), [
     ['unicorn', '🦄', 'Enormous unicorn', 2500], ['gorilla', '🦍', 'Giant gorilla', 5000], ['giraffe', '🦒', 'Life-size giraffe', 10000],
