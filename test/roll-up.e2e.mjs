@@ -353,28 +353,31 @@ down = false;
   await calm.close();
 }
 
-// Eight of the nine calls on today's card: the Roll Up trophy goes on the shelf, and the card says so. (Nine balls,
-// all but the fourth on their calls, left just before the card came up: it opens on the card's end.)
+// Eight of the nine calls on today's card: the Roll Up trophy goes on the shelf, and the card says so; all nine, and it
+// says all nine. (Nine balls, all but the fourth on their calls, then all of them, left just before the card came up:
+// it opens on the card's end.)
 {
   const nine = await ctx.newPage();
   nine.on('pageerror', e => problems.push('eight calls: ' + e.message));
   await nine.goto(base + 'roll-up/');
-  await nine.evaluate(async () => {
-    const { cardFor, dayKey } = await import(new URL('js/daily.js', location.href).href);
-    const c = cardFor(dayKey());
-    const balls = c.calls.map((v, i) => i === 3
-      ? { value: 10, points: 10 * (i === c.golden ? 2 : 1), golden: i === c.golden, call: v, hit: false }
-      : { value: v, points: v * 2 * (i === c.golden ? 2 : 1), golden: i === c.golden, call: v, hit: true });
-    const s = JSON.parse(localStorage.getItem('free-play.roll-up'));
-    delete s.daily;
-    localStorage.setItem('free-play.roll-up', JSON.stringify({ ...s, going: { key: c.key, score: balls.reduce((t, b) => t + b.points, 0), balls } }));
-  });
   const had = await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up'] || 0);
-  await nine.reload();
-  await nine.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 10000 });
-  assert.equal(await nine.textContent('#overFeat'), '🏆 Eight of the nine calls! The Roll Up trophy is on your shelf.');
-  assert.equal(await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up']), had + 1);
-  assert.equal(await nine.evaluate(() => rollUp.saved.daily.trophy), true);
+  for (const [miss, said, n] of [[3, 'Eight of the nine calls', 1], [-1, 'All nine calls', 2]]) {
+    await nine.evaluate(async miss => {
+      const { cardFor, dayKey } = await import(new URL('js/daily.js', location.href).href);
+      const c = cardFor(dayKey());
+      const balls = c.calls.map((v, i) => i === miss
+        ? { value: 10, points: 10 * (i === c.golden ? 2 : 1), golden: i === c.golden, call: v, hit: false }
+        : { value: v, points: v * 2 * (i === c.golden ? 2 : 1), golden: i === c.golden, call: v, hit: true });
+      const s = JSON.parse(localStorage.getItem('free-play.roll-up'));
+      delete s.daily;
+      localStorage.setItem('free-play.roll-up', JSON.stringify({ ...s, going: { key: c.key, score: balls.reduce((t, b) => t + b.points, 0), balls } }));
+    }, miss);
+    await nine.reload();
+    await nine.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 10000 });
+    assert.equal(await nine.textContent('#overFeat'), `🏆 ${said}! The Roll Up trophy is on your shelf.`);
+    assert.equal(await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up']), had + n);
+    assert.equal(await nine.evaluate(() => rollUp.saved.daily.trophy), true);
+  }
   // Left after eight balls, all on their calls, and the day over: it counts as played as Roll Up next opens, and that's
   // the trophy too. (The save as it was is put back after.)
   const kept = await nine.evaluate(() => localStorage.getItem('free-play.roll-up'));
@@ -389,7 +392,7 @@ down = false;
   await nine.reload();
   await nine.waitForFunction(() => window.rollUp?.saved.daily, null, { timeout: 10000 });
   assert.deepEqual(await nine.evaluate(() => [rollUp.saved.daily.unfinished, rollUp.saved.daily.trophy, rollUp.saved.going]), [true, true, undefined]);
-  assert.equal(await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up']), had + 2, 'a card left after eight calls gets the trophy');
+  assert.equal(await nine.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).prizes['trophy-roll-up']), had + 3, 'a card left after eight calls gets the trophy');
   await nine.evaluate(s => localStorage.setItem('free-play.roll-up', s), kept);
   await nine.close();
 }
