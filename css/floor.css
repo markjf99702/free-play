@@ -138,6 +138,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .cab:active .go { transform: translateY(2px); box-shadow: 0 2px 0 var(--go-edge); }
 
+/* On a wide screen (a laptop's, say) the floor is two rows of four, so it all shows on about two screens rather than
+   four rows of two with carpet either side. The cabinets in a row stand as tall as each other, their Play buttons in
+   a line, and the prize counter stays below at its own width. */
+@media (min-width: 1180px) {
+  .floor { max-width: 1240px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 26px 22px; }
+  .cab { max-width: none; }
+}
+
 /* ---------- the prize counter at the back ---------- */
 .booth { max-width: 900px; margin: 34px auto 0; }
 .booth-in {
