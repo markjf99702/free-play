@@ -157,6 +157,37 @@ for (const [width, height] of [[360, 640], [390, 844]]) {
     await page.keyboard.press('Escape');
   }
 }
+
+// The prizes stand four a row, on a phone as on a computer (and on Hoops' page as on the floor's), and three a row on
+// the narrowest phones, under 350 px. Each is a thumb's height to tap at least, with its name and price inside it.
+for (const [path, hook, opener] of [PAGES[0], PAGES[8]]) {
+  for (const [width, height, across] of [[320, 640, 3], [349, 640, 3], [350, 640, 4], [360, 640, 4], [390, 844, 4], [430, 932, 4], [1280, 800, 4]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(base + path);
+    await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1320, prizes: {} })));
+    await page.reload();
+    await page.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(sel => document.querySelector(sel).click(), opener); // (Hoops' is behind its title card)
+    const grid = await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll('.fp-prize')], boxes = tiles.map(t => t.getBoundingClientRect());
+      const out = [];
+      tiles.forEach((t, i) => {
+        if (boxes[i].height < 44) out.push(`${t.dataset.id} is ${Math.round(boxes[i].height)} px tall`);
+        for (const s of t.querySelectorAll('.n, .c')) {
+          const r = s.getBoundingClientRect();
+          if (s.scrollWidth > s.clientWidth + 1 || r.left < boxes[i].left || r.right > boxes[i].right) out.push(`${t.dataset.id}'s ${s.className === 'n' ? 'name' : 'price'} runs out of it`);
+        }
+      });
+      return { n: tiles.length, first: boxes.filter(b => Math.abs(b.top - boxes[0].top) < 2).length, rows: new Set(boxes.map(b => Math.round(b.top))).size, out };
+    });
+    const at = `${path || 'the floor'} at ${width} px`;
+    assert.equal(grid.first, across, `${at}: ${grid.first} prizes a row`);
+    assert.equal(grid.rows, Math.ceil(grid.n / across), `${at}: ${grid.n} prizes in ${grid.rows} rows`);
+    assert.deepEqual(grid.out, [], `${at}: the prizes`);
+    await page.keyboard.press('Escape');
+  }
+}
 await page.setViewportSize({ width: 390, height: 844 });
 
 // On a computer, on the floor and on a machine: opened from the keyboard, the counter keeps it. Tab goes round its

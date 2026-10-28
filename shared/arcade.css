@@ -80,7 +80,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 .fp-item:active { transform: scale(.9); }
 .fp-shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--fp-body); color: var(--fp-ink); background: var(--fp-red); border-radius: 999px; padding: 1px 5px; }
-.fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+/* Four prizes a row, on a phone as on a computer, so all sixteen fit on about one phone screen (see the phone's sizes
+   below). */
+.fp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .fp-prize {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px 10px; border-radius: 14px;
   background: rgba(251, 238, 210, .06); border: 1px solid var(--fp-line); text-align: center; color: var(--fp-ink);
@@ -92,6 +94,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .fp-prize.short { opacity: .55; }
 .fp-prize.short .c { color: var(--fp-ink3); }
 .fp-prize:not(.short):active { background: rgba(251, 238, 210, .14); }
+/* On a phone the four are narrower, with their names and prices a size down, and on the narrowest phones (under 350 px)
+   they go three a row. */
+@media (max-width: 460px) {
+  .fp-grid { gap: 6px; }
+  .fp-prize { padding: 10px 4px 8px; }
+  .fp-prize .n, .fp-prize .c { font-size: 13px; }
+}
+@media (max-width: 349.98px) { .fp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .fp-sheet button:focus-visible { outline: 2px solid var(--fp-gold); outline-offset: 3px; }
 .fp-sheet-in:focus { outline: none; } /* a tap on a blank part of the sheet keeps the focus in it, unmarked */
 
