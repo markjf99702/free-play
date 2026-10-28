@@ -120,6 +120,27 @@ test('the claw\'s left arm never swings out through the chute\'s clear wall, dro
   assert.ok(beside >= 12, `the arm only came down beside the wall in ${beside} goes`);
 });
 
+test('let go right beside the chute\'s clear wall, the claw\'s head comes to rest on top of it, not in it', () => {
+  // the wall and its rounded cap, 12 mm across, and the cap's top; the head, as the box it fills
+  const cap = { x0: BOX.guard.x - 6, x1: BOX.guard.x + 6, top: BOX.guard.top - 4 };
+  const box = body => ({ x0: Math.min(...body.vertices.map(v => v.x)), x1: Math.max(...body.vertices.map(v => v.x)), y1: Math.max(...body.vertices.map(v => v.y)) });
+  let onTop = 0;
+  for (let s = 1; s <= 6; s++) {
+    const m = createMachine(Matter, { random: seeded(s * 7) });
+    for (const x of [172, 176, 180, 184, 188, 196]) {
+      let rest = null;
+      go(m, x, m => {
+        const head = box(m.hub);
+        const into = head.x0 < cap.x1 && head.x1 > cap.x0 && head.y1 > cap.top + 0.5;
+        assert.ok(!into, `dropped at ${x} (seed ${s * 7}), the claw's head went ${(head.y1 - cap.top).toFixed(0)} mm into the wall in ${m.state}`);
+        if (m.state === 'close' && rest == null) rest = head.y1;
+      });
+      if (Math.abs(rest - cap.top) < 0.5) onTop++;
+    }
+  }
+  assert.ok(onTop >= 18, `the head only came to rest on the wall's top in ${onTop} goes`);
+});
+
 test('a plush is only won by falling down the chute, and it leaves the box when it is', () => {
   for (let s = 1; s <= 8; s++) {
     const m = createMachine(Matter, { random: seeded(s * 7) });

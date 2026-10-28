@@ -5,7 +5,8 @@
 // wall: the claw starts above it, and anything dropped in falls through the floor there and out of the prize door.
 //
 // A go: the claw slides right while the button's held (move), drops when it's let go (drop) until it comes to rest
-// on the heap, the way a claw on a cable goes slack, closes its two arms (close), lifts (lift), carries what it holds
+// on the heap, the way a claw on a cable goes slack (or, let go right beside the chute's clear wall, on the wall's top),
+// closes its two arms (close), lifts (lift), carries what it holds
 // back over the chute (carry), opens (release) and waits a moment for anything to fall (settle). Let go before it's
 // clear of the chute's wall (a tap on the button, say), and it slides back home instead (home): that's not a go, since
 // nothing dropped on from there can win.
@@ -31,6 +32,10 @@ const STEP = 1000 / 60;
 // The chute's clear wall, as the claw's left arm meets it: its far face and its top (with its rounded cap, and a hair to
 // spare), and how far above that the arm starts being pushed in as it comes down beside it.
 const WALL = { past: BOX.guard.x + 6 + 2, top: BOX.guard.top - 4 - 2, band: 15 };
+const HUB = { w: 64, h: 26 };             // the claw's head, mm
+// Let go right beside the chute's wall, the claw's head is over the wall's rounded cap: it comes to rest there, on the
+// cap, rather than going on down into the glass. (Its left edge over the cap, the cap's top.)
+const CAP = { x: BOX.guard.x + 6, top: BOX.guard.top - 4 };
 const DEEPEST = BOX.floor - ARM.drop - ARM.shaft - 8; // as low as the hub goes, hooks just off the floor
 
 // The plush, each a cluster of circles (cx, cy, r in mm, about its middle). draw.js gives each its face.
@@ -62,7 +67,7 @@ export function createMachine(Matter, { random = Math.random, plush = 14 } = {})
   ]);
 
   // The claw: a hub on the cable and two arms, each a shaft with a hook at the bottom pointing in.
-  const hub = Bodies.rectangle(HOME.x, HOME.y, 64, 26, { isStatic: true, collisionFilter: { group: CLAW }, label: 'hub' });
+  const hub = Bodies.rectangle(HOME.x, HOME.y, HUB.w, HUB.h, { isStatic: true, collisionFilter: { group: CLAW }, label: 'hub' });
   const arms = [-1, 1].map(side => {
     const px = HOME.x + side * ARM.pivot, py = HOME.y + ARM.drop;
     const shaft = Bodies.rectangle(px, py + ARM.shaft / 2, ARM.thick, ARM.shaft, { label: 'arm' });
@@ -208,9 +213,12 @@ export function createMachine(Matter, { random = Math.random, plush = 14 } = {})
         // down until it's resting on something (what it only brushes, it pushes aside), or as low as it goes
         const was = claw.y;
         claw.y = Math.min(DEEPEST, claw.y + SPEED.drop * dt);
+        // right beside the chute's wall, its head comes to rest on the wall's cap, and the arms close there
+        const onWall = claw.x - HUB.w / 2 < CAP.x && claw.y + HUB.h / 2 > CAP.top;
+        if (onWall) claw.y = Math.max(was, CAP.top - HUB.h / 2);
         pose();
         if (pressingHub() > REST || pressing() > REST * 3) claw.y = was; // resting on it, or wedged
-        if (claw.y === was || claw.y >= DEEPEST) { state = 'close'; t = 0; grab(); events.push('close'); }
+        if (claw.y === was || claw.y >= DEEPEST || onWall) { state = 'close'; t = 0; grab(); events.push('close'); }
         break;
       }
       case 'close':
