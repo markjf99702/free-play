@@ -87,20 +87,23 @@ self.addEventListener('fetch', e => {
 });
 
 // A page, from the network. On a connection that's up but not answering (a train, a captive wifi, one bar of signal),
-// it opens from the offline copy after PATIENCE instead, if the copy has it, and the network's answer still goes into
-// the copy when it comes. With no copy of the page, it waits on for the network. With no network at all, it opens
-// from the copy straight away, as it always has.
+// it opens from the offline copy after PATIENCE instead, if the copy has it. With no copy of the page, it waits on for
+// the network. With no network at all, it opens from the copy straight away, as it always has.
 function page(e) {
-  const net = network(e);
+  let answered = false, copied = false;
+  // The network's answer goes into the copy, unless the copy answered first: that page's files came from the copy,
+  // and a newer page kept beside them would be the mix this is avoiding, next time it opens from the copy.
+  const net = network(e, () => !copied);
+  // Safari before 16 doesn't say which page a load becomes (no resultingClientId), so the page's files couldn't come
+  // from the copy too, and would wait on the network anyway. There a page waits for the network, as it always has.
+  if (!e.resultingClientId) return net.catch(() => offline(e.request));
   return new Promise((resolve, reject) => {
-    let done = false;
-    const answer = res => { if (!done) { done = true; resolve(res); } };
+    const answer = res => { if (!answered) { answered = true; resolve(res); } };
     const slow = setTimeout(() => kept(e.request).then(copy => {
-      if (!copy || done) return;
-      if (e.resultingClientId) {
-        fromCopy.add(e.resultingClientId);
-        if (fromCopy.size > 50) fromCopy.delete(fromCopy.values().next().value); // the oldest, long gone
-      }
+      if (!copy || answered) return;
+      copied = true;
+      fromCopy.add(e.resultingClientId);
+      if (fromCopy.size > 50) fromCopy.delete(fromCopy.values().next().value); // the oldest, long gone
       answer(copy);
     }), PATIENCE);
     net.then(res => { clearTimeout(slow); answer(res); },
@@ -108,19 +111,21 @@ function page(e) {
   });
 }
 
-// A file from the network, kept in the offline copy for next time. The worker stays up until it's in, even when the
-// page has had its answer from the copy by then.
-function network(e) {
+// A file from the network, kept in the offline copy for next time (unless keep() says not). The worker stays up until
+// it's in.
+function network(e, keep = () => true) {
   let stored;
   const got = fresh(e.request).then(res => {
-    if (res.ok) { const copy = res.clone(); stored = caches.open(CACHE).then(c => c.put(e.request, copy)); }
+    if (res.ok && keep()) { const copy = res.clone(); stored = caches.open(CACHE).then(c => c.put(e.request, copy)); }
     return res;
   });
   try { e.waitUntil(got.then(() => stored, () => {})); } catch { /* the event is over: the copy goes in anyway */ }
   return got;
 }
 
-const kept = request => caches.match(request, { ignoreSearch: true });
+// A file from the offline copy, marked like the network's (see askAgainNextTime() below), so a reload once the network
+// is back asks again rather than reusing it.
+const kept = request => caches.match(request, { ignoreSearch: true }).then(r => r && askAgainNextTime(r));
 // With no network: the file from the offline copy. A page it hasn't got (a mistyped address) gets the arcade's own
 // page saying so, 404.html, as GitHub Pages answers online. A script, a style or a picture it hasn't got fails, as it
 // would with no copy at all: the floor's page in its place only broke whatever asked for it.

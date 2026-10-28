@@ -1337,12 +1337,18 @@ for (const [path, name, called] of [['', 'freePlay', 'the floor'], ['hoops/', 'h
 const waiting = gp.goto(ghBase + 'not-kept.html', { timeout: 30000 });
 await new Promise(r => setTimeout(r, 6000));
 assert.equal(new URL(gp.url()).pathname, '/hoops/', 'a page the offline copy has not got gave up on the network');
-// The network answers at last, with a newer floor: it goes into the offline copy.
+// The network answers at last, with a newer floor. It stays out of the offline copy: the floor opened from the copy,
+// with its files, and a newer floor kept beside them would mix two releases the next time it opens from there.
 gh.later = true;
 gh.stall = false;
 for (const [req, res] of gh.held.splice(0)) serveLikePages(req, res);
 assert.equal((await waiting).status(), 404);
-await until(async () => (await gp.evaluate(async name => (await (await caches.open(name)).match('./'))?.text(), copy + '-next'))?.includes('<!-- later -->'), 10000, "the network's late answer did not go into the offline copy");
+await new Promise(r => setTimeout(r, 2000));
+const floorKept = () => gp.evaluate(async name => (await (await caches.open(name)).match('./'))?.text(), copy + '-next');
+assert.ok(!(await floorKept())?.includes('<!-- later -->'), "the network's late answer for a page that opened from the copy went into the copy");
+// Opened with the network answering, the newer floor does go in.
+await gp.goto(ghBase);
+await until(async () => (await floorKept())?.includes('<!-- later -->'), 10000, 'the floor from the network did not go into the offline copy');
 await ghCtx.close();
 pages.close();
 
