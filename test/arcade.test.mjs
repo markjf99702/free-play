@@ -177,6 +177,17 @@ test('the prize counter and the tables pay-outs', () => {
   assert.deepEqual(Object.fromEntries(Object.entries(TABLES).map(([id, t]) => [id, t.perTicket])), { classic: 5000, space: 5000, haunted: 2500 });
 });
 
+test('above the enormous unicorn, a giant gorilla and a life-size giraffe to save up for', () => {
+  assert.deepEqual(PRIZES.slice(-3).map(p => [p.id, p.emoji, p.name, p.cost]), [
+    ['unicorn', '🦄', 'Enormous unicorn', 2500], ['gorilla', '🦍', 'Giant gorilla', 5000], ['giraffe', '🦒', 'Life-size giraffe', 10000],
+  ]);
+  kept.clear();
+  wallet.pay(15000);
+  assert.ok(wallet.buy(PRIZES.find(p => p.id === 'gorilla')) && wallet.buy(PRIZES.find(p => p.id === 'giraffe')));
+  assert.deepEqual(wallet.read(), { tickets: 0, prizes: { gorilla: 1, giraffe: 1 } });
+  assert.ok(SHELF.some(p => p.id === 'giraffe'), 'and it sits on the shelf');
+});
+
 // A .fp-payout box as feed() sees it: the strip, the count and its word.
 function payoutBox() {
   const strip = { style: {} }, count = { textContent: '' }, word = { textContent: '' };

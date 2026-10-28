@@ -86,8 +86,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 .fp-trophy sub { z-index: 1; } /* (its count over the plinth, not under it) */
 .fp-shelf sub { position: absolute; right: -4px; bottom: -2px; font: 700 11px var(--fp-body); color: var(--fp-ink); background: var(--fp-red); border-radius: 999px; padding: 1px 5px; }
-/* Four prizes a row, on a phone as on a computer, so all sixteen fit on about one phone screen (see the phone's sizes
-   below). */
+/* Four prizes a row, on a phone as on a computer, so all eighteen take little more than one phone screen (see the
+   phone's sizes below). */
 .fp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .fp-prize {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px 10px; border-radius: 14px;

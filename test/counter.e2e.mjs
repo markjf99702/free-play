@@ -217,12 +217,13 @@ for (const [path, hook, opener] of [['', 'freePlay', '#purse'], ['hoops/', 'hoop
   await page.focus(opener);
   await page.keyboard.press('Enter');
   assert.ok(await page.isVisible('.fp-sheet'), `${where}: Enter opens the counter`);
-  const outside = [];
-  for (let i = 1; i <= 20; i++) { await page.keyboard.press('Tab'); if (!(await inSheet())) outside.push(i); }
+  // (once round every button in it: Close, the shelf and the prizes)
+  const outside = [], round = await page.locator('.fp-sheet button').count();
+  for (let i = 1; i <= round; i++) { await page.keyboard.press('Tab'); if (!(await inSheet())) outside.push(i); }
   assert.deepEqual(outside, [], `${where}: Tabs that left the counter`);
   assert.equal(await focused(), 'fp-x', `${where}: Tab from the last prize goes round to Close`);
   await page.keyboard.press('Shift+Tab');
-  assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'unicorn', `${where}: Shift+Tab from Close goes round to the last prize`);
+  assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'giraffe', `${where}: Shift+Tab from Close goes round to the last prize`);
   const shelf = await page.locator('.fp-shelf').boundingBox();
   await page.mouse.click(shelf.x + shelf.width - 12, shelf.y + 12);
   await page.keyboard.press('Escape');

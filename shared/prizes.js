@@ -17,6 +17,8 @@ export const PRIZES = [
   { id: 'flamingo', emoji: '🦩', name: 'Blow-up flamingo', cost: 900, say: 'a blow-up flamingo' },
   { id: 'bear', emoji: '🧸', name: 'Giant teddy bear', cost: 1500, say: 'a giant teddy bear' },
   { id: 'unicorn', emoji: '🦄', name: 'Enormous unicorn', cost: 2500, say: 'an enormous unicorn' },
+  { id: 'gorilla', emoji: '🦍', name: 'Giant gorilla', cost: 5000, say: 'a giant gorilla' },
+  { id: 'giraffe', emoji: '🦒', name: 'Life-size giraffe', cost: 10000, say: 'a life-size giraffe' },
 ];
 
 // The plush in Clutch, the claw machine. They're won outright, not traded for, so they sit on the shelf but not on the

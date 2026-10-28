@@ -347,7 +347,7 @@ await page.waitForTimeout(800);
 await page.focus('.fp-prize >> nth=0');
 await page.keyboard.press('Enter');
 assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'lollipop', 'the keyboard stays on the prize');
-await page.focus('.fp-prize >> nth=15');
+await page.focus('.fp-prize >> nth=17');
 await page.keyboard.press('Tab');
 assert.equal(await page.evaluate(() => document.activeElement.className), 'fp-undo', 'Tab from the last prize reaches Undo');
 await page.waitForTimeout(800);
