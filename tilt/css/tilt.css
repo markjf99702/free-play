@@ -19,6 +19,9 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+/* what a card says, and its buttons: side by side on a phone on its side (at the end), and otherwise as if they weren't
+   there */
+.words, .acts { display: contents; }
 [data-single] .to-floor { display: none !important; }
 html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
 body {
@@ -179,7 +182,7 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
    of tickets hangs four long here. */
 @media (max-height: 700px) {
   #over .card { display: flex; flex-direction: column; }
-  #over .card > * { flex-shrink: 0; } /* (the card scrolls, rather than squeezing the note under the tickets) */
+  #over .card :is(.words, .acts) > * { flex-shrink: 0; } /* (the card scrolls, rather than squeezing the note under the tickets) */
   #over .scores { order: 1; width: 100%; margin: 16px auto 0; }
   #over .go { margin-top: 12px; }
   #over .fp-strip { max-height: 88px; }
@@ -190,3 +193,31 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
   .ctl { margin-bottom: 12px; } .tables { gap: 4px; } .tables span { padding-block: 6px; } .best { margin-top: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .display.msg, .display.lit, .hint { animation: none; } }
+
+/* ---- a phone on its side ---- */
+/* Each card in two columns, what it says on the left and its buttons on the right, so Play and the rest are in sight
+   without scrolling (and stay in sight if a short window makes the card scroll), clear of the notch. The title card,
+   with the tables to choose from, takes the whole height, over the backbox; the pause card and the end of a game keep
+   under it, where the Match comes up. At the end, the top five goes under the buttons. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .sheet { padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+  #title.sheet { top: 0; }
+  .card {
+    width: min(720px, 100%); padding: 16px 22px 14px;
+    display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); column-gap: 26px; align-items: center;
+  }
+  .words, .acts { display: block; min-width: 0; }
+  .acts { position: sticky; top: 0; }
+  h1 { font-size: 44px; }
+  .tables { margin-bottom: 0; }
+  #pause .card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (room for its buttons two a row) */
+  #pause .words, #over .words { grid-row: 1 / span 2; }
+  #pause .acts { grid-column: 2; grid-row: 1; }
+  #pause .jd-foot { grid-column: 2; grid-row: 2; }
+  /* (the end of a game in three: the score and its tickets, the top five, and the buttons) */
+  #over .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); column-gap: 20px; }
+  #over .words { grid-row: auto; }
+  #over .scores { order: 0; width: 100%; margin: 0; }
+  #over .final { font-size: min(40px, 4.6vw); } /* (an eight-digit score, in a third of an iPhone SE) */
+  #over .row { flex-direction: column; }
+}

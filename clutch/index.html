@@ -48,30 +48,38 @@
   <p class="sr" id="live" aria-live="polite"></p>
 
   <section class="card" id="title">
-    <a class="floor to-floor" href="../">← Free Play</a>
-    <div class="marquee"><h1>Clutch</h1></div>
-    <p class="lede">A claw machine full of plush, on free play. Whatever you win goes on your shelf.</p>
-    <p class="how">Hold the button and the claw slides across. Let go and it drops, grabs, and carries what it caught back to the chute. Catch one square in the middle; one caught by the edge tends to slip. Now and then there's a lucky star in there.</p>
-    <p class="how keys">On a keyboard: hold Space (or →) to move the claw, and let go to drop it.</p>
-    <div class="row">
-      <button type="button" class="big" id="play">Play</button>
-      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    <div class="words">
+      <a class="floor to-floor" href="../">← Free Play</a>
+      <div class="marquee"><h1>Clutch</h1></div>
+      <p class="lede">A claw machine full of plush, on free play. Whatever you win goes on your shelf.</p>
+      <p class="how">Hold the button and the claw slides across. Let go and it drops, grabs, and carries what it caught back to the chute. Catch one square in the middle; one caught by the edge tends to slip. Now and then there's a lucky star in there.</p>
+      <p class="how keys">On a keyboard: hold Space (or →) to move the claw, and let go to drop it.</p>
     </div>
-    <p class="best" id="titleBest"></p>
-    <footer class="jd-foot">
-      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
-    </footer>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="play">Play</button>
+        <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      </div>
+      <p class="best" id="titleBest"></p>
+      <footer class="jd-foot">
+        <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+      </footer>
+    </div>
   </section>
 
   <section class="card" id="win" hidden>
-    <canvas class="art" id="winArt" aria-hidden="true"></canvas>
-    <h2 id="winT">You got a plush frog.</h2>
-    <p class="how" id="winHow">It's on your shelf now, with your prizes.</p>
-    <div class="row">
-      <button type="button" class="big" id="more">Keep going</button>
-      <button type="button" class="plain" id="winShelf">See your shelf</button>
+    <div class="words">
+      <canvas class="art" id="winArt" aria-hidden="true"></canvas>
+      <h2 id="winT">You got a plush frog.</h2>
+      <p class="how" id="winHow">It's on your shelf now, with your prizes.</p>
+    </div>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="more">Keep going</button>
+        <button type="button" class="plain" id="winShelf">See your shelf</button>
+      </div>
     </div>
   </section>
 

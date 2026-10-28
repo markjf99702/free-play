@@ -49,48 +49,56 @@
 
   <section class="sheet" id="title" aria-labelledby="titleH">
     <div class="card">
-      <a class="floor to-floor" href="../">← Free Play</a>
-      <h1 id="titleH">Tilt</h1>
-      <p class="lede">Three pinball tables, in your pocket.</p>
-      <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
-      <p class="ctl keys">On a keyboard: Z and / flip, and hold Space to launch.</p>
-      <fieldset class="tables" id="tables" hidden><legend>Table</legend></fieldset>
-      <p class="rate" id="rate"></p>
-      <button type="button" class="go" id="startBtn">Play</button>
-      <p class="best" id="bestLine"></p>
-      <div class="row">
-        <button type="button" class="ghost tix" id="prizesBtn"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg><span id="tixT"></span> <span id="tixWordT">tickets</span> · Prize counter</button>
+      <div class="words">
+        <a class="floor to-floor" href="../">← Free Play</a>
+        <h1 id="titleH">Tilt</h1>
+        <p class="lede">Three pinball tables, in your pocket.</p>
+        <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
+        <p class="ctl keys">On a keyboard: Z and / flip, and hold Space to launch.</p>
+        <fieldset class="tables" id="tables" hidden><legend>Table</legend></fieldset>
       </div>
-      <details class="how">
-        <summary>How to play</summary>
-        <ul id="howTo">
-          <li><b>Flip:</b> tap and hold the left or right half of the screen. On a keyboard, Z and / (or the Shift keys, or ← →).</li>
-          <li><b>Launch:</b> hold the Launch button and let go. The longer you hold, the harder the shot. Keyboard: hold Space or ↓.</li>
-          <li><b>Nudge:</b> swipe up, or press ↑ or Space with the ball in play. Too many nudges and the machine tilts: the flippers go dead, and that ball scores nothing more.</li>
-          <li><b>Match:</b> when the last ball drains, the backbox stops on a number from 00 to 90. If it's the last two digits of your score, that's 10 more tickets.</li>
-        </ul>
-      </details>
-      <footer class="jd-foot">
-        <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
-        <span aria-hidden="true">·</span>
-        <a href="https://junkdrawer.works/privacy.html">Privacy</a>
-      </footer>
+      <div class="acts">
+        <p class="rate" id="rate"></p>
+        <button type="button" class="go" id="startBtn">Play</button>
+        <p class="best" id="bestLine"></p>
+        <div class="row">
+          <button type="button" class="ghost tix" id="prizesBtn"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg><span id="tixT"></span> <span id="tixWordT">tickets</span> · Prize counter</button>
+        </div>
+        <details class="how">
+          <summary>How to play</summary>
+          <ul id="howTo">
+            <li><b>Flip:</b> tap and hold the left or right half of the screen. On a keyboard, Z and / (or the Shift keys, or ← →).</li>
+            <li><b>Launch:</b> hold the Launch button and let go. The longer you hold, the harder the shot. Keyboard: hold Space or ↓.</li>
+            <li><b>Nudge:</b> swipe up, or press ↑ or Space with the ball in play. Too many nudges and the machine tilts: the flippers go dead, and that ball scores nothing more.</li>
+            <li><b>Match:</b> when the last ball drains, the backbox stops on a number from 00 to 90. If it's the last two digits of your score, that's 10 more tickets.</li>
+          </ul>
+        </details>
+        <footer class="jd-foot">
+          <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+        </footer>
+      </div>
     </div>
   </section>
 
   <section class="sheet" id="pause" hidden aria-labelledby="pauseH">
     <div class="card">
-      <h2 id="pauseH">Paused</h2>
-      <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
-      <p class="ctl keys">On a keyboard: Z and / flip, and hold Space to launch.</p>
-      <button type="button" class="go" id="resumeBtn">Keep playing</button>
-      <div class="row">
-        <button type="button" class="ghost" id="soundBtn" aria-pressed="true">Sound: on</button>
-        <button type="button" class="ghost" id="quitBtn">End game</button>
+      <div class="words">
+        <h2 id="pauseH">Paused</h2>
+        <p class="ctl">Tap and hold either side to flip. Hold Launch and let go to shoot.</p>
+        <p class="ctl keys">On a keyboard: Z and / flip, and hold Space to launch.</p>
       </div>
-      <div class="row">
-        <button type="button" class="ghost" id="pausePrizes"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg>Prize counter</button>
-        <a class="ghost to-floor" href="../">Back to the arcade</a>
+      <div class="acts">
+        <button type="button" class="go" id="resumeBtn">Keep playing</button>
+        <div class="row">
+          <button type="button" class="ghost" id="soundBtn" aria-pressed="true">Sound: on</button>
+          <button type="button" class="ghost" id="quitBtn">End game</button>
+        </div>
+        <div class="row">
+          <button type="button" class="ghost" id="pausePrizes"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg>Prize counter</button>
+          <a class="ghost to-floor" href="../">Back to the arcade</a>
+        </div>
       </div>
       <footer class="jd-foot">
         <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
@@ -102,18 +110,22 @@
 
   <section class="sheet" id="over" hidden aria-labelledby="overH">
     <div class="card">
-      <h2 id="overH">Game over</h2>
-      <p class="final" id="final">0</p>
-      <p class="note" id="overNote"></p>
-      <div class="fp-payout" id="payout"></div>
-      <ol class="scores" id="scores"></ol>
-      <button type="button" class="go" id="againBtn">Play again</button>
-      <div class="row" id="tablesRow" hidden>
-        <button type="button" class="ghost" id="tablesBtn">Change table</button>
+      <div class="words">
+        <h2 id="overH">Game over</h2>
+        <p class="final" id="final">0</p>
+        <p class="note" id="overNote"></p>
+        <div class="fp-payout" id="payout"></div>
       </div>
-      <div class="row">
-        <button type="button" class="ghost" id="overPrizes"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg>Prize counter</button>
-        <a class="ghost to-floor" href="../">Back to the arcade</a>
+      <ol class="scores" id="scores"></ol>
+      <div class="acts">
+        <button type="button" class="go" id="againBtn">Play again</button>
+        <div class="row" id="tablesRow" hidden>
+          <button type="button" class="ghost" id="tablesBtn">Change table</button>
+        </div>
+        <div class="row">
+          <button type="button" class="ghost" id="overPrizes"><svg class="fp-tix" aria-hidden="true"><use href="#ticket"/></svg>Prize counter</button>
+          <a class="ghost to-floor" href="../">Back to the arcade</a>
+        </div>
       </div>
     </div>
   </section>

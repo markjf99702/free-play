@@ -48,34 +48,42 @@
   <p class="sr" id="live" aria-live="polite"></p>
 
   <section class="card" id="title">
-    <a class="floor to-floor" href="../">← Free Play</a>
-    <div class="marquee"><h1>Topple</h1></div>
-    <p class="lede">A coin pusher. A ticket for every two coins you push over the edge.</p>
-    <p class="how">Touch the glass to aim the chute, and let go to drop a coin onto the moving pusher. As it slides back, coins get scraped off onto the deck, and as it slides forward, it pushes the deck's coins towards the edge. A cup holds 20 coins. When the lights along the back stop on a pocket, drop one through it for a shower of coins. Gold coins are worth ten, and there's always a prize on there somewhere.</p>
-    <p class="how keys">On a keyboard: ← and → move the chute, and Space drops a coin.</p>
-    <div class="row">
-      <button type="button" class="big" id="play">Play</button>
-      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    <div class="words">
+      <a class="floor to-floor" href="../">← Free Play</a>
+      <div class="marquee"><h1>Topple</h1></div>
+      <p class="lede">A coin pusher. A ticket for every two coins you push over the edge.</p>
+      <p class="how">Touch the glass to aim the chute, and let go to drop a coin onto the moving pusher. As it slides back, coins get scraped off onto the deck, and as it slides forward, it pushes the deck's coins towards the edge. A cup holds 20 coins. When the lights along the back stop on a pocket, drop one through it for a shower of coins. Gold coins are worth ten, and there's always a prize on there somewhere.</p>
+      <p class="how keys">On a keyboard: ← and → move the chute, and Space drops a coin.</p>
     </div>
-    <p class="best" id="titleBest"></p>
-    <footer class="jd-foot">
-      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
-    </footer>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="play">Play</button>
+        <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      </div>
+      <p class="best" id="titleBest"></p>
+      <footer class="jd-foot">
+        <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+      </footer>
+    </div>
   </section>
 
   <section class="card" id="over" hidden>
-    <h2 id="overT">The cup's empty</h2>
-    <p class="won-prize" id="overPrize" hidden></p>
-    <div class="fp-payout" id="payout"></div>
-    <p class="best" id="overBest"></p>
-    <p class="how">The coins on the deck stay where they are for next time.</p>
-    <div class="row">
-      <button type="button" class="big" id="again">Another cup</button>
-      <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    <div class="words">
+      <h2 id="overT">The cup's empty</h2>
+      <p class="won-prize" id="overPrize" hidden></p>
+      <div class="fp-payout" id="payout"></div>
+      <p class="best" id="overBest"></p>
+      <p class="how">The coins on the deck stay where they are for next time.</p>
     </div>
-    <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="again">Another cup</button>
+        <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      </div>
+      <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+    </div>
   </section>
 
   <section class="card" id="menu" hidden>

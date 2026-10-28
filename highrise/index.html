@@ -48,44 +48,56 @@
   <p class="sr" id="live" aria-live="polite"></p>
 
   <section class="card" id="title">
-    <a class="floor to-floor" href="../">← Free Play</a>
-    <div class="marquee"><h1>Highrise</h1></div>
-    <p class="lede">A stacker. Build the tower a floor at a time, all the way to the top.</p>
-    <p class="how">A row of lit windows slides along each floor: press Stop to set it down on the floor below. Windows hanging over the edge fall off, and the next row is only as wide as what stayed up. It speeds up as it climbs, with two windows at most from floor 6 and one from floor 11. Every floor is a ticket. At floor 11 you can take 25 more and stop, or keep going: the top floor pays the trophy and 100.</p>
-    <p class="how keys">On a keyboard: Space (or ↓) stops the row.</p>
-    <div class="row">
-      <button type="button" class="big" id="play">Play</button>
-      <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    <div class="words">
+      <a class="floor to-floor" href="../">← Free Play</a>
+      <div class="marquee"><h1>Highrise</h1></div>
+      <p class="lede">A stacker. Build the tower a floor at a time, all the way to the top.</p>
+      <p class="how">A row of lit windows slides along each floor: press Stop to set it down on the floor below. Windows hanging over the edge fall off, and the next row is only as wide as what stayed up. It speeds up as it climbs, with two windows at most from floor 6 and one from floor 11. Every floor is a ticket. At floor 11 you can take 25 more and stop, or keep going: the top floor pays the trophy and 100.</p>
+      <p class="how keys">On a keyboard: Space (or ↓) stops the row.</p>
     </div>
-    <p class="best" id="titleBest"></p>
-    <footer class="jd-foot">
-      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
-    </footer>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="play">Play</button>
+        <button type="button" class="plain" id="toPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      </div>
+      <p class="best" id="titleBest"></p>
+      <footer class="jd-foot">
+        <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+      </footer>
+    </div>
   </section>
 
   <section class="card" id="choose" hidden>
-    <h2>Floor 11!</h2>
-    <p class="lede">Take the minor prize and stop here, or keep building for the top?</p>
-    <p class="how">Stop now and you get 25 tickets on top of your 11. Keep going and the top floor pays the trophy and 100, but if the tower stops short, the 25 is gone.</p>
-    <div class="row">
-      <button type="button" class="big" id="takeMinor">Take the 25</button>
-      <button type="button" class="big alt" id="keepGoing">Keep going</button>
+    <div class="words">
+      <h2>Floor 11!</h2>
+      <p class="lede">Take the minor prize and stop here, or keep building for the top?</p>
+      <p class="how">Stop now and you get 25 tickets on top of your 11. Keep going and the top floor pays the trophy and 100, but if the tower stops short, the 25 is gone.</p>
+    </div>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="takeMinor">Take the 25</button>
+        <button type="button" class="big alt" id="keepGoing">Keep going</button>
+      </div>
     </div>
   </section>
 
   <section class="card" id="over" hidden>
-    <p class="trophy" id="overTrophy" aria-hidden="true" hidden></p>
-    <h2 id="overT">Eight floors</h2>
-    <p class="how" id="overHow"></p>
-    <div class="fp-payout" id="payout"></div>
-    <p class="best" id="overBest"></p>
-    <div class="row">
-      <button type="button" class="big" id="again">Build again</button>
-      <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+    <div class="words">
+      <p class="trophy" id="overTrophy" aria-hidden="true" hidden></p>
+      <h2 id="overT">Eight floors</h2>
+      <p class="how" id="overHow"></p>
+      <div class="fp-payout" id="payout"></div>
+      <p class="best" id="overBest"></p>
     </div>
-    <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+    <div class="acts">
+      <div class="row">
+        <button type="button" class="big" id="again">Build again</button>
+        <button type="button" class="plain" id="overPrizes"><svg><use href="#ticket"/></svg>Prize counter</button>
+      </div>
+      <p class="back to-floor"><a href="../">Back to the arcade</a></p>
+    </div>
   </section>
 
   <section class="card" id="menu" hidden>

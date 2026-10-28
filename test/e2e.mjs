@@ -697,6 +697,138 @@ for (const [width, height, insets, low] of [[390, 844, { top: 47, bottom: 34, le
 }
 await tall.close();
 
+// On a phone on its side (an iPhone 14's 844 x 390 under its notch, and an iPhone SE's 667 x 375), each card stands in
+// two columns, what it says on the left and its buttons on the right, and every button and link on it is in sight
+// without scrolling, clear of the notch and the home indicator: each machine's title card, its menu and the end of a
+// round (played, with a new best and a full strip of tickets), Clutch's win, Highrise's choice at floor 11, and Roll
+// Up's today's card. Roll Up's note asking for the phone upright keeps clear of the notch, and goes while a card is up.
+const side = await browser.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+const sp = await side.newPage();
+sp.on('pageerror', e => problems.push(e.message));
+const sideCdp = await side.newCDPSession(sp);
+await sp.addInitScript(() => {
+  if (sessionStorage.getItem('seeded')) return;
+  sessionStorage.setItem('seeded', '1');
+  // (bests of 1, so each round's end card has a new best on it; Tilt's top five full)
+  for (const k of ['roll-up', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops']) localStorage.setItem('free-play.' + k, JSON.stringify({ best: 1, rounds: 1, games: 1, cups: 1 }));
+  localStorage.setItem('free-play.tilt', JSON.stringify({ table: 'classic', scores: [1, 2, 3, 4].map(n => ({ score: n * 1000, date: '2026-10-01' })) }));
+});
+const SIDEWAYS = [[844, 390, { top: 0, bottom: 21, left: 47, right: 47 }], [667, 375, { top: 0, bottom: 0, left: 0, right: 0 }]];
+const sideways = async (name, id) => {
+  for (const [width, height, insets] of SIDEWAYS) {
+    await sp.setViewportSize({ width, height });
+    await sideCdp.send('Emulation.setSafeAreaInsetsOverride', { insets });
+    await sp.waitForTimeout(100);
+    const out = await sp.evaluate(([id, insets]) => {
+      const card = document.getElementById(id), box = card.querySelector('.card') || card, b = box.getBoundingClientRect(), out = [];
+      const words = card.querySelector('.words, h2'), acts = card.querySelector('.acts, .col');
+      if (!words || !acts || acts.getBoundingClientRect().left < words.getBoundingClientRect().right - 1) out.push('not in two columns');
+      if (box.scrollHeight > box.clientHeight + 1) out.push(`scrolls ${box.scrollHeight - box.clientHeight} px`);
+      for (const el of card.querySelectorAll('button, a, summary')) {
+        if (!el.getClientRects().length || el.closest('[hidden]')) continue;
+        const r = el.getBoundingClientRect(), what = `"${(el.getAttribute('aria-label') || el.textContent).trim().slice(0, 24)}"`;
+        if (r.top < Math.max(0, b.top) - 1 || r.bottom > Math.min(innerHeight - insets.bottom, b.bottom) + 1) out.push(`${what} out of sight, ${Math.round(r.top)} to ${Math.round(r.bottom)} px down`);
+        if (r.left < insets.left || r.right > innerWidth - insets.right) out.push(`${what} under the notch`);
+      }
+      return out;
+    }, [id, insets]);
+    assert.deepEqual(out, [], `${name}'s ${id} card at ${width} x ${height}`);
+  }
+  await sp.setViewportSize({ width: 844, height: 390 });
+  await sideCdp.send('Emulation.setSafeAreaInsetsOverride', { insets: SIDEWAYS[0][2] });
+};
+// opens the page; checks its title card and, once it's playing, its menu
+const openSideways = async (path, hook, start) => {
+  await sp.goto(base + path);
+  await sp.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
+  await sp.evaluate(() => document.fonts.ready);
+  await sideways(hook, 'title');
+  await sp.click(start);
+  await sp.click('#menuBtn');
+  await sideways(hook, hook === 'tilt' ? 'pause' : 'menu');
+  await sp.click(hook === 'tilt' ? '#resumeBtn' : '#resume');
+};
+// waits for the end of the round, and the strip of tickets to finish feeding out
+const ended = async (id = 'over') => {
+  await sp.waitForSelector(`#${id}:not([hidden])`, { timeout: 60000 });
+  await sp.waitForFunction(() => { const b = document.querySelector('#over .fp-won b'); return !b || b.dataset.n === b.textContent || ((b.dataset.n = b.textContent), false); }, null, { timeout: 10000, polling: 400 });
+};
+// Roll Up: today's card, played through, and the note.
+await openSideways('roll-up/', 'rollUp', '#daily');
+const note = () => sp.evaluate(() => { const n = document.querySelector('.upright'); return n.getClientRects().length ? Math.round(n.getBoundingClientRect().right) : null; });
+assert.ok((await note()) <= 844 - 47, `Roll Up's upright note reaches ${await note()} px across, under the notch`);
+await sp.click('#menuBtn');
+assert.equal(await note(), null, "Roll Up's upright note shows over its menu");
+await sp.click('#resume');
+await sp.evaluate(() => { rollUp.speed = 8; });
+for (let i = 0; i < 9; i++) {
+  await sp.waitForFunction(() => rollUp.mode === 'aim', null, { timeout: 15000 });
+  await sp.evaluate(v => rollUp.roll(0, v, 0), [305, 332, 280][i % 3]);
+}
+await ended();
+assert.ok(await sp.isVisible('#stars'), "Roll Up's end card isn't today's card");
+await sideways('rollUp', 'over');
+assert.equal(await note(), null, "Roll Up's upright note shows over its end card");
+// Tilt: a game ended from the menu.
+await openSideways('tilt/', 'tilt', '#startBtn');
+await sp.evaluate(() => { window.tilt.game.score = 954320; });
+await sp.click('#menuBtn');
+await sp.click('#quitBtn');
+await sp.click('#quitBtn');
+await ended();
+await sideways('tilt', 'over');
+// Clutch: its win card, as a go that wins puts it up.
+await openSideways('clutch/', 'clutch', '#play');
+await sp.evaluate(() => { document.getElementById('win').hidden = false; document.getElementById('winT').textContent = 'You got a lucky star!'; });
+await sideways('clutch', 'win');
+// Topple: a whole cup.
+await openSideways('topple/', 'topple', '#play');
+await sp.evaluate(() => { topple.speed = 4; });
+for (let i = 0; i < 20; i++) {
+  await sp.waitForFunction(() => topple.machine.ready, null, { timeout: 10000 });
+  await sp.evaluate(x => topple.drop(x), [150, 90, 210][i % 3]);
+}
+await ended();
+await sideways('topple', 'over');
+// Highrise: up to floor 11, and the minor prize.
+await openSideways('highrise/', 'highrise', '#play');
+while (await sp.evaluate(() => highrise.tower.built) < 11) {
+  await sp.waitForFunction(() => highrise.ready, null, { timeout: 5000 });
+  await sp.evaluate(() => highrise.stopAt(3));
+}
+await ended('choose');
+await sideways('highrise', 'choose');
+await sp.click('#takeMinor');
+await ended();
+await sideways('highrise', 'over');
+// Popgun, Bonkers and Hoops: a round each.
+await openSideways('popgun/', 'popgun', '#play');
+await sp.evaluate(() => { popgun.speed = 4; });
+while (!(await sp.evaluate(() => popgun.gallery.over))) {
+  await sp.waitForFunction(() => popgun.gallery.ready || popgun.gallery.over);
+  await sp.evaluate(() => popgun.fire(280, 420));
+}
+await ended();
+await sideways('popgun', 'over');
+await openSideways('bonkers/', 'bonkers', '#play');
+await sp.evaluate(() => { bonkers.speed = 6; });
+while (!(await sp.evaluate(() => bonkers.burrow.over))) {
+  await sp.evaluate(() => { const m = bonkers.burrow.moles.find(m => m.state === 'rising' && m.rise > 0.6); if (m) bonkers.swing([50, 150, 250, 350, 450][m.hole], -40); });
+  await sp.waitForTimeout(30);
+}
+await ended();
+await sideways('bonkers', 'over');
+await openSideways('hoops/', 'hoops', '#play');
+await sp.evaluate(() => { hoops.speed = 6; });
+while (!(await sp.evaluate(() => hoops.court.over))) {
+  await sp.evaluate(() => { if (hoops.court.pocket()) hoops.shoot(hoops.sweet(), 0); });
+  await sp.waitForTimeout(30);
+}
+await ended();
+await sideways('hoops', 'over');
+assert.ok(await sp.evaluate(() => document.getElementById('overBest').classList.contains('fp-best')), "Hoops' end card has no new best on it");
+await side.close();
+
 // Everything to tap on the floor and on every card is 44 px each way at least (Apple's Human Interface Guidelines,
 // and WCAG 2.2's 2.5.5): the way back to the floor, the links at the foot of each card, the counter's close. The
 // 40 px buttons along the top answer a tap a few px round them too (checked 2.5 px out). (The prizes on a shelf, a
