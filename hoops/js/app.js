@@ -161,9 +161,9 @@ function endRound() {
   save();
   const n = court.baskets, swish = court.swishes;
   $('overT').textContent = `${score.toLocaleString('en-US')} ${score === 1 ? 'point' : 'points'}`;
-  // '1 basket from 18 shots, a swish.', '5 baskets from 20 shots, 2 of them swishes.' And with no ticket, how far off
-  // one it was.
-  const swishes = !swish ? '' : n === 1 ? ', a swish' : swish === n ? `, all ${n} of them swishes` : swish === 1 ? ', 1 of them a swish' : `, ${swish} of them swishes`;
+  // '1 basket from 18 shots, a swish.', '2 baskets from 9 shots, both of them swishes.', '5 baskets from 20 shots, 2 of
+  // them swishes.' And with no ticket, how far off one it was.
+  const swishes = !swish ? '' : n === 1 ? ', a swish' : swish === n ? (n === 2 ? ', both of them swishes' : `, all ${n} of them swishes`) : swish === 1 ? ', 1 of them a swish' : `, ${swish} of them swishes`;
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}${swishes}. `
     + (won ? 'A ticket for every 4 points.' : shortOfATicket(score, 4));
   bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);

@@ -216,7 +216,7 @@ assert.equal(await page.textContent('#overT'), `${score.toLocaleString('en-US')}
 // how it went, and the swishes among the baskets, said of the baskets: '1 basket from 18 shots, a swish.'
 {
   const [n, sw, shots] = [await court('baskets'), await court('swishes'), await court('shots')];
-  const said = !sw ? '' : n === 1 ? ', a swish' : sw === n ? `, all ${n} of them swishes` : sw === 1 ? ', 1 of them a swish' : `, ${sw} of them swishes`;
+  const said = !sw ? '' : n === 1 ? ', a swish' : sw === n ? (n === 2 ? ', both of them swishes' : `, all ${n} of them swishes`) : sw === 1 ? ', 1 of them a swish' : `, ${sw} of them swishes`;
   assert.equal(await page.textContent('#overHow'), `${n} ${n === 1 ? 'basket' : 'baskets'} from ${shots} ${shots === 1 ? 'shot' : 'shots'}${said}. A ticket for every 4 points.`);
 }
 await page.waitForFunction(t => document.getElementById('live').textContent === t, `${score.toLocaleString('en-US')} points. ${Math.floor(score / 4)} tickets.`, { timeout: 2000 }).catch(() => {});
