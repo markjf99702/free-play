@@ -6,7 +6,7 @@ import { createGallery, ticketsFor, tipFor, PER_TICKET, CORKS, W, H, feat } from
 import { createDraw, MOON } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, bigPrize, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
 import { trophy } from '../../shared/prizes.js';
@@ -275,7 +275,7 @@ soundLabel();
 function openPrizes() {
   paused = true;
   openCounter({
-    onBuy: () => sound.buy(),
+    onBuy: p => { sound.unlock(); if (bigPrize(p)) sound.handOver(); else sound.buy(); },
     onClose: () => {
       paused = !$('menu').hidden; hud(); closed();
       // back to the game: the keys go to it again, not to the ticket button the counter handed the focus back to

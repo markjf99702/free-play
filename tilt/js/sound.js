@@ -105,6 +105,8 @@ export function play(name, o = {}) {
     }
     case 'bonus': if (ok('bonus', 0.05)) bell(t, 523, 0.16); break;
     case 'award': [0, 0.09, 0.18].forEach((d, i) => bell(t + d, [523, 659, 784][i], 0.2)); break;
+    // a big prize handed over at the counter: up five bells as it comes down, and a chord as it lands
+    case 'handOver': [523, 659, 784, 1047, 1319].forEach((f, i) => bell(t + i * 0.11, f, 0.2)); [784, 1047, 1568].forEach(f => bell(t + 0.7, f, 0.15)); break;
     case 'extraBall': [0, 0.12, 0.24, 0.36, 0.6].forEach((d, i) => bell(t + d, [523, 659, 784, 1047, 1047][i], 0.22)); break;
     case 'saved': [0, 0.1].forEach((d, i) => bell(t + d, [784, 1047][i], 0.2)); break;
     case 'drain': tone(t, 300, 0.6, 0.25, 'triangle', 90); break;

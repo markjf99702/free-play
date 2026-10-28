@@ -8,7 +8,7 @@ import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { trophy } from '../../shared/prizes.js';
-import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, bigPrize, counterOpen, feed, bestLine, bump, pocketButton, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
@@ -246,7 +246,7 @@ soundLabel();
 function openPrizes() {
   paused = true;
   openCounter({
-    onBuy: () => sound.buy(),
+    onBuy: p => { sound.unlock(); if (bigPrize(p)) sound.handOver(); else sound.buy(); },
     onClose: () => {
       paused = !$('menu').hidden; hud();
       // back to the game: the keys go to the stop button again, not to the ticket button the counter handed the focus to

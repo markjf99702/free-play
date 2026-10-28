@@ -422,6 +422,44 @@ await until(async () => await page.isHidden('#goal'), 3000, 'a goal dropped in a
 assert.equal((await page.textContent('#purse')).trim(), '1,320 tickets · Prize counter');
 await other.close();
 
+// A big prize, 600 tickets and up, is handed over: it comes down large onto a plank at the foot of the counter, with a
+// line of its own and Undo under it, all on the screen. A small one keeps its short line. Set to cut down motion, the
+// phone shows the prize already on its plank.
+await pocket({ tickets: 3000, prizes: {} });
+await page.click('#trade');
+await page.click('.fp-prize[data-id="lollipop"]');
+assert.equal(await page.locator('.fp-toast.fp-handover').count(), 0, 'a lollipop is just handed over');
+await page.waitForTimeout(800);
+await page.click('.fp-prize[data-id="unicorn"]');
+assert.ok(await page.isVisible('.fp-sheet .fp-toast.fp-handover'), 'the unicorn is handed over at the foot of the counter');
+assert.equal(await page.textContent('.fp-big'), '🦄');
+assert.equal(await page.textContent('.fp-toast'), '🦄The enormous unicorn comes down off the top shelf. 2,500 tickets. Undo');
+assert.equal(await page.getAttribute('.fp-big', 'aria-hidden'), 'true', 'a screen reader hears the line, not the emoji');
+assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.fp-big i')).animationName), 'fp-down', 'it comes down');
+await page.waitForTimeout(900);
+const handed = await page.evaluate(() => {
+  const box = e => document.querySelector(e).getBoundingClientRect();
+  const t = box('.fp-toast'), big = box('.fp-big i'), plank = box('.fp-big'), undo = box('.fp-undo');
+  return { inside: t.left >= 0 && t.right <= innerWidth && t.top >= 0 && t.bottom <= innerHeight, onPlank: Math.abs(big.bottom - plank.bottom) < 12, size: big.height, undo: undo.height };
+});
+assert.ok(handed.inside, 'the hand-over is on the screen');
+assert.ok(handed.onPlank && handed.size > 50, `the unicorn sits large on its plank (${JSON.stringify(handed)})`);
+assert.ok(handed.undo >= 44, 'Undo is a thumb tall');
+await page.click('.fp-undo');
+assert.match(await page.textContent('.fp-toast'), /^Traded back\./);
+assert.equal(await page.locator('.fp-toast.fp-handover').count(), 0, 'and the hand-over goes with Undo');
+await page.click('.fp-x');
+const calm = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, reducedMotion: 'reduce' });
+const cp = await calm.newPage();
+await cp.goto(base);
+await cp.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 900, prizes: {} })));
+await cp.reload();
+await cp.click('#trade');
+await cp.click('.fp-prize[data-id="flamingo"]');
+assert.equal(await cp.textContent('.fp-toast'), '🦩The blow-up flamingo comes down off the top shelf. 900 tickets. Undo');
+assert.equal(await cp.evaluate(() => getComputedStyle(document.querySelector('.fp-big i')).animationName), 'none', 'set to cut down motion, nothing drops');
+await calm.close();
+
 // The shelf, on the floor and in the counter: every row of prizes stands on a plank of its own, the outlines of what's
 // still to win as well. (Read off the pixels down the shelf's left edge, clear of the prizes.)
 async function planks(sel) {

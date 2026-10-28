@@ -8,7 +8,7 @@ import { createDraw, drawPlush } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { PLUSH } from '../../shared/prizes.js';
-import { openCounter, counterOpen, pocketButton, fmt } from '../../shared/counter.js';
+import { openCounter, bigPrize, counterOpen, pocketButton, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { count } from '../../shared/records.js';
 
@@ -261,7 +261,7 @@ function openPrizes() {
   release();
   paused = true;
   openCounter({
-    onBuy: () => sound.buy(),
+    onBuy: p => { sound.unlock(); if (bigPrize(p)) sound.handOver(); else sound.buy(); },
     onClose: () => {
       paused = !$('menu').hidden; hud(); closed();
       // back to the game: the keys go to the big button again, not to the ticket button the counter handed the focus to

@@ -8,7 +8,7 @@ import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, ticketsFor, nineCalls, BALLS } from './daily.js';
 import { trophy } from '../../shared/prizes.js';
 import * as wallet from '../../shared/wallet.js';
-import { openCounter, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
+import { openCounter, bigPrize, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
 
@@ -542,7 +542,7 @@ function openPrizes() {
   paused = true;
   sound.rolling(0); // a ball held mid-roll goes quiet
   openCounter({
-    onBuy: () => sound.buy(),
+    onBuy: p => { sound.unlock(); if (bigPrize(p)) sound.handOver(); else sound.buy(); },
     onClose: () => {
       paused = !$('menu').hidden; hud();
       // back to the game: the keys go to it again, not to the ticket button the counter handed the focus back to

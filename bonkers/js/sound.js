@@ -167,3 +167,11 @@ export function buy() {
   if (!ac || !enabled) return;
   bell(1175, 0, 0.2); bell(1568, 0.09, 0.18);
 }
+
+// A big prize handed over at the counter (600 tickets and up): a longer fanfare, up five bells as it comes down off
+// the top shelf, and a chord as it lands on the plank.
+export function handOver() {
+  if (!ac || !enabled) return;
+  [523, 659, 784, 1047, 1319].forEach((f, i) => bell(f, i * 0.11, 0.2));
+  [784, 1047, 1568].forEach(f => bell(f, 0.7, 0.15));
+}

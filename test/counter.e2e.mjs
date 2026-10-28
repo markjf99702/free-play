@@ -43,6 +43,16 @@ browser.newContext = async (...a) => {
   return c;
 };
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, serviceWorkers: 'block' });
+// Which of the page's sounds make each tone: the function in its sound.js (Tilt's all come from play()).
+await ctx.addInitScript(() => {
+  window.__sounds = [];
+  const make = AudioContext.prototype.createOscillator;
+  AudioContext.prototype.createOscillator = function () {
+    const at = /at (?:Module\.)?(\w+) \([^)]*\/js\/sound\.js/.exec(new Error().stack.split('\n').filter(l => !/at (tone|burst|bell|env|noise|white|chink|beep) /.test(l)).join('\n'));
+    window.__sounds.push(at ? at[1] : '?');
+    return make.call(this);
+  };
+});
 const page = await ctx.newPage();
 // another tab on the floor, which wins or spends tickets while a page is open
 const other = await ctx.newPage();
@@ -122,6 +132,26 @@ for (const [path, hook, tix, opener] of PAGES) {
     assert.deepEqual(await under(1500, 'bear'), ['Enough for the giant teddy bear!', false, true], `${where}: with enough`);
     assert.deepEqual((await under(1500, null))?.[1], true, `${where}: with no goal`);
     assert.equal(await page.locator('.fp-goal').count(), 1, `${where}: one line, however many rounds`);
+  }
+
+  // A big prize (600 tickets and up) is handed over with a longer fanfare than a small one's two bells, inside a
+  // machine. (On the floor there's no sound.)
+  if (path) {
+    await page.evaluate(() => { localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 700, prizes: {} })); window.__sounds.length = 0; });
+    await page.waitForTimeout(800); // (a tap right after a trade is taken for a double tap, and ignored)
+    await page.click(opener);
+    await page.click('.fp-prize[data-id="lollipop"]');
+    await page.waitForTimeout(800);
+    const small = await page.evaluate(() => window.__sounds.splice(0));
+    await page.click('.fp-prize[data-id="octopus"]');
+    assert.match(await text('.fp-toast'), /^🐙The stuffed octopus comes down off the top shelf\. 600 tickets\. ?Undo$/u, `${where}: the octopus handed over`);
+    const big = await page.evaluate(() => window.__sounds.splice(0));
+    if (hook === 'tilt') assert.ok(small.length && big.length > small.length * 2, `${where}: ${big.length} tones for the octopus, ${small.length} for a lollipop`);
+    else {
+      assert.ok(small.includes('buy') && !small.includes('handOver'), `${where}: a lollipop's sound (${[...new Set(small)]})`);
+      assert.ok(big.includes('handOver') && !big.includes('buy'), `${where}: the octopus's fanfare (${[...new Set(big)]})`);
+    }
+    await page.keyboard.press('Escape');
     await page.evaluate(() => localStorage.setItem('free-play.wallet', JSON.stringify({ tickets: 1229, prizes: { lollipop: 1 } })));
   }
 

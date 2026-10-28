@@ -14,7 +14,7 @@ import { dayKey } from '../../shared/calendar.js';
 import { count } from '../../shared/records.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
 import { trophy } from '../../shared/prizes.js';
-import { openCounter, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
+import { openCounter, bigPrize, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.tilt'; // what was 'tilt.v1' at tilt.junkdrawer.works; ../shared/carry.js brings it over
@@ -292,7 +292,7 @@ $('quitBtn').addEventListener('click', () => {
   if (game.score > 0) gameOver(game, { ended: true }); else toTitle();
 });
 // The arcade's prize counter, from the title card, the pause card or the end of a game.
-for (const id of ['prizesBtn', 'pausePrizes', 'overPrizes']) $(id).addEventListener('click', () => { unlock(); openCounter({ onBuy: () => play('award') }); });
+for (const id of ['prizesBtn', 'pausePrizes', 'overPrizes']) $(id).addEventListener('click', () => { unlock(); openCounter({ onBuy: p => play(bigPrize(p) ? 'handOver' : 'award') }); });
 
 function soundLabel() {
   $('soundBtn').textContent = 'Sound: ' + (store.sound === false ? 'off' : 'on');

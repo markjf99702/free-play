@@ -26,6 +26,11 @@ export function pocketButton(el, n) {
 
 export const TICKET = '<svg class="fp-tix" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 2h20v3.6a2.4 2.4 0 0 0 0 4.8V14H2v-3.6a2.4 2.4 0 0 0 0-4.8z" fill="#f2944e"/><path d="M8 3.5v9" stroke="#fbeed2" stroke-width="1" stroke-dasharray="1.4 1.2"/><circle cx="15" cy="8" r="2.6" fill="#fbeed2"/></svg>';
 
+// A prize this dear (the stuffed octopus and up) is handed over: it comes down large onto a plank at the foot of the
+// counter, with a line of its own, and a machine plays a longer fanfare for it (opts.onBuy hears which prize it was).
+export const BIG = 600;
+export const bigPrize = p => p.cost >= BIG;
+
 let sheet = null, opts = {}, lastFocus = null;
 // A second tap this soon after a trade is the same tap twice (a double tap, or a finger that bounced), whichever prize
 // it lands on: the grid is drawn again after a trade, and a new row on the shelf can move it down under the finger.
@@ -239,7 +244,9 @@ function trade(p) {
     // the Undo button has gone: the keyboard goes back to the prize
     if (focused) sheet.querySelector(`.fp-prize[data-id="${p.id}"]`)?.focus({ preventScroll: true });
   };
-  toast(`You got ${p.say}.${n > 1 ? ` That's ${n} on your shelf.` : ''}`, { undo });
+  const more = n > 1 ? ` That's ${n} on your shelf.` : '';
+  if (bigPrize(p)) toast(`The ${p.name.toLowerCase()} comes down off the top shelf. ${tickets(p.cost)}.${more}`, { undo, prize: p });
+  else toast(`You got ${p.say}.${more}`, { undo });
   render();
 }
 
@@ -307,7 +314,8 @@ globalThis.addEventListener?.('storage', e => {
 
 // A line at the foot of the screen (or of the counter, while it's open) for a moment. With undo, it carries an Undo
 // button for a few seconds longer; with act, a button that says label ('Save up for this'), for as long. Either goes
-// when the counter closes.
+// when the counter closes. With prize, it's a big prize handed over: the prize large over the line, coming down onto
+// a plank (or already on it, on a phone set to cut down motion).
 let toastEl = null, toastTimer = 0, toastUndo = null;
 function toastBox() {
   if (!toastEl) {
@@ -319,11 +327,20 @@ function toastBox() {
   }
   return toastEl;
 }
-export function toast(text, { undo, act, label = 'Undo' } = {}) {
+export function toast(text, { undo, act, label = 'Undo', prize } = {}) {
   const el = toastBox(), fn = undo || act;
   el.textContent = text;
   toastUndo = fn || null;
   el.classList.toggle('undoable', !!fn);
+  el.classList.toggle('fp-handover', !!prize);
+  if (prize) {
+    const big = document.createElement('span'), it = document.createElement('i');
+    big.className = 'fp-big';
+    big.setAttribute('aria-hidden', 'true');
+    it.textContent = prize.emoji;
+    big.append(it);
+    el.prepend(big);
+  }
   if (fn) {
     const b = document.createElement('button');
     b.type = 'button';
