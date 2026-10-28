@@ -67,8 +67,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* Today's special, under the pocket: the machine's name goes to it */
 .today { max-width: 26em; margin: 10px auto 0; font-size: 15px; font-weight: 600; color: var(--ink2); text-wrap: balance; }
 .today a { padding: 13px 4px; margin: 0 -4px; color: var(--gold); text-decoration-thickness: 1px; text-underline-offset: 3px; } /* 44 px tall to tap */
-/* (on the narrowest phones it would break onto a second line in the pocket, so there only a screen reader hears it:
-   the row under the pocket has the prize counter too) */
 /* In a Safari tab on an iPhone or iPad, a line saying to add it to the Home Screen (see js/floor.js), with a × to put
    it away */
 .keep {
@@ -79,6 +77,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .keep span { flex: 1; text-wrap: balance; }
 .keep-x { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--ink2); font: 22px/1 var(--body); }
 .keep-x:active { background: rgba(251, 238, 210, .1); }
+/* (on the narrowest phones it would break onto a second line in the pocket, so there only a screen reader hears it:
+   the row under the pocket has the prize counter too) */
 @media (max-width: 359.98px) {
   .purse .to { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
