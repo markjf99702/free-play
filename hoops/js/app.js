@@ -2,7 +2,7 @@
 // tickets at the end. js/court.js has the balls, the hoop and the rules, js/draw.js draws the machine, and
 // js/sound.js makes the noises. Tickets go into the arcade's wallet (../shared/wallet.js) at the end of a round.
 
-import { createCourt, ticketsFor, power, flickFor, readFlick, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
+import { createCourt, ticketsFor, power, flickFor, readFlick, READ, FLICK, SWEET, HOOP, LAUNCH } from './court.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -188,13 +188,19 @@ function say(text) { $('live').textContent = text; }
 
 // ---------- the flick ----------
 // Each finger down is a flick in the making; when it lifts, the last part of its path says how hard and which way.
+// Kept: the last KEEP ms of its path, all that readFlick() looks back over. (By time, not a count of points: a phone
+// that reads the glass 240 times a second makes 40 in a sixth of a second, so a thumb resting a fifth of a second
+// before it lifts would push the flick itself out.)
 const flicks = new Map();
+const KEEP = READ.rest + READ.stroke + 30; // ms
 function track(e) {
   const s = flicks.get(e.pointerId);
   if (!s) return;
   const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
   for (const ev of list.length ? list : [e]) s.push({ t: ev.timeStamp, x: ev.clientX, y: ev.clientY });
-  if (s.length > 40) s.splice(0, s.length - 40);
+  let old = 0;
+  while (old < s.length - 2 && s[s.length - 1].t - s[old + 1].t >= KEEP) old++;
+  if (old) s.splice(0, old);
 }
 canvas.addEventListener('pointerdown', e => {
   sound.unlock();

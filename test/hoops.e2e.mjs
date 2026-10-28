@@ -141,6 +141,23 @@ const rested = await page.evaluate(() => {
 });
 assert.ok(rested, 'a flick that rests before the finger lifts throws');
 assert.ok(Math.abs(rested.speed / rested.sweet - 1) < 0.02, `at ${rested.speed.toFixed(0)}, as the flick it was (${rested.sweet.toFixed(0)})`);
+// And through the page's own finger-tracking, on a phone that reads the glass 500 times a second: resting a sixth of
+// a second before lifting is some ninety points of trembling, and the flick before them still throws.
+await pocket();
+const tracked = await page.evaluate(() => {
+  const c = document.getElementById('stage'), cab = hoops.draw.cabinet(), speed = 2.4 * (cab.bottom - cab.top);
+  const at = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: 9, pointerType: 'touch', isPrimary: true, clientX: x, clientY: y, bubbles: true, cancelable: true }));
+  const shots = hoops.court.shots;
+  let x = 195, y = 640;
+  at('pointerdown', x, y);
+  const t0 = performance.now();
+  for (let next = t0 + 2; next <= t0 + 90; next += 2) { while (performance.now() < next); y = 640 - speed * (performance.now() - t0) / 1000; at('pointermove', x, y); }
+  const t1 = performance.now(), y1 = y;
+  for (let next = t1 + 2, k = 0; next <= t1 + 180; next += 2, k++) { while (performance.now() < next); x = 195 + (k % 2 ? 1 : -1); y = y1 + (k % 3 ? 0 : 1); at('pointermove', x, y); }
+  at('pointerup', x, y);
+  return hoops.court.shots - shots;
+});
+assert.equal(tracked, 1, 'a flick that rests before the finger lifts, read from the finger itself, throws');
 await pocket();
 // A stroke up the screen too slow to throw drops the ball back with a thud, and the first two in a round say how.
 const duds = await page.evaluate(() => {
