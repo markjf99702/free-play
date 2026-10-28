@@ -36,7 +36,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 
 /* ---------- the door: the sign and the tickets in your pocket ---------- */
-.door { max-width: 900px; margin: 0 auto; padding: 34px 0 10px; text-align: center; }
+.door { max-width: 1000px; margin: 0 auto; padding: 34px 0 10px; text-align: center; } /* (wide enough for the row of machines in one line on a computer) */
 .sign { margin: 0; font: 400 clamp(58px, 17vw, 112px)/.95 var(--sign); letter-spacing: .01em; text-wrap: balance; }
 .sign span { display: inline-block; }
 .sign .free { color: #ffd0e3; text-shadow: 0 0 4px var(--pink), 0 0 14px var(--pink), 0 0 34px rgba(255, 95, 162, .7); }
@@ -77,6 +77,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font: 400 13px/1 var(--disp); letter-spacing: .03em;
 }
 .hop:active span { transform: translateY(1px); filter: brightness(1.15); }
+/* (on a narrow phone a little closer, so the row still breaks into even lines, with none left on its own) */
+@media (max-width: 379.98px) { .aisle { gap: 0 6px; } .hop span { padding: 0 8px; } }
 .hop.roll-up { --hop-bg: linear-gradient(#8e1c22, #55101a); --hop-glow: 0 2px 0 rgba(0, 0, 0, .35); }
 .hop.tilt { --hop-bg: #120a02; --hop-edge: #5a3410; --hop-ink: #ffa53a; --hop-glow: 0 0 6px rgba(255, 140, 30, .8); }
 .hop.clutch { --hop-bg: #170a26; --hop-edge: #ffd36a; --hop-ink: #ffd0e3; --hop-glow: 0 0 5px #ff5fa2, 0 0 12px rgba(255, 95, 162, .7); }
