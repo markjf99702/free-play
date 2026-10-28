@@ -9,7 +9,7 @@
   &nbsp;
   <img src="docs/phone-roll-up.png" alt="Roll Up pushed in on the board as a ball drops into the 50 cup: chrome rings on a blue board with lit numbers 20, 30, 40 and 50, 100 cups in both top corners, and +50 rising over the cup" width="250">
   &nbsp;
-  <img src="docs/phone-tilt.png" alt="The end of a game of Tilt: 268,550 points, number 2 on the list at a ticket for every 5,000 points, and a strip of 53 orange tickets hanging out of a slot" width="250">
+  <img src="docs/phone-tilt.png" alt="The end of a game of Tilt: 268,550 points, number 2 on the list at a ticket for every 5,000 points, a strip of 53 orange tickets hanging out of a slot, and MATCH 80 on the backbox above" width="250">
 </p>
 <p align="center">
   <img src="docs/phone-clutch.png" alt="Clutch, a candy-pink claw machine: CLUTCH in neon on a bulb-lit sign, the claw coming up out of a heap of plush frogs, ghosts, aliens, penguins and a chick with a penguin in its grip, the prize chute behind a clear wall on the left, and a big pink HOLD button under the cabinet" width="250">
@@ -55,6 +55,7 @@ Three pinball tables. Classic is laid out and scored like an early-80s solid-sta
 - **Launch** by holding the Launch button and letting go: the longer you hold, the harder the shot. Keyboard: hold Space or ↓.
 - **Nudge** with a quick swipe up, or ↑ or Space with the ball in play. Nudge too often and you get two Danger warnings; once more and the machine tilts: the flippers go dead and nothing else scores on that ball, bonus included.
 - **The bonus** is counted, times the multiplier, when the ball drains. A ball that drains in the first few seconds is given back, once.
+- **The Match.** At game over the backbox rolls through the numbers and stops on one from 00 to 90, the way the machines of Classic's day end a game. If it's the last two digits of your score, that's 10 more tickets: about one game in ten.
 - Each table keeps its own top five scores.
 
 ### Classic

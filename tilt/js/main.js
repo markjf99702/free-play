@@ -4,6 +4,7 @@
 // a ticket for every table.perTicket points, and the prize counter is the arcade's too.
 
 import { STEP } from './physics.js';
+import { MATCH_TICKETS } from './game.js';
 import { Renderer } from './render.js';
 import { NORMAL } from './settings.js';
 import { play, unlock, setSound } from './sound.js';
@@ -19,6 +20,8 @@ const FIRST = Object.keys(TABLES)[0]; // the table a new player starts on
 const SINGLE = !!window.TILT_SINGLE_FILE || 'single' in document.documentElement.dataset;
 const store = load();
 const renderer = new Renderer($('table'));
+// Asked for less motion (the system's setting): the Match comes straight up, without rolling through the numbers.
+const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 setSound(store.sound !== false);
 
 // The table in the machine (see useTable below), its skin, and its rules running a game or the demo.
@@ -231,6 +234,7 @@ function startGame() {
   $('title').hidden = true; $('over').hidden = true; $('pause').hidden = true;
   paused = false;
   msgs.length = 0; // nothing left over from the last game
+  match = null;
   games++;
   game.start('play');
   play('start');
@@ -289,6 +293,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && gam
 
 function toTitle() {
   $('over').hidden = true;
+  match = null;
   showBest();
   $('title').hidden = false;
   game.start('attract');
@@ -308,16 +313,24 @@ function gameOver(g) {
   store[table.scoresKey] = list.slice(0, 5);
   save();
   const rank = store[table.scoresKey].indexOf(entry);
-  // the machine pays out, and the tickets feed from the slot once the card is up
+  // The Match comes up on the backbox as the card does (see hud()). The machine pays out at once, the Match too, and
+  // the tickets feed from the slot once the card is up.
+  const m = g.drawMatch(), extra = m.matched ? MATCH_TICKETS : 0;
+  match = { ...m, at: performance.now() };
   const won = Math.floor(score / table.perTicket);
-  wallet.pay(won);
+  wallet.pay(won + extra);
   stopFeed();
-  setTimeout(() => { stopFeed = feed($('payout'), won, { tick: () => play('rollover') }); }, 900);
+  setTimeout(() => {
+    if (m.matched) play('match');
+    stopFeed = feed($('payout'), won + extra, { tick: () => play('rollover') });
+  }, 900);
   $('final').textContent = fmt(score);
   const placed = rank === 0 && list.length > 1 ? 'A new high score.' : rank >= 0 ? `Number ${rank + 1} on your list.` : '';
   // with no ticket, how far off one it was, in place of the rate: '3,550 more points and it's a ticket.'
-  $('overNote').textContent = [placed, won ? rate(table) : shortOfATicket(score, table.perTicket)].filter(Boolean).join(' ');
-  const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won)}.`;
+  const matched = m.matched ? `Match ${two(m.number)}: ${MATCH_TICKETS} ${won ? 'more ' : ''}tickets.` : '';
+  $('overNote').textContent = [placed, won ? rate(table) : shortOfATicket(score, table.perTicket), matched].filter(Boolean).join(' ');
+  const heard = `Game over: ${fmt(score)}${placed ? ', ' + placed.charAt(0).toLowerCase() + placed.slice(1, -1) : ''}, ${tickets(won + extra)}.` +
+    ` Match ${two(m.number)}${m.matched ? ', a match' : ''}.`;
   $('scores').innerHTML = '';
   store[table.scoresKey].forEach(s => {
     const li = document.createElement('li');
@@ -327,6 +340,19 @@ function gameOver(g) {
   });
   setTimeout(() => { $('over').hidden = false; $('againBtn').focus(); speak(heard); }, 900);
   setTimeout(() => { if (!$('over').hidden && game.mode === 'over') game.start('attract'); }, 1600);
+}
+
+// ---------- the Match ----------
+// At game over the backbox's display rolls through the numbers and stops on the Match (see Game.drawMatch()), lit up
+// when it matches, and keeps it there while the end card is up. { number, matched, at } until the next game.
+let match = null;
+const ROLL = 850; // ms of rolling, so it stops as the card comes up
+const two = n => String(n).padStart(2, '0');
+function matchShown(now) {
+  if (!match) return null;
+  const left = ROLL - (now - match.at);
+  if (left > 0 && !calm?.matches) return { text: two((match.number + 100 - 10 * Math.ceil(left / 70) % 100) % 100), lit: false };
+  return { text: two(match.number), lit: match.matched };
 }
 
 // ---------- the backbox display's messages ----------
@@ -364,7 +390,7 @@ function message(now) {
 }
 
 // ---------- the clock ----------
-let last = performance.now(), acc = 0, shownScore = -1, shownMsg = '', shownBall = '';
+let last = performance.now(), acc = 0, shownScore = '', shownMsg = '', shownBall = '', shownLit = false;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
@@ -386,13 +412,18 @@ function hud(now) {
   if (msg !== shownMsg) {
     shownMsg = msg;
     d.classList.toggle('msg', !!msg);
-    if (msg) d.textContent = msg; else { d.innerHTML = '<span id="score"></span>'; shownScore = -1; }
+    if (msg) d.textContent = msg; else { d.innerHTML = '<span id="score"></span>'; shownScore = ''; }
   }
+  const m = game.mode === 'play' ? null : matchShown(now);
   if (!msg) {
-    const s = game.mode === 'play' || game.mode === 'over' ? game.score : +(topFive()[0]?.score ?? 0);
-    if (s !== shownScore) { shownScore = s; $('score').textContent = fmt(s); }
+    const s = m ? m.text : fmt(game.mode === 'play' || game.mode === 'over' ? game.score : +(topFive()[0]?.score ?? 0));
+    if (s !== shownScore) {
+      if (m && !m.lit && shownScore) play('matchTick');
+      shownScore = s; $('score').textContent = s;
+    }
   }
-  const ball = game.mode === 'play' ? `Ball ${game.ballNo}` + (game.extraBalls > 0 ? '+' : '') : game.mode === 'over' ? 'Game over' : 'Best';
+  if (!!m?.lit !== shownLit) { shownLit = !!m?.lit; d.classList.toggle('lit', shownLit); }
+  const ball = m ? 'Match' : game.mode === 'play' ? `Ball ${game.ballNo}` + (game.extraBalls > 0 ? '+' : '') : game.mode === 'over' ? 'Game over' : 'Best';
   if (ball !== shownBall) { shownBall = ball; $('ballNo').textContent = ball; }
   // Only while a ball waits to be plunged: not while the machine plunges another itself in multiball.
   const showLaunch = game.mode === 'play' && game.state === 'lane' && game.ballInLane() && !paused;

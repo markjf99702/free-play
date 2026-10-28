@@ -111,6 +111,9 @@ export function play(name, o = {}) {
     case 'danger': tone(t, 140, 0.25, 0.4, 'sawtooth'); tone(t + 0.3, 140, 0.25, 0.4, 'sawtooth'); break;
     case 'tilt': tone(t, 90, 1.2, 0.5, 'sawtooth', 60); noise(t, 0.4, 200, 0.6, 0.8, 'lowpass'); break;
     case 'gameOver': [0, 0.25, 0.5].forEach((d, i) => bell(t + d, [523, 392, 262][i], 0.22)); break;
+    // the Match rolling through its numbers, and a match: the knocker a free game fires, and the bells
+    case 'matchTick': tone(t, 1500, 0.03, 0.07, 'square'); break;
+    case 'match': noise(t, 0.09, 160, 0.8, 1, 'lowpass'); [0.1, 0.19, 0.28, 0.42].forEach((d, i) => bell(t + d, [784, 988, 1175, 1568][i], 0.2)); break;
     case 'start': [0, 0.08, 0.16, 0.24].forEach((d, i) => bell(t + d, [392, 523, 659, 784][i], 0.18)); break;
   }
 }

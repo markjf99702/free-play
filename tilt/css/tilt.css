@@ -50,6 +50,8 @@ body {
 }
 .display.msg { font-size: clamp(12px, 8.9vw - 15.5px, 18px); text-transform: uppercase; animation: flash .3s steps(2) 3; }
 @keyframes flash { 50% { opacity: .35; } }
+/* a Match that matches: it flashes, and stays lit */
+.display.lit { color: #ffe08a; text-shadow: 0 0 8px rgba(255, 200, 80, .9), 0 0 22px rgba(255, 170, 40, .6); animation: flash .3s steps(2) 4; }
 .menu {
   justify-self: end; width: 44px; height: 44px; border-radius: 10px; border: 1px solid #3a2208;
   background: #120a02; color: var(--amber); display: grid; place-items: center; cursor: pointer;
@@ -187,4 +189,4 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
   h1 { font-size: 48px; } .card { padding: 18px 18px 14px; }
   .ctl { margin-bottom: 12px; } .tables { gap: 4px; } .tables span { padding-block: 6px; } .best { margin-top: 8px; }
 }
-@media (prefers-reduced-motion: reduce) { .display.msg, .hint { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .display.msg, .display.lit, .hint { animation: none; } }

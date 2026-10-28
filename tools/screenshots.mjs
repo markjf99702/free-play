@@ -214,7 +214,9 @@ async function rollUpBoard(page) {
   await page.click('#menuBtn');
   await page.click('#quitBtn'); // (End game asks first)
   await page.click('#quitBtn');
-  await page.waitForTimeout(4400);
+  // once the strip has fed out all 53 (and the Match, 80 here, has stopped on the backbox)
+  await page.waitForFunction(() => document.querySelector('#over .fp-won b')?.textContent === '53', null, { timeout: 15000 });
+  await page.waitForTimeout(600);
   await page.screenshot({ path: join(root, 'docs/phone-tilt.png') });
   await page.context().close();
 }

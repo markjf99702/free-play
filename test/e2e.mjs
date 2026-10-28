@@ -103,7 +103,8 @@ await page.click('.cab.tilt');
 await page.waitForURL(base + 'tilt/');
 assert.equal(await page.textContent('#tixT'), String(before), "Tilt's title card shows the arcade's tickets");
 await page.click('#startBtn');
-await page.evaluate(() => { window.tilt.game.score = 154320; });
+// (kept from coming up with a Match of 20, about one game in ten, which would pay 10 more)
+await page.evaluate(() => { window.tilt.game.score = 154320; Object.getPrototypeOf(Object.getPrototypeOf(window.tilt.game)).drawMatch = () => ({ number: 30, matched: false }); });
 await page.click('#menuBtn');
 await page.click('#quitBtn'); // (End game asks first)
 await page.click('#quitBtn');

@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { World, makeBall, BALL_R, STEP, flipperEnds, closestOnSeg } from '../tilt/js/physics.js';
-import { Game } from '../tilt/js/game.js';
+import { Game, MATCH_TICKETS } from '../tilt/js/game.js';
 import { TABLES } from '../tilt/js/tables.js';
 import { buildTable, H } from '../tilt/js/tables/classic/layout.js';
 import { Classic, SCORES } from '../tilt/js/tables/classic/rules.js';
@@ -428,6 +428,38 @@ test('three balls, then game over; bonus is counted and multiplied', () => {
   }
   assert.ok(over, 'the game ended after the third ball');
 });
+
+test('the Match: a number from 00 to 90, a match when it is the score\'s last two digits, about one game in ten', () => {
+  seed(9);
+  const g = new Classic({ ...NORMAL });
+  g.score = 268550;
+  const seen = new Map();
+  let matched = 0;
+  for (let i = 0; i < 5000; i++) {
+    const m = g.drawMatch();
+    assert.ok(Number.isInteger(m.number / 10) && m.number >= 0 && m.number <= 90, `a match number of ${m.number}`);
+    assert.equal(m.matched, m.number === 50);
+    seen.set(m.number, (seen.get(m.number) || 0) + 1);
+    if (m.matched) matched++;
+  }
+  assert.equal(seen.size, 10, 'every number from 00 to 90 comes up');
+  assert.ok(matched > 400 && matched < 600, `${matched} matches in 5,000`);
+  assert.equal(MATCH_TICKETS, 10);
+});
+
+for (const table of Object.values(TABLES)) {
+  test(`${table.name}: a score always ends in 0, so the Match can come up on it`, () => {
+    seed(4);
+    const g = new table.Game({ ...NORMAL });
+    g.start('attract');
+    for (let f = 0; f < 60 * 60 * 2; f++) {
+      for (let i = 0; i < 17; i++) g.world.step();
+      g.autopilot(); g.update(1 / 60);
+      assert.equal(g.score % 10, 0, `a score of ${g.score}`);
+    }
+    assert.ok(g.score > 0);
+  });
+}
 
 test('completing the top lanes raises the multiplier and lights the bumpers', () => {
   const g = new Classic({ ...NORMAL });

@@ -1,7 +1,7 @@
 // The machine every table shares: serving each ball to the plunger, the flippers, nudging and tilt, ball save,
-// extra balls, multiball, the end of each ball and of the game, and the demo's autopilot. A table's rules extend
-// Game: they build the table (build()), score what the physics reports (a bumper kicked, a rollover was crossed)
-// and keep the lamps that the table draws. They can extend reset(), nextBall(), serve(), update(), event(),
+// extra balls, multiball, the end of each ball and of the game (and its Match), and the demo's autopilot. A table's
+// rules extend Game: they build the table (build()), score what the physics reports (a bumper kicked, a rollover was
+// crossed) and keep the lamps that the table draws. They can extend reset(), nextBall(), serve(), update(), event(),
 // drained() and lost(), always calling the version here, and fill in flipped(), release() and countBonus() below.
 // A lock holds a ball with held = { until: Infinity } and locked = true: it stays on the table but isn't in
 // play (inPlay()). launchBall() puts another ball into play.
@@ -10,6 +10,9 @@
 // one to the next as it changes (render.js).
 
 import { World, makeBall, BALL_R } from './physics.js';
+
+// Tickets a match pays at game over (see drawMatch()).
+export const MATCH_TICKETS = 10;
 
 export class Game {
   constructor(settings, out = {}) {
@@ -237,6 +240,14 @@ export class Game {
       return;
     }
     this.nextBall();
+  }
+
+  // The Match, as the machines of Classic's day end a game: a number from 00 to 90 comes up, and if it's the last two
+  // digits of the score (which always ends in 0), that's a match. They gave a free game for it; on free play it's
+  // MATCH_TICKETS more tickets. About one game in ten.
+  drawMatch() {
+    const number = Math.floor(Math.random() * 10) * 10;
+    return { number, matched: number === this.score % 100 };
   }
 
   // For the attract-mode demo: a little autopilot that flips when the ball comes down to a flipper.

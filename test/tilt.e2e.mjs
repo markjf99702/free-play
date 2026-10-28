@@ -69,6 +69,11 @@ assert.equal(await page.getAttribute('meta[property="og:description"]', 'content
 // Without opening How to play, it says how to flip and launch, and what the table in the machine pays (its own
 // rate, so it stays right if the pay changes).
 const rateLine = p => p.evaluate(() => `A ticket for every ${window.tilt.table.perTicket.toLocaleString('en-US')} points.`);
+// The Match at the end of a game comes up at random, about one game in ten. Where a test counts a game's tickets or
+// reads its end card word for word, the page is kept from matching (the Match has its own test, further on).
+const noMatch = p => p.evaluate(() => {
+  Object.getPrototypeOf(Object.getPrototypeOf(window.tilt.game)).drawMatch = function () { return { number: (this.score + 10) % 100, matched: false }; };
+});
 assert.ok(await page.isVisible('#title .ctl'), 'the title card does not say how to play without opening How to play');
 assert.match(await page.textContent('#title .ctl'), /hold either side to flip\. Hold Launch and let go/);
 assert.equal(await page.textContent('#rate'), await rateLine(page), 'the title card does not say what the table pays');
@@ -167,6 +172,7 @@ assert.equal(await page.evaluate(() => window.tilt.game.world.time), frozen, 'th
 await page.tap('#resumeBtn');
 
 // Drain every ball (straight down the middle) and the game ends with a score on the list.
+await noMatch(page);
 await page.evaluate(() => { const g = window.tilt.game; g.settings.ballSave = 0; g.saveUntil = 0; g.score += 12340; });
 for (let i = 0; i < 3; i++) {
   await page.evaluate(() => { const g = window.tilt.game; const b = g.world.balls[0]; if (b) { b.x = 243; b.y = 980; b.vx = 0; b.vy = 300; g.state = 'live'; } });
@@ -179,7 +185,8 @@ assert.equal(await page.textContent('#overNote'), 'Number 1 on your list. ' + aw
 // A screen reader hears how the game ended, and not every change of score on the display.
 const paid = await page.evaluate(n => Math.floor(n / window.tilt.table.perTicket), Number(final.replace(/,/g, '')));
 await page.waitForFunction(() => document.getElementById('live').textContent.startsWith('Game over'), null, { timeout: 2000 });
-assert.equal(await page.textContent('#live'), `Game over: ${final}, number 1 on your list, ${paid} ${paid === 1 ? 'ticket' : 'tickets'}.`);
+const missed = String((Number(final.replace(/,/g, '')) + 10) % 100).padStart(2, '0'); // the Match it was kept to
+assert.equal(await page.textContent('#live'), `Game over: ${final}, number 1 on your list, ${paid} ${paid === 1 ? 'ticket' : 'tickets'}. Match ${missed}.`);
 assert.equal(await page.getAttribute('#display', 'aria-live'), null, 'the score display is read out at every change');
 assert.equal(await page.locator('#scores li').count(), 1);
 
@@ -238,6 +245,7 @@ assert.equal(await page.textContent('#rate'), await rateLine(page));
 assert.notEqual(await rateLine(page), 'A ticket for every 5,000 points.', 'the hard table pays what the others do');
 assert.equal(new URL(page.url()).searchParams.get('table'), 'haunted');
 const beforeHaunted = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+await noMatch(page);
 await page.keyboard.press('Enter');
 await page.waitForSelector('#launch:not([hidden])');
 await touch('touchStart', [{ x: lb.x + lb.width / 2, y: lb.y + lb.height / 2, id: 1 }]);
@@ -296,6 +304,48 @@ assert.equal(await page.textContent('#final'), ended.score.toLocaleString('en-US
 assert.equal(await page.evaluate(() => window.tilt.store.scores.length), listed + 1, 'End game saved the game more than once');
 assert.equal(await page.locator('#scores li').count(), listed + 1);
 
+// The Match: as the game ends the backbox rolls through the numbers and stops on one, and keeps it while the end card
+// is up. One that's the score's last two digits lights up and pays 10 more tickets, at once and out of the slot with
+// the rest, and the end card and a screen reader say so. One that isn't pays nothing more. The next game puts the
+// backbox back to its ball.
+const pocket = () => page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets);
+for (const [score, matched] of [[268550, true], [268540, false]]) {
+  await page.tap('#againBtn');
+  await page.waitForSelector('#launch:not([hidden])');
+  const before = await pocket();
+  const rolled = await page.evaluate(async s => {
+    const own = Math.random;
+    window.tilt.game.score = s;
+    Math.random = () => 0.55; // a Match of 50
+    document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click();
+    Math.random = own;
+    // what the backbox shows as it rolls
+    const seen = new Set();
+    for (const end = performance.now() + 700; performance.now() < end;) {
+      await new Promise(r => requestAnimationFrame(r));
+      seen.add(document.getElementById('ballNo').textContent + ' ' + document.getElementById('score').textContent);
+    }
+    return [...seen];
+  }, score);
+  assert.ok(rolled.length > 4 && rolled.every(t => /^Match \d0$/.test(t)), `the backbox showed ${rolled.join(', ')} as the Match rolled`);
+  const paid = Math.floor(score / 5000) + (matched ? 10 : 0);
+  assert.equal(await pocket(), before + paid, `a game of ${score} with a Match of 50 paid ${(await pocket()) - before}`);
+  await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
+  await page.waitForFunction(() => document.getElementById('ballNo').textContent === 'Match' && document.getElementById('score').textContent === '50', null, { timeout: 3000 });
+  assert.equal(await page.evaluate(() => document.getElementById('display').classList.contains('lit')), matched, 'the Match lights up when it matches');
+  const note = await page.textContent('#overNote');
+  if (matched) assert.match(note, /A ticket for every 5,000 points\. Match 50: 10 more tickets\.$/);
+  else assert.doesNotMatch(note, /Match/);
+  await page.waitForFunction(() => document.getElementById('live').textContent.startsWith('Game over'), null, { timeout: 2000 });
+  assert.match(await page.textContent('#live'), new RegExp(`, ${paid} tickets\\. Match 50${matched ? ', a match' : ''}\\.$`));
+  await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === n, String(paid), { timeout: 8000 });
+  // still showing once the demo has started again behind the card
+  await page.waitForTimeout(900);
+  assert.deepEqual(await page.evaluate(() => [window.tilt.game.mode, document.getElementById('ballNo').textContent, document.getElementById('score').textContent]), ['attract', 'Match', '50']);
+}
+await page.tap('#againBtn');
+await page.waitForFunction(() => document.getElementById('ballNo').textContent === 'Ball 1' && !document.getElementById('display').classList.contains('lit'), null, { timeout: 3000 });
+
 // A page of its own, in a new browser context (a time zone, a window size, storage of its own), whose errors count too.
 async function freshPage(options = {}) {
   const c = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block', ...options });
@@ -310,6 +360,7 @@ const west = await freshPage({ timezoneId: 'America/Los_Angeles' });
 await west.clock.setFixedTime(new Date('2026-10-14T00:30:00Z'));
 await west.goto(base);
 await west.waitForFunction(() => window.tilt);
+await noMatch(west);
 await west.tap('#startBtn');
 await west.evaluate(() => { window.tilt.game.score += 4321; });
 await west.tap('#menuBtn');
@@ -367,6 +418,7 @@ await short.addInitScript(() => localStorage.setItem('free-play.tilt', JSON.stri
 await short.goto(base);
 await short.waitForFunction(() => window.tilt);
 await short.evaluate(() => document.fonts.ready);
+await noMatch(short);
 await short.evaluate(() => { window.tilt.startGame(); window.tilt.game.score = 888880; document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
 await short.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 await short.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '177', null, { timeout: 10000 });
