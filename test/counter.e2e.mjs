@@ -58,7 +58,16 @@ const page = await ctx.newPage();
 const other = await ctx.newPage();
 await other.goto(base);
 const problems = [];
-// og.png, in words: what a link to any page shows
+// A JPEG's width and height, from its first start-of-frame marker.
+function jpegSize(b) {
+  for (let i = 2; i < b.length;) {
+    const marker = b[i + 1], len = b.readUInt16BE(i + 2);
+    if (marker >= 0xc0 && marker <= 0xc3) return [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5)];
+    i += 2 + len;
+  }
+  return null;
+}
+// og.png, in words: what the floor's link shows (and Records')
 const OG_ALT = "FREE PLAY in pink and teal neon over the line 'An arcade on your phone: eight machines on free play, and a prize counter.' Beside it, screens from the eight machines: skee-ball rings, a pinball table, a claw over a heap of plush, a coin pusher's deck, a stacker's tower, a shooting gallery's ducks and rabbits, moles in their tunnels, and a basketball dropping through the hoop under SWISH! +3.";
 page.on('pageerror', e => problems.push(e.message));
 page.on('console', m => { if (m.type() === 'error') problems.push(m.text()); });
@@ -106,11 +115,23 @@ for (const [path, hook, tix, opener] of PAGES) {
 
   // A link to the page shows that page, with a picture from the live site.
   assert.equal(await page.getAttribute('meta[property="og:url"]', 'content'), HOME + path, `${where}: og:url`);
-  assert.match(await page.getAttribute('meta[property="og:image"]', 'content'), /^https:\/\/free-play\.junkdrawer\.works\/\S+\.png$/, `${where}: og:image`);
+  // (a machine's own: its name on its sign, its line, and it on a phone, 1200 x 630, as tools/screenshots.mjs draws it;
+  // the floor's has all eight)
+  const ogImage = await page.getAttribute('meta[property="og:image"]', 'content');
+  assert.equal(ogImage, path ? `${HOME}${path}og.jpg` : `${HOME}og.png`, `${where}: og:image`);
+  const pic = await readFile(join(root, ogImage.slice(HOME.length)));
+  const size = path ? jpegSize(pic) : [pic.readUInt32BE(16), pic.readUInt32BE(20)];
+  assert.deepEqual(size, [1200, 630], `${where}: the link preview's picture is ${size.join(' x ')}`);
+  assert.ok(pic.length < 160_000, `${where}: the link preview's picture is ${pic.length} bytes`);
   // and says what's in the picture, for anyone who can't see it
   const ogAlt = await page.getAttribute('meta[property="og:image:alt"]', 'content');
-  if ((await page.getAttribute('meta[property="og:image"]', 'content')).endsWith('/og.png')) assert.equal(ogAlt, OG_ALT, `${where}: og:image:alt`);
-  else assert.ok(ogAlt && ogAlt.length > 40, `${where}: og:image:alt`);
+  if (!path) assert.equal(ogAlt, OG_ALT, `${where}: og:image:alt`);
+  else {
+    // (a machine's: its name on its sign, and the line under it, which is the link's line too)
+    const name = (await page.getAttribute('meta[property="og:title"]', 'content')).replace(/, at Free Play$/, '').toUpperCase();
+    assert.ok(ogAlt.startsWith(name + ' '), `${where}: og:image:alt starts '${ogAlt.slice(0, 20)}'`);
+    assert.ok(ogAlt.includes(`'${await page.getAttribute('meta[property="og:description"]', 'content')}'`), `${where}: og:image:alt has another line`);
+  }
 
   assert.equal(await text(tix), '1,234', `${where}: the tickets, with a comma`);
   // the ticket count in a machine's corner says what it is and how many, to a screen reader too

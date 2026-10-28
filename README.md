@@ -161,7 +161,7 @@ A machine is a folder with its own `index.html`. To put one on the floor:
 1. Load `../shared/carry.js` first in its `<head>` and `../shared/arcade.css` before its own styles, and point its icon, manifest and fonts at the arcade's (`../icon.svg`, `../manifest.webmanifest`, `../fonts/`).
 2. Pay tickets with `pay(n)` from `shared/wallet.js`, and show them coming out of the slot with `feed()` and `PAYOUT` from `shared/counter.js`; or, for a machine that pays in prizes the way Clutch does, put them on the shelf with `give(prize)` (and list them in `shared/prizes.js`). Open the prize counter with `openCounter()`. A machine with physics can use matter-js from `shared/matter.min.js`, as Clutch and Topple do.
 3. Keep its own saves under a key starting `free-play.` and its name, link back to the floor (`../`), and register `../sw.js` for offline. Make sound only when `soundOn()` from `shared/sound.js` says so, and have its Sound button flip the arcade's switch with `switchSound()`.
-4. Give it a cabinet in `index.html` (with its folder's name as the cabinet's `id`, a button for it in the row under the pocket, in `css/floor.css` its sign's colours, and a picture of it in `floor/`, which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list (bump `CACHE`, and set `FILES` to what `npm test` says), and give it a test.
+4. Give it a cabinet in `index.html` (with its folder's name as the cabinet's `id`, a button for it in the row under the pocket, in `css/floor.css` its sign's colours, and a picture of it in `floor/` and its own link preview, `og.jpg` in its folder, both of which `tools/screenshots.mjs` draws), add its files to `sw.js`'s list (bump `CACHE`, and set `FILES` to what `npm test` says), and give it a test.
 
 ## Running it
 
@@ -170,7 +170,7 @@ It's a static site: plain HTML, CSS and JavaScript, with no build step.
 ```sh
 npx serve .                   # or any static file server, then open the printed address
 npm test                      # unit tests in node, then the floor, the prize counter, the move and each machine in Chromium (needs Playwright)
-node tools/screenshots.mjs    # redraws floor/*.jpg, docs/*.png and og.png
+node tools/screenshots.mjs    # redraws floor/*.jpg, docs/*.png, og.png and each machine's og.jpg
 node tools/make-icons.mjs     # redraws the PNG icons from icon.svg
 node tools/tune.mjs 60 space  # plays Tilt's tables with the autopilot and reports how balls drain and what they score
 ```
@@ -203,7 +203,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `topple/`: Topple. `js/machine.js` is the pusher (the shelf, in the code), the deck and the coins seen from above, in millimetres, run by matter-js, `js/draw.js` puts it in perspective with a simple camera, `js/app.js` runs the chute, the cup and what comes over the edge, and `js/sound.js` makes the noises.
 - `floor/`: the pictures on the cabinets' screens.
 - `docs/`: the README's pictures of each machine and the counter on a phone.
-- `tools/`: `screenshots.mjs` draws the pictures (`floor/*.jpg`, `docs/*.png` and `og.png`) from the pages themselves, `make-icons.mjs` draws the PNG icons from `icon.svg` and `tools/icon-full-bleed.svg` (the one with square corners, for phones that round them), and `tune.mjs` plays Tilt's tables with the autopilot and reports how balls drain and what they score.
+- `tools/`: `screenshots.mjs` draws the pictures (`floor/*.jpg`, `docs/*.png`, the floor's link preview `og.png`, and each machine's own, `hoops/og.jpg` and so on: its sign, its line and it on a phone) from the pages themselves, `make-icons.mjs` draws the PNG icons from `icon.svg` and `tools/icon-full-bleed.svg` (the one with square corners, for phones that round them), and `tune.mjs` plays Tilt's tables with the autopilot and reports how balls drain and what they score.
 - `test/`: unit tests for the arcade and each machine (`*.test.mjs`), and browser tests for the floor (`e2e.mjs`), the prize counter on every page (`counter.e2e.mjs`), the move (`carry.e2e.mjs`) and each machine.
 - `fonts/`: Bungee, Bungee Outline and Figtree (SIL Open Font License), served from here so nothing loads from elsewhere.
 - `sw.js`: keeps a copy of the floor and every machine for playing offline. An installed copy is downloaded whole again only when `sw.js` itself changes, so it carries `FILES`, a fingerprint of every file it keeps: change any of them and `npm test` fails until `FILES` is changed to match (it says what to), so a release never leaves a copy half old and half new. When its list of files changes, bump the number in `CACHE` too.

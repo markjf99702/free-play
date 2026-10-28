@@ -1,5 +1,5 @@
-// Renders the pictures: the cabinet screens on the floor (floor/*.jpg), the README's (docs/*.png) and the link
-// preview (og.png):  node tools/screenshots.mjs
+// Renders the pictures: the cabinet screens on the floor (floor/*.jpg), the README's (docs/*.png), the floor's link
+// preview (og.png) and each machine's (roll-up/og.jpg and so on):  node tools/screenshots.mjs
 // Math.random and the date are fixed, so the same pictures come out every time.
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -68,6 +68,9 @@ async function rollUpBoard(page) {
   await page.waitForTimeout(260);
 }
 
+// The machines on a phone for their own link previews, where it isn't the README's picture.
+const phones = {};
+
 // The cabinet screens, 4:3: Roll Up's ball in the air over the rings, and Tilt's demo ball among the bumpers.
 {
   const page = await open('roll-up/', { width: 390, height: 844 }, 2);
@@ -87,6 +90,7 @@ async function rollUpBoard(page) {
   await page.evaluate(() => { document.getElementById('title').hidden = true; });
   await page.waitForTimeout(1600); // the demo ball up among the bumpers
   await page.screenshot({ path: join(root, 'floor/tilt.jpg'), type: 'jpeg', quality: 82, clip: { x: 0, y: 60, width: 390, height: 292 } });
+  phones.tilt = await page.screenshot(); // (for Tilt's link preview, below: the table, where its README picture is a game's end)
   await page.context().close();
 }
 
@@ -258,6 +262,40 @@ async function rollUpBoard(page) {
   await page.evaluate(() => document.fonts.ready);
   const png = await page.screenshot();
   await writeFile(join(root, 'og.png'), UPNG ? palette(png) : png);
+  await page.context().close();
+}
+
+// Each machine's own link preview (roll-up/og.jpg and so on), 1200 x 630, in the floor's card's style: its name on its
+// sign from the floor (css/floor.css), its line from its page, and the machine on a phone (its docs/phone-*.png, drawn
+// above, or Tilt's table). The pages point their og:image at it, and never load it. (A JPEG: as a PNG the phone's
+// picture takes it over 300 KB.)
+for (const [m, name] of [['roll-up', 'Roll Up'], ['tilt', 'Tilt'], ['clutch', 'Clutch'], ['topple', 'Topple'], ['highrise', 'Highrise'], ['popgun', 'Popgun'], ['bonkers', 'Bonkers'], ['hoops', 'Hoops']]) {
+  const page = await open('', { width: 1200, height: 630 }, 1);
+  const html = await readFile(join(root, m, 'index.html'), 'utf8');
+  const line = html.match(/<meta property="og:description" content="([^"]*)">/)[1];
+  const trim = (await readFile(join(root, 'css/floor.css'), 'utf8')).match(new RegExp(`\\.cab\\.${m} \\{ --trim: (#[0-9a-f]{6})`))?.[1] || '#f2c14e';
+  const glow = `rgba(${[1, 3, 5].map(i => parseInt(trim.slice(i, i + 2), 16)).join(', ')}, .22)`;
+  await page.setContent(`<!doctype html><html><head>
+    <link rel="stylesheet" href="${base}shared/arcade.css"><link rel="stylesheet" href="${base}css/floor.css">
+    <style>
+      html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+      body { padding: 0; min-height: 0; background: radial-gradient(ellipse at 28% 0%, ${glow}, transparent 62%), #0d0b1f; position: relative; }
+      .left { position: absolute; left: 70px; top: 0; bottom: 0; width: 680px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+      .marquee { display: inline-block; margin: 0; padding: 16px 22px 14px; zoom: 2.3; }
+      p { margin: 34px 0 0; max-width: 640px; font: 600 36px/1.25 var(--body); color: #fbeed2; text-wrap: balance; }
+      small { display: block; margin-top: 22px; font: 500 24px var(--body); color: rgba(251, 238, 210, .6); }
+      small b { font: 400 30px var(--sign); color: #ffd0e3; text-shadow: 0 0 4px var(--pink), 0 0 12px var(--pink); margin-right: 12px; }
+      small b + b { color: #d6fffb; text-shadow: 0 0 4px var(--teal), 0 0 12px var(--teal); margin-right: 16px; }
+      .phone { position: absolute; right: 104px; top: 34px; width: 250px; padding: 11px; border-radius: 40px; background: #050407; transform: rotate(3deg);
+        box-shadow: 0 0 0 3px ${trim}, 0 24px 60px rgba(0, 0, 0, .65); }
+      .phone img { display: block; width: 100%; border-radius: 30px; }
+    </style></head><body>
+    <div class="left ${m}"><span class="marquee">${name}</span><p>${line}</p><small><b>Free</b><b>Play</b>free-play.junkdrawer.works/${m}/</small></div>
+    <div class="phone"><img src="${phones[m] ? `data:image/png;base64,${phones[m].toString('base64')}` : `${base}docs/phone-${m}.png`}" alt=""></div>
+  </body></html>`);
+  await page.evaluate(() => Promise.all([document.fonts.ready, ...[...document.images].map(i => i.decode())]));
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: join(root, m, 'og.jpg'), type: 'jpeg', quality: 90 });
   await page.context().close();
 }
 
