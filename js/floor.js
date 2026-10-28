@@ -81,10 +81,11 @@ function machines() {
 }
 
 // Today's special, under the pocket: which machine, and its goal (or that it's made), and on that machine's cabinet the
-// badge says Special rather than Free play (and a screen reader hears the line with the cabinet).
+// badge says Special rather than Free play (and a screen reader hears the line with the cabinet). The machine's name
+// goes to it, and Tilt's to the day's table (a link that names a table opens on it).
 function special() {
   const s = specialFor(), made = madeToday(), to = document.createElement('a');
-  to.href = `${s.machine}/`;
+  to.href = s.table ? `${s.machine}/?table=${s.table}` : `${s.machine}/`;
   to.textContent = s.name;
   const goal = s.goalText.charAt(0).toUpperCase() + s.goalText.slice(1);
   $('today').replaceChildren("Today's special: ", to, made ? `. You made it: ${BONUS} more tickets. A new one tomorrow.` : `. ${goal} for ${BONUS} more tickets.`);
