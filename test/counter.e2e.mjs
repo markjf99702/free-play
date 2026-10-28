@@ -132,6 +132,20 @@ for (const [path, hook, tix, opener] of PAGES) {
     assert.deepEqual(await under(1500, 'bear'), ['Enough for the giant teddy bear!', false, true], `${where}: with enough`);
     assert.deepEqual((await under(1500, null))?.[1], true, `${where}: with no goal`);
     assert.equal(await page.locator('.fp-goal').count(), 1, `${where}: one line, however many rounds`);
+    // And it stays true while the card is up: traded for at the counter (the end card has a button for it), the line
+    // goes, and another prize picked there to save up for, it says so.
+    const line = () => page.evaluate(() => { const el = document.querySelector('#payout + .fp-goal'); return [el.textContent, el.hidden]; });
+    await under(1500, 'bear');
+    await page.waitForTimeout(800); // (a tap right after a trade is taken for a double tap, and ignored)
+    await page.click(opener);
+    await page.click('.fp-prize[data-id="bear"]');
+    assert.equal((await line())[1], true, `${where}: the bear traded for, the line under the dispenser goes`);
+    await page.waitForTimeout(800);
+    await page.click('.fp-prize[data-id="giraffe"]');
+    await page.click('.fp-toast .fp-act');
+    assert.deepEqual(await line(), ['10,000 to go for the life-size giraffe', false], `${where}: the giraffe picked, the line says so`);
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => localStorage.removeItem('free-play.goal'));
   }
 
   // A big prize (600 tickets and up) is handed over with a longer fanfare than a small one's two bells, inside a

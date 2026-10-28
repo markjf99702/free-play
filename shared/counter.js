@@ -389,11 +389,19 @@ function goalUnder(box) {
   if (!box.insertAdjacentElement) return; // (a stand-in for the box, in the tests)
   let el = box.nextElementSibling;
   if (!el?.classList.contains('fp-goal')) el = box.insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { className: 'fp-goal' }));
+  goalNow(el);
+}
+function goalNow(el) {
   const g = goal(), have = read().tickets;
   el.textContent = goalLine(have, g);
   el.classList.toggle('enough', !!g && have >= g.cost);
   el.hidden = !g;
 }
+// It stays true while the card is up: the prize traded for, or another picked, at the counter the card's own button
+// opens (or in another tab), and the line says so at once.
+const goalsNow = () => globalThis.document?.querySelectorAll('.fp-goal').forEach(goalNow);
+globalThis.addEventListener?.('free-play:goal', goalsNow);
+globalThis.addEventListener?.('free-play:wallet', goalsNow);
 
 // A quick swell: the pocket in a machine's corner, as the last of a round's tickets go into it.
 export function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
