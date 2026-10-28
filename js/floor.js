@@ -99,6 +99,28 @@ function special() {
   }
 }
 
+// Safari clears a site's saves, tickets and shelf and all, after seven days of using Safari without a visit to it, and
+// a Home Screen app keeps its own count of days and isn't expected to lose them (the WebKit blog, 'Full Third-Party
+// Cookie Blocking and More', 24 March 2020). So in a Safari tab on an iPhone or iPad, and never in the Home Screen app,
+// a line under the pocket says to add it there, until its × puts it away (free-play.home-screen, on this phone only).
+// (navigator.standalone is Safari's own on an iPhone and iPad: false in a tab, true in the Home Screen app, and not
+// there at all anywhere else. Chrome, Firefox and Edge there say who they are.)
+const AWAY = 'free-play.home-screen';
+function safariTab() {
+  const n = globalThis.navigator, ua = n?.userAgent || '';
+  return n?.standalone === false && n.maxTouchPoints > 0 && /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|DuckDuckGo/.test(ua);
+}
+function homeScreen() {
+  let away = false;
+  try { away = !!JSON.parse(localStorage.getItem(AWAY))?.away; } catch { /* storage off: it stays until put away */ }
+  $('keep').hidden = away || !safariTab();
+}
+$('keepX').addEventListener('click', () => {
+  try { localStorage.setItem(AWAY, JSON.stringify({ away: true })); } catch { /* storage off: away for this visit */ }
+  $('keep').hidden = true;
+  $('purse').focus({ preventScroll: true }); // (the keyboard goes on from the pocket, not from a button that's gone)
+});
+
 function pocket() {
   const w = wallet.read();
   $('tix').textContent = fmt(w.tickets);
@@ -131,6 +153,7 @@ addEventListener('storage', e => { if (e.key === null || e.key.startsWith('free-
 pocket();
 machines();
 special();
+homeScreen();
 
 // Back from a machine by one of its own links (there's no Back button on a phone's home-screen app), the floor opens
 // at that machine's cabinet rather than at the top of a long page. A reload, or Back and Forward, are left where the

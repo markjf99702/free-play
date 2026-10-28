@@ -728,6 +728,44 @@ await tab.close();
   await page.evaluate(([keys, was]) => keys.forEach((k, i) => (was[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, was[i]))), [KEYS, was]);
 }
 
+// In a Safari tab on an iPhone, a line under the pocket says to add Free Play to the Home Screen so Safari keeps the
+// tickets (Safari clears a site's saves after seven days of use without a visit; a Home Screen app keeps its own
+// count), with the row of machines still on the first screen, until its × puts it away for good. Not in the Home
+// Screen app, not in Chrome on an iPhone, and not here in Chromium.
+{
+  assert.equal(await page.isHidden('#keep'), true, 'the Home Screen line shows in Chromium on a computer');
+  const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+  const CHROME = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1';
+  const phone = async (standalone, userAgent = IPHONE) => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent, serviceWorkers: 'block' });
+    await c.addInitScript(s => Object.defineProperty(Navigator.prototype, 'standalone', { get: () => s, configurable: true }), standalone);
+    const p = await c.newPage();
+    p.on('pageerror', e => problems.push(e.message));
+    await p.goto(base);
+    await p.waitForFunction(() => !!window.freePlay);
+    return p;
+  };
+  const tab = await phone(false);
+  assert.equal(await tab.isVisible('#keep'), true, "in a Safari tab on an iPhone there's no line about the Home Screen");
+  assert.equal((await tab.textContent('#keep span')).replaceAll('\u00a0', ' '), 'Add Free Play to your Home Screen so Safari keeps your tickets.'); // ('Home Screen' kept together)
+  const row = await tab.locator('.aisle a').evaluateAll(els => Math.max(...els.map(a => a.getBoundingClientRect().bottom)));
+  assert.ok(row <= 844, `with the Home Screen line, the row of machines runs ${Math.round(row - 844)} px below the first screen`);
+  const x = await tab.locator('#keepX').boundingBox();
+  assert.ok(x.width >= 44 && x.height >= 44, `the line's × is ${x.width} x ${x.height} px`);
+  assert.match(await tab.locator('#keepX').ariaSnapshot(), /^- button "Hide this"/, "the line's × to a screen reader");
+  await tab.tap('#keepX');
+  assert.equal(await tab.isHidden('#keep'), true, 'the × leaves the line up');
+  await tab.reload();
+  await tab.waitForFunction(() => !!window.freePlay);
+  assert.equal(await tab.isHidden('#keep'), true, 'put away, the line comes back on the next visit');
+  await tab.context().close();
+  for (const [standalone, ua, where] of [[true, IPHONE, 'the Home Screen app'], [false, CHROME, 'Chrome on an iPhone']]) {
+    const p = await phone(standalone, ua);
+    assert.equal(await p.isHidden('#keep'), true, `the Home Screen line shows in ${where}`);
+    await p.context().close();
+  }
+}
+
 // Today's special under the pocket, on a day that's Tilt's (Oct 29, 2026, on Haunted House): which machine, its goal,
 // and the badge on its cabinet; and once it's made, that it's made. Tilt's title card says the goal too.
 {

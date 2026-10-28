@@ -69,6 +69,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .today a { padding: 13px 4px; margin: 0 -4px; color: var(--gold); text-decoration-thickness: 1px; text-underline-offset: 3px; } /* 44 px tall to tap */
 /* (on the narrowest phones it would break onto a second line in the pocket, so there only a screen reader hears it:
    the row under the pocket has the prize counter too) */
+/* In a Safari tab on an iPhone or iPad, a line saying to add it to the Home Screen (see js/floor.js), with a × to put
+   it away */
+.keep {
+  display: flex; align-items: center; gap: 10px; width: fit-content; max-width: min(100%, 36em); margin: 12px auto 0; padding: 2px 2px 2px 16px;
+  border: 1px solid rgba(255, 211, 106, .35); border-radius: 18px; background: linear-gradient(rgba(255, 211, 106, .07), rgba(255, 211, 106, .07)), var(--carpet);
+  font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--ink2); text-align: left;
+}
+.keep span { flex: 1; text-wrap: balance; }
+.keep-x { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--ink2); font: 22px/1 var(--body); }
+.keep-x:active { background: rgba(251, 238, 210, .1); }
 @media (max-width: 359.98px) {
   .purse .to { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }

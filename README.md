@@ -38,7 +38,7 @@
 - **Your records.** Every machine with a score keeps its top five, with the day each was set (Tilt one for each table), and its end card says when a round makes the list: 'Number 3 on your list.' **Records**, at the end of the row under your pocket, shows them all, with Roll Up's longest run of days, Highrise's top-outs and the plush you've won, and the arcade's all-time totals of tickets won, rounds played and prizes traded, counted from the day it started counting.
 - **Sound.** One switch for the whole arcade: Sound in any machine's menu, or at the foot of the floor, turns every machine on or off, in every open tab too.
 - **Upright or on its side.** It's made for a phone held upright. On its side, each machine's cards stand in two columns, what they say on the left and their buttons on the right, so Play is in sight without scrolling.
-- No account and no server. Your tickets, prizes and scores stay in your browser. It works offline (on a connection that isn't answering, a page opens from the offline copy after four seconds), and installs to a phone's home screen as one app.
+- No account and no server. Your tickets, prizes and scores stay in your browser. It works offline (on a connection that isn't answering, a page opens from the offline copy after four seconds), and installs to a phone's home screen as one app. In a Safari tab on an iPhone or iPad, a line under the pocket says to add it to the Home Screen (until its × puts it away): Safari clears a site's saves, tickets and all, after seven days of using Safari without a visit, and an app on the Home Screen keeps its own count ([WebKit blog](https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/), 24 March 2020).
 
 ## Roll Up
 
