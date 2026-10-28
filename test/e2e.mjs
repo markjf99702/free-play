@@ -81,6 +81,18 @@ assert.equal(await page.textContent('#trade'), 'Trade tickets', "the booth's but
 // the prize counter, all on the first screen: a tap on one brings its cabinet to the top of the screen (the counter at
 // the foot of the floor, into view), the keyboard goes with it, and the address stays as it was.
 assert.ok((await page.locator('#purse .to').boundingBox())?.width > 50, "the pocket doesn't show that it opens the prize counter");
+// (and the pocket stays one line, with a pocketful of tickets, from the narrowest phones up: on those, under 360 px,
+// only a screen reader hears that it opens the counter)
+await page.evaluate(() => { document.getElementById('tix').textContent = '123,456'; });
+for (const width of [320, 344, 359, 360, 390]) {
+  await page.setViewportSize({ width, height: 844 });
+  const { h, shown } = await page.evaluate(() => ({ h: document.getElementById('purse').getBoundingClientRect().height, shown: document.querySelector('#purse .to').getBoundingClientRect().width > 50 }));
+  assert.ok(h < 48, `at ${width} px, the pocket is ${Math.round(h)} px tall: on two lines`);
+  assert.equal(shown, width >= 360, `at ${width} px, the pocket ${shown ? 'shows' : "doesn't show"} that it opens the prize counter`);
+}
+assert.equal(await nameOf(page.locator('#purse')), '123,456 tickets · Prize counter', "the purse's name on the narrowest phones");
+await page.setViewportSize({ width: 390, height: 844 });
+await page.evaluate(() => window.freePlay.pocket());
 const hops = await page.locator('.aisle a').evaluateAll(els => els.map(a => [a.textContent, a.getBoundingClientRect().bottom]));
 assert.deepEqual(hops.map(h => h[0]), [...MACHINES, 'Prize counter'], 'the row of machines under the pocket');
 assert.ok(Math.max(...hops.map(h => h[1])) <= 844, `the row of machines runs ${Math.round(Math.max(...hops.map(h => h[1])) - 844)} px below the first screen`);

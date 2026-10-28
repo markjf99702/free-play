@@ -53,6 +53,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .purse b { min-width: 1ch; font: 400 18px var(--disp); color: var(--gold); } /* sent empty: js/floor.js fills it */
 .purse .to { color: var(--ink3); }
+/* (on the narrowest phones it would break onto a second line in the pocket, so there only a screen reader hears it:
+   the row under the pocket has the prize counter too) */
+@media (max-width: 359.98px) {
+  .purse .to { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 
 /* Under the pocket, a row of the machines, each in its sign's colours, and the prize counter: a tap goes straight to
    its cabinet (js/floor.js), so the first screen on a phone shows all eight, and Hoops at the far end is one tap away. */
