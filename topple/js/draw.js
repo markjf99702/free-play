@@ -187,9 +187,16 @@ export function createDraw(canvas) {
     roundRect(c, { x: tray.x + 5, y: tray.y + 5, w: tray.w - 10, h: tray.h - 10 }, (tray.h - 10) / 2);
     const tg = c.createLinearGradient(0, tray.y, 0, tray.y + tray.h); tg.addColorStop(0, '#000'); tg.addColorStop(1, '#1d2b31');
     c.fillStyle = tg; c.fill();
-    c.font = `400 ${Math.max(9, tray.h * 0.2)}px Bungee, Impact, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    // (no wider than the glass: on a phone on its side, where the cabinet is narrow, the words get a little smaller
+    // rather than run off its rounded corners)
+    const rule = 'A TICKET FOR EVERY TWO COINS OVER THE EDGE';
+    let size = Math.max(9, tray.h * 0.2);
+    c.font = `400 ${size}px Bungee, Impact, sans-serif`;
+    const wide = c.measureText(rule).width;
+    if (wide > win.w) { size *= win.w / wide; c.font = `400 ${size}px Bungee, Impact, sans-serif`; }
+    c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillStyle = 'rgba(251, 238, 210, .85)';
-    c.fillText('A TICKET FOR EVERY TWO COINS OVER THE EDGE', tray.x + tray.w / 2, tray.y + tray.h + tray.h * 0.55);
+    c.fillText(rule, tray.x + tray.w / 2, tray.y + tray.h + tray.h * 0.55);
   }
 
   // ---------- each frame ----------
