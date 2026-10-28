@@ -8,14 +8,14 @@
 // fingerprint of every file in SHELL: change any of them and test/arcade.test.mjs fails until FILES is changed to
 // match (it says what to), which changes this file, so every copy is made whole again at once. Bump CACHE's number
 // as well when the list itself changes.
-const CACHE = 'free-play-v11';
-const FILES = '7676bd6c'; // test/arcade.test.mjs checks this
+const CACHE = 'free-play-v12';
+const FILES = '81a81af8'; // test/arcade.test.mjs checks this
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the page for an address that is not there
   '404.html',
   // the machines by their addresses as well as by index.html, so either opens offline
-  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/', 'hoops/',
+  'roll-up/', 'tilt/', 'clutch/', 'topple/', 'highrise/', 'popgun/', 'bonkers/', 'hoops/', 'records/',
   // floor
   'css/floor.css', 'js/floor.js', 'floor/bonkers.jpg', 'floor/clutch.jpg', 'floor/highrise.jpg', 'floor/hoops.jpg',
   'floor/popgun.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
@@ -23,6 +23,8 @@ const SHELL = [
   'shared/arcade.css', 'shared/calendar.js', 'shared/carry.js', 'shared/counter.js', 'shared/insets.js', 'shared/matter.min.js',
   'shared/prizes.js', 'shared/records.js', 'shared/wallet.js',
   'fonts/bungee-outline.woff2', 'fonts/bungee.woff2', 'fonts/figtree.woff2',
+  // the records
+  'records/index.html', 'records/records.css', 'records/records.js',
   // Roll Up
   'roll-up/css/app.css', 'roll-up/index.html', 'roll-up/js/app.js', 'roll-up/js/daily.js', 'roll-up/js/physics.js',
   'roll-up/js/scene.js', 'roll-up/js/sound.js',

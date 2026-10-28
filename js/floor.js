@@ -128,7 +128,7 @@ backFrom();
 // The row of machines under the pocket: a tap on one goes to its cabinet (or the prize counter at the back), gliding
 // there unless the phone is set to cut down motion, and leaves the address as it was, so the phone's Back still leaves
 // the floor. The keyboard goes with it, so Tab carries on from there. (Without this script they're plain links to the
-// same places.)
+// same places. Records, at the end of the row, is a page of its own: a link like any other.)
 for (const hop of document.querySelectorAll('.aisle a')) {
   hop.addEventListener('click', e => {
     const to = document.getElementById(hop.hash.slice(1));

@@ -255,6 +255,7 @@ function gameOver() {
     result.key = key;
     result.streak = prev && prev.key === dayBefore(key) ? (prev.streak || 1) + 1 : 1;
     saved.daily = result;
+    saved.longest = Math.max(Number(saved.longest) || 0, result.streak); // the longest run of days, for the records
     delete saved.going;
   } else {
     result.isBest = game.score > saved.best && !first;

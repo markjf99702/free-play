@@ -170,6 +170,7 @@ test("today's card left part-way waits all day, and counts as played at midnight
   assert.equal(s.going, undefined, "it isn't on the go any more");
   assert.deepEqual(s.daily, { key: '2026-10-27', score: 150, balls: going.balls, won: 15, streak: 4, unfinished: true });
   assert.equal(s.games, 5, 'a game played');
+  assert.equal(s.longest, 4, 'the longest run of days, for the records');
   assert.equal(s.best, 200, "and a card's score isn't a regular game's best");
   // a run of days starts again after a day missed, and a card with no balls rolled is played for nothing
   assert.equal(settle({ going, daily: { key: '2026-10-20', balls: [], streak: 6 } }, '2026-10-29').daily.streak, 1);

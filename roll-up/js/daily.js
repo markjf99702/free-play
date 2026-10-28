@@ -41,7 +41,7 @@ export function settle(s, today = dayKey()) {
   const prev = s.daily;
   const streak = prev && prev.key === dayBefore(g.key) && Array.isArray(prev.balls) ? (Number(prev.streak) || 1) + 1 : 1;
   const won = ticketsFor(score);
-  return { ...rest, games: (Number(s.games) || 0) + 1, daily: { key: g.key, score, balls, won, streak, unfinished: true } };
+  return { ...rest, games: (Number(s.games) || 0) + 1, longest: Math.max(Number(s.longest) || 0, streak), daily: { key: g.key, score, balls, won, streak, unfinished: true } };
 }
 
 // What a ball is worth: its hole, doubled for a called shot, doubled again for the golden ball.

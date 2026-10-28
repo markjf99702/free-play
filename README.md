@@ -33,7 +33,7 @@
 - **Tickets.** Roll Up pays one for every 10 points, and a fair game earns about 25 to 35. Tilt pays one for every 5,000 on Classic and Space, and one for every 2,500 on Haunted House, the hard one, and a fair game earns about 50 to 70. They feed out of a slot at the end. Topple pays one for every two coins pushed over its front edge, about 8 to 18 a cup, Highrise one for every floor built, Popgun one for every 30 points, Bonkers one for every 15, and Hoops one for every 4.
 - **Plush and prizes.** Clutch is the one machine that pays in prizes instead of tickets: whatever its claw drops down the chute goes straight on your shelf. So does a prize pushed off Topple's deck.
 - **The prize counter** is on the floor and in every machine's menus. Trade tickets for anything from a 5-ticket lollipop to a 2,500-ticket enormous unicorn, and it sits on your shelf next to your plush. Tapped the wrong one? For a few seconds after a trade, Undo gives the tickets back.
-- **Your records.** Every machine with a score keeps its top five, with the day each was set (Tilt one for each table), and its end card says when a round makes the list: 'Number 3 on your list.'
+- **Your records.** Every machine with a score keeps its top five, with the day each was set (Tilt one for each table), and its end card says when a round makes the list: 'Number 3 on your list.' **Records**, at the end of the row under your pocket, shows them all, with Roll Up's longest run of days, Highrise's top-outs and the plush you've won, and the arcade's all-time totals of tickets won, rounds played and prizes traded, counted from the day it started counting.
 - **Upright or on its side.** It's made for a phone held upright. On its side, each machine's cards stand in two columns, what they say on the left and their buttons on the right, so Play is in sight without scrolling.
 - No account and no server. Your tickets, prizes and scores stay in your browser. It works offline (on a connection that isn't answering, a page opens from the offline copy after four seconds), and installs to a phone's home screen as one app.
 
@@ -177,8 +177,10 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 ### Files
 
 - `index.html`, `css/floor.css`, `js/floor.js`: the floor, with a row of buttons to each machine, a cabinet for each, and the prize counter at the back.
+- `records/`: the Records page, which reads every machine's save and the all-time totals, and changes nothing.
 - `404.html`: the page for a mistyped address ("That machine isn't on the floor."), with the way to the floor and to each machine. GitHub Pages serves it for any address that isn't there, at any depth, and the offline copy does the same for a page it hasn't kept, so its styles are on the page and its links and fonts start from the site's root (`/hoops/`), the one place a path here isn't relative.
 - `shared/wallet.js`: the one pocket of tickets and shelf of prizes every machine pays into and the counter spends from.
+- `shared/records.js`: each machine's top five, and the all-time totals (`free-play.totals`, kept apart from the pocket).
 - `shared/counter.js`, `shared/arcade.css`: the prize counter, the ticket dispenser at the end of a game, and the toast, for every page.
 - `shared/prizes.js`: what's at the prize counter and what it costs, the plush Clutch gives out, the prizes on Topple's deck and Highrise's trophy.
 - `shared/matter.min.js`: matter-js, the 2D physics Clutch and Topple run on (MIT licence, kept here so it works offline).

@@ -94,7 +94,7 @@ assert.equal(await nameOf(page.locator('#purse')), '123,456 tickets · Prize cou
 await page.setViewportSize({ width: 390, height: 844 });
 await page.evaluate(() => window.freePlay.pocket());
 const hops = await page.locator('.aisle a').evaluateAll(els => els.map(a => [a.textContent, a.getBoundingClientRect().bottom]));
-assert.deepEqual(hops.map(h => h[0]), [...MACHINES, 'Prize counter'], 'the row of machines under the pocket');
+assert.deepEqual(hops.map(h => h[0]), [...MACHINES, 'Prize counter', 'Records'], 'the row of machines under the pocket');
 assert.ok(Math.max(...hops.map(h => h[1])) <= 844, `the row of machines runs ${Math.round(Math.max(...hops.map(h => h[1])) - 844)} px below the first screen`);
 for (const [hop, sel] of [['hoops', '.cab.hoops'], ['topple', '.cab.topple'], ['counter', '.booth']]) {
   await page.evaluate(() => scrollTo(0, 0));
@@ -500,6 +500,45 @@ await tab.evaluate(saves => Object.entries(saves).forEach(([k, v]) => (v == null
   { 'free-play.popgun': popSave, 'free-play.wallet': walletSave });
 await tab.close();
 
+// Records, at the end of the row of machines: each machine's top five with its days, what else it keeps worth a look,
+// and the all-time totals. (The saves there were are put back after.)
+{
+  const KEYS = ['free-play.roll-up', 'free-play.tilt', 'free-play.clutch', 'free-play.topple', 'free-play.highrise', 'free-play.popgun', 'free-play.bonkers', 'free-play.hoops', 'free-play.totals'];
+  const was = await page.evaluate(keys => keys.map(k => localStorage.getItem(k)), KEYS);
+  await page.evaluate(keys => keys.forEach(k => localStorage.removeItem(k)), KEYS);
+  await page.evaluate(([today]) => {
+    const put = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+    put('free-play.roll-up', { best: 410, games: 9, longest: 6, top: [{ score: 410, date: '2026-10-21' }, { score: 380, date: today }] });
+    put('free-play.tilt', { scores: [{ score: 268550, date: '2026-10-24' }], hauntedScores: [{ score: 96200, date: '2025-12-31' }] });
+    put('free-play.clutch', { goes: 40, won: { frog: 3, star: 1 } });
+    put('free-play.topple', { best: 34, cups: 4, prizes: 1, top: [{ score: 34, date: '2026-10-20' }] });
+    put('free-play.highrise', { best: 15, games: 8, tops: 2, top: [{ score: 15, date: '2026-10-26' }, { score: 11, date: '2026-10-23' }] });
+    put('free-play.bonkers', { best: 795, rounds: 3 }); // a best from before there was a list: no day
+    put('free-play.totals', { since: '2026-10-28', tickets: 1874, traded: 9, rounds: { 'roll-up': 12, tilt: 4 } });
+  }, [today]);
+  await page.goto(base);
+  await page.waitForFunction(() => !!window.freePlay);
+  await page.click('.aisle a.records');
+  await page.waitForURL(base + 'records/');
+  await page.waitForFunction(() => !!window.records);
+  const text = id => page.evaluate(id => document.getElementById(id).innerText.replace(/\s+/g, ' ').trim(), id);
+  assert.deepEqual([await text('totTickets'), await text('totRounds'), await text('totTraded'), await text('since')], ['1,874', '16', '9', 'Counted since Oct 28.']);
+  const short = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  assert.equal(await text('rollUpRec'), `410 Oct 21 380 ${short} Longest run of days on today's card: 6.`);
+  assert.equal(await text('tiltRec'), 'Classic 268,550 Oct 24 Haunted House 96,200 Dec 31, 2025');
+  assert.equal(await text('clutchRec'), '4 plush won 🐸 3 🌟 1');
+  assert.equal(await text('toppleRec'), '34 tickets Oct 20 1 prize pushed off the deck.');
+  assert.equal(await text('highriseRec'), 'Floor 15 Oct 26 Floor 11 Oct 23 Topped out twice.');
+  assert.equal(await text('bonkersRec'), '795', 'a best kept from before the list, with no day');
+  assert.equal(await text('popgunRec'), 'No rounds yet.');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'the records scroll sideways on a phone');
+  // a machine's name goes to it, and the way back goes to the floor
+  assert.equal(await page.getAttribute('#recHoops', 'href'), '../hoops/');
+  await page.click('.to-floor');
+  await page.waitForURL(base);
+  await page.evaluate(([keys, was]) => keys.forEach((k, i) => (was[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, was[i]))), [KEYS, was]);
+}
+
 // Every file the pages loaded is kept for offline.
 const shell = [...(await readFile(join(root, 'sw.js'), 'utf8')).match(/SHELL = \[([^\]]*)\]/)[1].matchAll(/'([^']*)'/g)].map(m => m[1]);
 assert.deepEqual([...loaded].filter(f => f !== 'sw.js' && !shell.includes(f)), [], 'files the pages load but sw.js does not keep');
@@ -534,7 +573,7 @@ await page.setViewportSize({ width: 390, height: 844 });
 
 // Offline: someone who has been to the floor once, and nowhere else, loses the connection. Once the offline copy
 // holds every file, the server goes down and the browser goes offline (so the pages see it), and the floor, every
-// machine and Tilt's Haunted House open from the copy, with all their fonts and pictures.
+// machine, Tilt's Haunted House and the records open from the copy, with all their fonts and pictures.
 const OFFLINE = { '': 'freePlay', 'roll-up/': 'rollUp', 'tilt/': 'tilt', 'clutch/': 'clutch', 'topple/': 'topple', 'highrise/': 'highrise', 'popgun/': 'popgun', 'bonkers/': 'bonkers', 'hoops/': 'hoops' };
 const away = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const ap = await away.newPage();
@@ -545,7 +584,7 @@ await ap.waitForFunction(() => navigator.serviceWorker?.controller, null, { time
 await until(() => ap.evaluate(async shell => (await Promise.all(shell.map(f => caches.match(f)))).every(Boolean), shell), 20000, 'the offline copy never held every file');
 down = true;
 await away.setOffline(true);
-for (const [path, name] of [...Object.entries(OFFLINE), ['tilt/?table=haunted', 'tilt']]) {
+for (const [path, name] of [...Object.entries(OFFLINE), ['records/', 'records'], ['tilt/?table=haunted', 'tilt']]) {
   const called = path || 'the floor';
   await ap.goto(base + path).catch(e => assert.fail(`${called} did not open offline: ${e.message.split('\n')[0]}`));
   await ap.waitForFunction(name => !!window[name], name, { timeout: 10000 }).catch(() => assert.fail(`${called} opened offline, but not its game`));

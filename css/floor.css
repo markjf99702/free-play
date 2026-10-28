@@ -60,7 +60,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 /* Under the pocket, a row of the machines, each in its sign's colours, and the prize counter: a tap goes straight to
-   its cabinet (js/floor.js), so the first screen on a phone shows all eight, and Hoops at the far end is one tap away. */
+   its cabinet (js/floor.js), so the first screen on a phone shows all eight, and Hoops at the far end is one tap away.
+   Records, at the end, is a page of its own (records/). */
 /* (Each is 44 px tall to tap, with its sign 36 px tall in the middle of that.) */
 .aisle { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 8px; margin: 10px auto 0; }
 .hop {
@@ -82,6 +83,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hop.bonkers { --hop-bg: #e2412f; --hop-edge: #ffc93c; --hop-ink: #ffc93c; --hop-glow: 1.5px 1.5px 0 #9a2216; }
 .hop.hoops { --hop-bg: #1d3fa8; --hop-edge: #ff8a1f; --hop-ink: #fff6e6; --hop-glow: 1.5px 1.5px 0 #c75a10; }
 .hop.counter { --hop-bg: #1a1233; --hop-edge: rgba(255, 211, 106, .55); --hop-ink: var(--gold); }
+.hop.records { --hop-bg: #0a1c22; --hop-edge: rgba(79, 240, 224, .55); --hop-ink: #d6fffb; --hop-glow: 0 0 5px var(--teal), 0 0 12px rgba(79, 240, 224, .55); }
 /* where a tap on one of them lands: just clear of the top of the screen (and of a phone's notch) */
 .cab, .booth { scroll-margin-top: calc(14px + env(safe-area-inset-top, 0px)); }
 .booth:focus { outline: none; }
