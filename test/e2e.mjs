@@ -433,7 +433,7 @@ await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null 
 
 // A daily player's cabinets: Roll Up's run of days, with today's card played or still to play (and its title card says
 // so too), a Topple cup on the go, and more than one lucky star from Clutch. (The saves there were are put back after.)
-const DAILY = ['free-play.roll-up', 'free-play.topple', 'free-play.clutch'];
+const DAILY = ['free-play.roll-up', 'free-play.topple', 'free-play.clutch', 'free-play.wallet'];
 const dailySaves = await page.evaluate(keys => keys.map(k => localStorage.getItem(k)), DAILY);
 const yday = new Date(day.getFullYear(), day.getMonth(), day.getDate() - 1, 12);
 const yesterday = [yday.getFullYear(), yday.getMonth() + 1, yday.getDate()].map(n => String(n).padStart(2, '0')).join('-');
@@ -456,6 +456,31 @@ assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready. Play
 await page.goto(base + 'roll-up/');
 await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
 assert.match(await page.textContent('#dailyHow'), / Play it to make it 4 days in a row\.$/);
+await page.goto(base);
+await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
+// Today's card part-way through: the cabinet says how many balls are left.
+const three = nine.slice(0, 3);
+await seed({ 'free-play.roll-up': { best: 450, games: 9, going: { key: today, score: 90, balls: three } } });
+await page.reload();
+await page.waitForFunction(() => !!window.freePlay);
+assert.equal(await page.textContent('#rollUpStat'), "Today's card on the go: 6 balls left. Best: 450.");
+// Left part-way yesterday, it counted as played then, with the balls rolled: the run of days goes on, and Roll Up pays
+// for those balls when it next opens (once).
+const dby = new Date(day.getFullYear(), day.getMonth(), day.getDate() - 2, 12);
+const dayBeforeYesterday = [dby.getFullYear(), dby.getMonth() + 1, dby.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+await seed({ 'free-play.roll-up': { best: 450, games: 9, daily: { key: dayBeforeYesterday, score: 200, balls: nine, streak: 2 }, going: { key: yesterday, score: 90, balls: three } } });
+await page.reload();
+await page.waitForFunction(() => !!window.freePlay);
+assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready. Play it to make it 4 days in a row. Best: 450.");
+const pocketBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+for (let visit = 0; visit < 2; visit++) {
+  await page.goto(base + 'roll-up/');
+  await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
+  assert.ok(await page.isVisible('#title'), "yesterday's card isn't today's: Roll Up opens on its title card");
+  assert.match(await page.textContent('#dailyHow'), / Play it to make it 4 days in a row\.$/);
+  assert.deepEqual(await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('free-play.roll-up')); return [s.going, s.games, s.daily.key, s.daily.score, s.daily.streak]; }), [undefined, 10, yesterday, 90, 3]);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), pocketBefore + 9, `paid for its three balls, once (visit ${visit + 1})`);
+}
 await page.goto(base);
 await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
 await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [DAILY, dailySaves]);

@@ -200,17 +200,42 @@ const lane = await page.evaluate(async () => {
 assert.ok(lane.notes <= lane.grab + 1 && lane.notes < lane.foul - 40, `the notes come down to ${lane.notes.toFixed(0)}, the red line is at ${lane.foul.toFixed(0)}`);
 assert.equal(await page.textContent('#callV'), String(card.calls[0]));
 const SPEED = { 20: [0, 250], 30: [0, 280], 40: [0, 305], 50: [0, 332], 100: [26, 374] };
-await page.evaluate(() => { rollUp.speed = 6; });
-for (let i = 0; i < 9; i++) {
+const rollCall = async i => {
   await page.waitForFunction(() => rollUp.mode === 'aim', null, { timeout: 15000 });
   if (i === card.golden) assert.ok(await page.isVisible('#goldNote'), 'the golden ball is pointed out when it comes up');
-  const [vx, vz] = SPEED[card.calls[i]];
-  await page.evaluate(([vx, vz]) => rollUp.roll(vx, vz, 0), [vx, vz]);
-}
+  await page.evaluate(([vx, vz]) => rollUp.roll(vx, vz, 0), SPEED[card.calls[i]]);
+};
+await page.evaluate(() => { rollUp.speed = 6; });
+for (let i = 0; i < 3; i++) await rollCall(i);
+await page.waitForFunction(() => rollUp.thrown === 3 && rollUp.mode === 'aim', null, { timeout: 15000 });
+// Once it's started, the card is yours: the menu doesn't offer to start it again.
+await page.click('#menuBtn');
+assert.ok(await page.isHidden('#restart'), "the menu offers 'Start a new game' on today's card");
+await page.click('#resume');
+// Left part-way, it's kept where it was, and Roll Up opens on it: the balls rolled, the score and the golden ball.
+const part = await page.evaluate(() => ({ score: rollUp.score, balls: rollUp.game.balls }));
+assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.roll-up')).going), { key: card.key, ...part });
+await page.reload();
+await page.evaluate(() => document.fonts.ready);
+assert.ok(await page.isHidden('#title'), 'Roll Up opens on the card, not its title card');
+assert.deepEqual(await page.evaluate(() => [rollUp.mode, rollUp.thrown, rollUp.score, rollUp.game.balls, rollUp.game.card.key]), ['aim', 3, part.score, part.balls, card.key]);
+assert.equal(await page.textContent('#ballNo'), 'Ball 4 of 9');
+assert.equal(await page.textContent('.fp-toast'), "Today's card, where you left it: ball 4 of 9.");
+assert.equal(await page.evaluate(() => rollUp.ball.golden), card.golden === 3, 'the golden ball is where it was');
+// Left with a ball still rolling, it's played out as the page goes: it can't be rolled again.
+await page.evaluate(([vx, vz]) => rollUp.roll(vx, vz, 0), SPEED[card.calls[3]]);
+assert.equal(await mode(), 'roll');
+await page.reload();
+await page.evaluate(() => document.fonts.ready);
+assert.deepEqual(await page.evaluate(() => [rollUp.mode, rollUp.thrown]), ['aim', 4], 'the ball left rolling counts');
+await page.evaluate(() => { rollUp.speed = 6; });
+for (let i = 4; i < 9; i++) await rollCall(i);
 await page.waitForFunction(() => rollUp.mode === 'over', null, { timeout: 30000 });
 await page.evaluate(() => { rollUp.speed = 1; });
 const daily = await page.evaluate(() => rollUp.saved.daily);
 assert.equal(daily.key, card.key);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.roll-up')).going), undefined, "once it's played, it isn't on the go");
+assert.deepEqual(daily.balls.slice(0, 3), part.balls, 'the card is the one started before');
 const called = daily.balls.filter(b => b.hit).length;
 assert.ok(called >= 5, `rolling for each call should hit most of them (hit ${called})`);
 for (const b of daily.balls) assert.equal(b.points, b.value * (b.hit ? 2 : 1) * (b.golden ? 2 : 1));

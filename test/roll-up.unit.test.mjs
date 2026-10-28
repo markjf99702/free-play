@@ -157,3 +157,27 @@ test("today's card is the same all day, different the next, and fair", async () 
   assert.equal(shareLine('2026-10-27', 1240, [true, true], 1), 'Roll Up · Tue 27 Oct · 1,240\n★★\nfree-play.junkdrawer.works/roll-up/');
   assert.equal(shareLine('2026-10-27', 440, [false, true], 3), 'Roll Up · Tue 27 Oct · 440 · 3 days in a row\n☆★\nfree-play.junkdrawer.works/roll-up/');
 });
+
+test("today's card left part-way waits all day, and counts as played at midnight with the balls rolled", async () => {
+  const { settle } = await import('../roll-up/js/daily.js');
+  const ball = (value, points = value) => ({ value, points, golden: false, call: 30, hit: false });
+  const going = { key: '2026-10-27', score: 150, balls: [ball(50), ball(30, 60), ball(40)] };
+  // on its own day it's still on the go: nothing changes
+  const today = { best: 200, games: 4, going };
+  assert.equal(settle(today, '2026-10-27'), today);
+  // the next day it's played: the balls rolled, what they scored and pay, and the run of days
+  const s = settle({ ...today, daily: { key: '2026-10-26', score: 210, balls: [], streak: 3 } }, '2026-10-28');
+  assert.equal(s.going, undefined, "it isn't on the go any more");
+  assert.deepEqual(s.daily, { key: '2026-10-27', score: 150, balls: going.balls, won: 15, streak: 4, unfinished: true });
+  assert.equal(s.games, 5, 'a game played');
+  assert.equal(s.best, 200, "and a card's score isn't a regular game's best");
+  // a run of days starts again after a day missed, and a card with no balls rolled is played for nothing
+  assert.equal(settle({ going, daily: { key: '2026-10-20', balls: [], streak: 6 } }, '2026-10-29').daily.streak, 1);
+  assert.deepEqual(settle({ going: { key: '2026-10-27', balls: [] } }, '2026-10-28').daily, { key: '2026-10-27', score: 0, balls: [], won: 0, streak: 1, unfinished: true });
+  // one with no day, or a day already played, is dropped without counting
+  for (const bad of [{ going: { balls: [] } }, { going: 'x' }, { going: { key: '2026-10-27', balls: [] }, daily: { key: '2026-10-27', balls: [] } }]) {
+    const t = settle(bad, '2026-10-28');
+    assert.equal(t.going, undefined, JSON.stringify(bad));
+    assert.equal(t.daily, bad.daily, JSON.stringify(bad));
+  }
+});

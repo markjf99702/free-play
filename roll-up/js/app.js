@@ -5,15 +5,13 @@
 import * as phys from './physics.js';
 import { createScene } from './scene.js';
 import * as sound from './sound.js';
-import { dayKey, dayBefore, cardFor, points, shareLine } from './daily.js';
+import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, ticketsFor, BALLS } from './daily.js';
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.roll-up';
-const BALLS = 9;
-const ticketsFor = score => Math.floor(score / 10); // a ticket for every 10 points
 const { LANE, R } = phys;
 // Asked for less motion (the system's setting, read each frame): the push-in onto the board cuts rather than glides.
 const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -48,7 +46,8 @@ function meterMarks() {
 (globalThis.requestIdleCallback || setTimeout)(meterMarks);
 
 // ---------- what's kept between visits ----------
-// Roll Up's own: the best score, games played, today's card and the sound. Tickets and prizes are the arcade's.
+// Roll Up's own: the best score, games played, today's card (once played: daily; part-way: going) and the sound.
+// Tickets and prizes are the arcade's.
 const saved = load();
 function load() {
   let s = null;
@@ -59,9 +58,23 @@ function load() {
 }
 // Today's card, if it's been played: a card saved without its balls doesn't count.
 const playedToday = () => { const d = saved.daily; return d && d.key === dayKey() && Array.isArray(d.balls) ? d : null; };
+// Today's card part-way through: its first ball has been rolled, and it waits where it was left.
+const goingToday = () => { const g = saved.going; return g && g.key === dayKey() && Array.isArray(g.balls) ? g : null; };
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the game still plays */ }
 }
+// A card left part-way on an earlier day counts as played that day, with the balls it rolled (see settle() in
+// daily.js), and they pay now.
+function settleCard() {
+  const s = settleOld(saved);
+  if (s === saved) return;
+  const paid = s.daily !== saved.daily ? s.daily.won : 0;
+  for (const k of Object.keys(saved)) delete saved[k];
+  Object.assign(saved, s);
+  save();
+  wallet.pay(paid);
+}
+settleCard();
 sound.setEnabled(saved.sound);
 
 // ---------- the scene ----------
@@ -100,17 +113,31 @@ let flash = null;
 const lights = { mode: 'idle', t: 0 };
 const TROUGH_POP = 26;       // how far up the board (cm) a ball in the trough shows what it scored
 
+// A new game, or today's card: a fresh one, or the one on the go, where it was left.
 function newGame(daily = false) {
+  const going = daily ? goingToday() : null;
   const card = daily ? cardFor(dayKey()) : null;
   // one ball of the nine is golden: today's card says which, otherwise it's a surprise
   game = { thrown: 0, score: 0, balls: [], card, golden: card ? card.golden : Math.floor(Math.random() * BALLS) };
-  shown = 0;
+  if (going) {
+    game.balls = going.balls.slice(0, BALLS);
+    game.thrown = game.balls.length;
+    game.score = game.balls.reduce((t, b) => t + (Number(b?.points) || 0), 0);
+  }
+  shown = game.score;
   ball = phys.newBall(handX);
-  ball.golden = game.golden === 0;
+  ball.golden = game.golden === game.thrown;
   pops.length = 0; flash = null;
   lights.mode = 'idle';
   mode = 'aim';
+  // (all nine rolled, and the page gone before the card came up: it's over)
+  if (game.thrown >= BALLS) { mode = 'result'; resultT = 1.05; }
   hud();
+}
+// Today's card, as it stands: kept with every ball rolled, so leaving keeps it.
+function keepCard() {
+  saved.going = { key: game.card.key, score: game.score, balls: game.balls };
+  save();
 }
 
 function trayCount() {
@@ -143,7 +170,16 @@ function throwBall(vx, vz) {
   mode = 'roll';
   thrownOnce = true;
   handX = ball.x;
+  if (game.card && !goingToday()) keepCard(); // the first ball rolled: the card is yours
   hud();
+}
+// A ball still rolling on today's card as the page goes, or goes out of sight: it's played out there and then, as it
+// would have gone, so it can't be rolled again.
+function rollOut() {
+  if (!game.card || mode !== 'roll') return;
+  phys.advance(ball, 30);
+  sound.rolling(0);
+  if (ball.state === 'done') scored();
 }
 
 // The ball is done: it dropped in a hole, fell in the trough, or didn't make the jump.
@@ -171,6 +207,7 @@ function scored() {
   game.score += w.points;
   game.balls.push({ value: v, points: w.points, golden: !!ball.golden, call: w.call, hit: w.hit });
   game.thrown++;
+  if (game.card) keepCard();
   const left = BALLS - game.thrown;
   const extra = w.hit ? ', the called shot' : '';
   // (after the last ball, the end of the game says the rest: see gameOver)
@@ -214,6 +251,7 @@ function gameOver() {
     result.key = key;
     result.streak = prev && prev.key === dayBefore(key) ? (prev.streak || 1) + 1 : 1;
     saved.daily = result;
+    delete saved.going;
   } else {
     result.isBest = game.score > saved.best && !first;
     result.was = saved.best;
@@ -240,6 +278,7 @@ const counting = n => k => { toCome = n - k; hud(); if (k === n && n) bump($('ti
 // is over all the same: it pays as the page goes (today's card is played), and its card is what's up if the page
 // comes back.
 addEventListener('pagehide', () => {
+  rollOut();
   if (mode === 'result' && game.thrown >= BALLS) { $('menu').hidden = true; paused = false; gameOver(); }
   feeding();
 });
@@ -432,7 +471,7 @@ function dailyButton() {
   const y = saved.daily, run = !done && y?.key === dayBefore(dayKey()) && Array.isArray(y.balls) ? (Number(y.streak) || 1) + 1 : 0;
   $('dailyHow').textContent = done
     ? `${d.balls.filter(b => b.hit).length} of 9 calls${d.streak > 1 ? `, ${d.streak} days in a row` : ''}. A new card comes at midnight.`
-    : `Nine called shots, the same for everyone today. One go a day. Hit the call for double.${run ? ` Play it to make it ${run} days in a row.` : ''}`;
+    : `Nine called shots, the same for everyone today. One go a day, kept where you leave it. Hit the call for double.${run ? ` Play it to make it ${run} days in a row.` : ''}`;
 }
 $('daily').addEventListener('click', () => {
   sound.unlock();
@@ -457,13 +496,16 @@ function toggleMenu(open = $('menu').hidden) {
   if (!$('title').hidden || !$('over').hidden) return; // a card is up: it has its own buttons
   $('menu').hidden = !open;
   paused = open;
+  // today's card can't be started again: only a regular game can
+  $('restart').hidden = !!game.card;
   if (open) { drag = null; charge = null; if (mode === 'drag') settle(); sound.rolling(0); $('resume').focus({ preventScroll: true }); }
 }
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
 // Leaving the page mid-round (a call, another app, the phone locked) opens the menu, so the round waits there
 // rather than carrying on the moment the page is back.
-document.addEventListener('visibilitychange', () => { if (document.hidden && $('title').hidden && $('over').hidden) toggleMenu(true); });
+// (A ball rolling on today's card is played out first: see rollOut.)
+document.addEventListener('visibilitychange', () => { if (document.hidden && $('title').hidden && $('over').hidden) { rollOut(); toggleMenu(true); } });
 $('restart').addEventListener('click', () => { start(!!game.card); toggleMenu(false); });
 $('sound').addEventListener('click', () => {
   saved.sound = !saved.sound; save();
@@ -498,11 +540,20 @@ addEventListener('pageshow', hud); // back from the floor, where tickets may hav
 // Roll Up open in another tab, or this page brought back by Back as it was: look at the save again, so a game ending
 // here adds to what's there now (today's card among it) instead of writing an old copy over it.
 function reread() {
-  Object.assign(saved, load());
+  const now = load();
+  for (const k of Object.keys(saved)) delete saved[k];
+  Object.assign(saved, now);
+  settleCard();
   sound.setEnabled(saved.sound);
   soundLabel();
   dailyButton();
   titleBest();
+  // today's card, played on in the other tab: this one goes on from where that one is, or shows how it went
+  if (game.card && ['aim', 'deal', 'result'].includes(mode)) {
+    const d = playedToday(), g = goingToday();
+    if (d && d.key === game.card.key) { $('menu').hidden = true; paused = false; mode = 'title'; showOver(d, false); }
+    else if (g && g.balls.length > game.thrown) newGame(true);
+  }
 }
 addEventListener('storage', e => { if (e.key === KEY) reread(); });
 addEventListener('pageshow', e => { if (e.persisted) reread(); });
@@ -561,6 +612,15 @@ hud();
 function titleBest() { $('titleBest').textContent = saved.best ? `Best: ${fmt(saved.best)}.` : ''; }
 titleBest();
 requestAnimationFrame(tick);
+
+// Today's card part-way through: Roll Up opens on it, where it was left.
+if (goingToday()) {
+  $('title').hidden = true;
+  newGame(true);
+  const next = `Today's card, where you left it: ball ${Math.min(BALLS, game.thrown + 1)} of ${BALLS}.`;
+  toast(next);
+  $('live').textContent = next;
+}
 
 if ('serviceWorker' in navigator && !('single' in document.documentElement.dataset) && location.protocol !== 'file:') {
   navigator.serviceWorker.register('../sw.js').catch(() => {});

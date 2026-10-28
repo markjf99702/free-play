@@ -45,7 +45,7 @@ Skee-ball, the boardwalk kind. Flick the ball up the lane, and it hops the ramp 
 - **The 100s want an angle.** They sit in the top corners: roll firmly and a little toward one.
 - **Real bounces.** The ball is simulated in 3D, so it rattles off the ring lips and can bounce out of a ring or into a better one.
 - **The golden ball.** One ball in every game is golden, and whatever it drops into scores double. You can see which one it is in the tray.
-- **Today's card.** Nine called shots, the same for everyone that day, with that day's golden ball. The called hole glows; drop the ball in it for double, so a called shot with the golden ball is ×4. You get one go a day, a star for each call you hit, a count of the days in a row you've played, and a line to send someone. A new card comes at midnight.
+- **Today's card.** Nine called shots, the same for everyone that day, with that day's golden ball. The called hole glows; drop the ball in it for double, so a called shot with the golden ball is ×4. You get one go a day, a star for each call you hit, a count of the days in a row you've played, and a line to send someone. Once its first ball is rolled the card is yours: leave part-way and Roll Up opens on it next time, where you left it, and it can't be started again. A new card comes at midnight, and one still part-way then counts as played, paying for the balls you rolled.
 - **The keyboard works too.** ← and → move the ball; hold Space to wind up and let go to roll. The meter by the ball turns red where a straight roll from the middle of the lane sails over the rings, and a faint tick marks the 50.
 
 ## Tilt

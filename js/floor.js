@@ -6,7 +6,7 @@
 import * as wallet from '../shared/wallet.js';
 import { openCounter, shelfItem, fmt, tickets } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
-import { dayKey, dayBefore } from '../roll-up/js/daily.js';
+import { dayKey, dayBefore, settle, BALLS } from '../roll-up/js/daily.js';
 
 const $ = id => document.getElementById(id);
 const readSave = key => {
@@ -18,14 +18,18 @@ const best = n => `Best: ${fmt(n)}.`;
 
 function machines() {
   // Roll Up: today's card first, since it changes every day, with the run of days it's been played; then the best game.
-  const ru = readSave('free-play.roll-up');
+  // (A card left part-way on an earlier day counts as played that day: see settle() in roll-up/js/daily.js.)
+  const ru = settle(readSave('free-play.roll-up'));
   const daily = ru.daily && Array.isArray(ru.daily.balls) ? ru.daily : null;
   const run = Number(daily?.streak) || 1;
-  const card = daily?.key === dayKey()
-    ? `Today's card: ${fmt(daily.score)}, ${daily.balls.filter(b => b.hit).length} of 9 calls${run > 1 ? `, ${run} days in a row` : ''}.`
-    : daily?.key === dayBefore(dayKey())
-      ? `Today's card is ready. Play it to make it ${run + 1} days in a row.`
-      : "Today's card is ready: nine called shots.";
+  const toRoll = ru.going?.key === dayKey() && Array.isArray(ru.going.balls) ? BALLS - Math.min(BALLS, ru.going.balls.length) : 0;
+  const card = toRoll
+    ? `Today's card on the go: ${toRoll} ${toRoll === 1 ? 'ball' : 'balls'} left.`
+    : daily?.key === dayKey()
+      ? `Today's card: ${fmt(daily.score)}, ${daily.balls.filter(b => b.hit).length} of 9 calls${run > 1 ? `, ${run} days in a row` : ''}.`
+      : daily?.key === dayBefore(dayKey())
+        ? `Today's card is ready. Play it to make it ${run + 1} days in a row.`
+        : "Today's card is ready: nine called shots.";
   $('rollUpStat').textContent = ru.best ? `${card} ${best(ru.best)}` : card;
 
   // Tilt: the best score on any table, and which table.
