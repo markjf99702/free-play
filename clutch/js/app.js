@@ -7,6 +7,7 @@ import { createMachine } from './machine.js';
 import { createDraw, drawPlush } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
+import { soundOn, switchSound } from '../../shared/sound.js';
 import { PLUSH } from '../../shared/prizes.js';
 import { openCounter, bigPrize, counterOpen, pocketButton, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
@@ -32,7 +33,7 @@ function load() {
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the claw still works */ }
 }
-sound.setEnabled(saved.sound);
+sound.setEnabled(soundOn(saved.sound));
 const total = () => Object.values(saved.won).reduce((a, n) => a + (Number(n) || 0), 0);
 const plushFor = kind => PLUSH.find(p => p.kind === kind);
 
@@ -246,15 +247,18 @@ $('resume').addEventListener('click', () => toggleMenu(false));
 // rather than carrying on the moment the page is back.
 document.addEventListener('visibilitychange', () => { if (document.hidden) toggleMenu(true); });
 $('sound').addEventListener('click', () => {
-  saved.sound = !saved.sound; save();
+  saved.sound = switchSound(!soundOn(saved.sound)); save();
   sound.setEnabled(saved.sound);
   soundLabel();
 });
 function soundLabel() {
-  $('sound').textContent = `Sound: ${saved.sound ? 'on' : 'off'}`;
-  $('sound').setAttribute('aria-pressed', String(saved.sound));
+  const on = soundOn(saved.sound);
+  $('sound').textContent = `Sound: ${on ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(on));
 }
 soundLabel();
+// flipped on the floor, or on any machine in another tab: this one follows
+addEventListener('free-play:sound', () => { sound.setEnabled(soundOn(saved.sound)); soundLabel(); });
 
 // ---------- the prize counter (the arcade's) ----------
 function openPrizes() {
@@ -278,7 +282,7 @@ addEventListener('pageshow', () => hud()); // back from the floor, where tickets
 // to what's there now instead of writing an old copy over it.
 function reread() {
   Object.assign(saved, load());
-  sound.setEnabled(saved.sound);
+  sound.setEnabled(soundOn(saved.sound));
   soundLabel();
   hud();
 }

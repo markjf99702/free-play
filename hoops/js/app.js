@@ -6,6 +6,7 @@ import { createCourt, ticketsFor, tipFor, power, flickFor, readFlick, READ, FLIC
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
+import { soundOn, switchSound } from '../../shared/sound.js';
 import { openCounter, bigPrize, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
@@ -29,7 +30,7 @@ function load() {
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the balls still bounce */ }
 }
-sound.setEnabled(saved.sound);
+sound.setEnabled(soundOn(saved.sound));
 
 // ---------- the picture ----------
 const canvas = $('stage');
@@ -319,15 +320,18 @@ $('resume').addEventListener('click', () => toggleMenu(false));
 // rather than carrying on the moment the page is back.
 document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'play') toggleMenu(true); });
 $('sound').addEventListener('click', () => {
-  saved.sound = !saved.sound; save();
+  saved.sound = switchSound(!soundOn(saved.sound)); save();
   sound.setEnabled(saved.sound);
   soundLabel();
 });
 function soundLabel() {
-  $('sound').textContent = `Sound: ${saved.sound ? 'on' : 'off'}`;
-  $('sound').setAttribute('aria-pressed', String(saved.sound));
+  const on = soundOn(saved.sound);
+  $('sound').textContent = `Sound: ${on ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(on));
 }
 soundLabel();
+// flipped on the floor, or on any machine in another tab: this one follows
+addEventListener('free-play:sound', () => { sound.setEnabled(soundOn(saved.sound)); soundLabel(); });
 
 function openPrizes() {
   paused = true;
@@ -351,7 +355,7 @@ addEventListener('pageshow', pocket);
 // here adds to what's there now instead of writing an old copy over it.
 function reread() {
   Object.assign(saved, load());
-  sound.setEnabled(saved.sound);
+  sound.setEnabled(soundOn(saved.sound));
   soundLabel();
   hud();
 }

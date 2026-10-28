@@ -10,6 +10,7 @@ import { NORMAL } from './settings.js';
 import { play, unlock, setSound } from './sound.js';
 import { TABLES } from './tables.js';
 import * as wallet from '../../shared/wallet.js';
+import { soundOn, switchSound } from '../../shared/sound.js';
 import { dayKey } from '../../shared/calendar.js';
 import { count } from '../../shared/records.js';
 import { claim, titleLine, endLine } from '../../shared/special.js';
@@ -26,7 +27,7 @@ const store = load();
 const renderer = new Renderer($('table'));
 // Asked for less motion (the system's setting): the Match comes straight up, without rolling through the numbers.
 const calm = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
-setSound(store.sound !== false);
+setSound(soundOn(store.sound));
 
 // The table in the machine (see useTable below), its skin, and its rules running a game or the demo.
 let table, skin, game;
@@ -88,7 +89,7 @@ addEventListener('pageshow', showTickets); // back from the floor, where tickets
 // goes into the top five as it is now instead of writing an old list over it.
 function reread() {
   Object.assign(store, load());
-  setSound(store.sound !== false);
+  setSound(soundOn(store.sound));
   soundLabel();
   showBest();
 }
@@ -295,13 +296,16 @@ $('quitBtn').addEventListener('click', () => {
 for (const id of ['prizesBtn', 'pausePrizes', 'overPrizes']) $(id).addEventListener('click', () => { unlock(); openCounter({ onBuy: p => play(bigPrize(p) ? 'handOver' : 'award') }); });
 
 function soundLabel() {
-  $('soundBtn').textContent = 'Sound: ' + (store.sound === false ? 'off' : 'on');
-  $('soundBtn').setAttribute('aria-pressed', String(store.sound !== false));
+  const on = soundOn(store.sound);
+  $('soundBtn').textContent = 'Sound: ' + (on ? 'on' : 'off');
+  $('soundBtn').setAttribute('aria-pressed', String(on));
 }
 soundLabel();
 $('soundBtn').addEventListener('click', () => {
-  store.sound = store.sound === false; setSound(store.sound); save(); soundLabel();
+  store.sound = switchSound(!soundOn(store.sound)); setSound(store.sound); save(); soundLabel();
 });
+// flipped on the floor, or on any machine in another tab: Tilt follows
+addEventListener('free-play:sound', () => { setSound(soundOn(store.sound)); soundLabel(); });
 
 function setPaused(p) {
   paused = p;

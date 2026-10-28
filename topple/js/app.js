@@ -10,6 +10,7 @@ import { dayKey } from '../../shared/calendar.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
+import { soundOn, switchSound } from '../../shared/sound.js';
 import { TRINKETS } from '../../shared/prizes.js';
 import { openCounter, bigPrize, counterOpen, toast, feed, bestLine, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
@@ -43,7 +44,7 @@ function save() {
   saved.cup = cup;
   try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { /* storage full or off: the coins still push */ }
 }
-sound.setEnabled(saved.sound);
+sound.setEnabled(soundOn(saved.sound));
 
 // The next prize the attendant puts on: one of the four, now and then the gem.
 const trinket = kind => TRINKETS.find(t => t.kind === kind);
@@ -322,15 +323,18 @@ function toggleMenu(open = $('menu').hidden) {
 $('menuBtn').addEventListener('click', () => { sound.unlock(); toggleMenu(); });
 $('resume').addEventListener('click', () => toggleMenu(false));
 $('sound').addEventListener('click', () => {
-  saved.sound = !saved.sound; save();
+  saved.sound = switchSound(!soundOn(saved.sound)); save();
   sound.setEnabled(saved.sound);
   soundLabel();
 });
 function soundLabel() {
-  $('sound').textContent = `Sound: ${saved.sound ? 'on' : 'off'}`;
-  $('sound').setAttribute('aria-pressed', String(saved.sound));
+  const on = soundOn(saved.sound);
+  $('sound').textContent = `Sound: ${on ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(on));
 }
 soundLabel();
+// flipped on the floor, or on any machine in another tab: this one follows
+addEventListener('free-play:sound', () => { sound.setEnabled(soundOn(saved.sound)); soundLabel(); });
 
 // ---------- the prize counter (the arcade's) ----------
 function openPrizes() {
@@ -355,7 +359,7 @@ addEventListener('pageshow', () => hud()); // back from the floor, where tickets
 // pair are this page's own.
 function reread() {
   Object.assign(saved, { ...load(), field: saved.field, cup: saved.cup, odd: saved.odd });
-  sound.setEnabled(saved.sound);
+  sound.setEnabled(soundOn(saved.sound));
   soundLabel();
   hud();
 }

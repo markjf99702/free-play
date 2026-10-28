@@ -219,6 +219,28 @@ test("saving up for a prize: kept under its own key, and said as '180 to go for 
   globalThis.dispatchEvent = () => true;
 });
 
+test("one Sound switch for the whole arcade: each machine's own until it's first flipped, then the arcade's", async () => {
+  const s = await import('../shared/sound.js');
+  const events = [];
+  globalThis.dispatchEvent = e => { events.push([e.type, e.detail]); return true; };
+  kept.clear();
+  assert.equal(s.arcadeSound(), null, 'never flipped');
+  assert.equal(s.soundOn(true), true, "so a machine keeps its own: on");
+  assert.equal(s.soundOn(false), false, '... or off');
+  assert.equal(s.soundOn(undefined), true, 'and a machine that never said is on');
+  assert.equal(s.switchSound(false), false);
+  assert.equal(kept.get('free-play.sound'), '{"on":false}', 'its own key, apart from the pocket');
+  assert.deepEqual(events, [['free-play:sound', false]], 'every page hears about it');
+  assert.equal(s.soundOn(true), false, "Topple muted is every machine muted, whatever its own said");
+  assert.equal(s.switchSound(true), true);
+  assert.equal(s.soundOn(false), true, 'and on again for all of them');
+  for (const junk of ['nope', '[1]', '{}', '{"on":"yes"}', 'null']) {
+    kept.set('free-play.sound', junk);
+    assert.equal(s.arcadeSound(), null, `${junk} is never flipped`);
+  }
+  globalThis.dispatchEvent = () => true;
+});
+
 test('above the enormous unicorn, a giant gorilla and a life-size giraffe to save up for', () => {
   assert.deepEqual(PRIZES.slice(-3).map(p => [p.id, p.emoji, p.name, p.cost]), [
     ['unicorn', '🦄', 'Enormous unicorn', 2500], ['gorilla', '🦍', 'Giant gorilla', 5000], ['giraffe', '🦒', 'Life-size giraffe', 10000],

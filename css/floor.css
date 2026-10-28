@@ -227,7 +227,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .trade:active { background: rgba(255, 211, 106, .22); }
 
-.jd-foot { margin: 28px 0 0; padding: 0 0 28px; text-align: center; font-size: 13px; color: var(--ink3); }
+/* the arcade's one Sound switch, for every machine */
+.switches { margin: 26px 0 0; text-align: center; }
+.hush {
+  min-height: 44px; padding: 6px 20px; border-radius: 999px; border: 1px solid var(--line);
+  background: #1a1233; color: var(--ink2); font: 600 15px/1.2 var(--body);
+}
+.hush:active { background: #2a2050; }
+
+.jd-foot { margin: 22px 0 0; padding: 0 0 28px; text-align: center; font-size: 13px; color: var(--ink3); }
 .jd-foot a { padding: 15px 4px; margin: 0 -4px; color: var(--ink3); text-decoration: none; } /* 44 px tall to tap */
 .jd-foot a:hover, .jd-foot a:focus-visible { color: var(--ink2); text-decoration: underline; }
 .jd-foot span { margin: 0 6px; }

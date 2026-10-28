@@ -647,6 +647,48 @@ await tab.evaluate(saves => Object.entries(saves).forEach(([k, v]) => (v == null
   { 'free-play.popgun': popSave, 'free-play.wallet': walletSave });
 await tab.close();
 
+// One Sound switch for the whole arcade, at the foot of the floor and in every machine's menu. Before it's first
+// flipped each machine keeps its own (Topple muted on its own stays muted, the rest are on), and the floor's says on
+// while any of them is. Flipped on the floor, every machine is off, a machine open in another tab too; flipped in a
+// machine, every machine is on again and the floor follows. (The saves there were are put back after.)
+{
+  const KEYS = ['free-play.sound', 'free-play.topple'];
+  const was = await page.evaluate(keys => keys.map(k => localStorage.getItem(k)), KEYS);
+  await page.evaluate(() => {
+    localStorage.removeItem('free-play.sound');
+    localStorage.setItem('free-play.topple', JSON.stringify({ ...JSON.parse(localStorage.getItem('free-play.topple') || '{}'), sound: false }));
+  });
+  await page.reload();
+  await page.waitForFunction(() => !!window.freePlay);
+  const said = (p, id = 'sound') => p.evaluate(id => [document.getElementById(id).textContent, document.getElementById(id).getAttribute('aria-pressed')], id);
+  assert.deepEqual(await said(page), ['Sound: on', 'true'], 'the floor says on while any machine is');
+  const box = await page.locator('#sound').boundingBox();
+  assert.ok(box.height >= 44, `the floor's Sound button is ${box.height} px tall`);
+  const other = await ctx.newPage();
+  const hook = { 'roll-up': 'rollUp', tilt: 'tilt', clutch: 'clutch', topple: 'topple', highrise: 'highrise', popgun: 'popgun', bonkers: 'bonkers', hoops: 'hoops' };
+  const visit = async m => { await other.goto(base + m + '/'); await other.waitForFunction(h => !!window[h], hook[m], { timeout: 10000 }); };
+  await visit('topple');
+  assert.deepEqual(await said(other), ['Sound: off', 'false'], 'Topple muted on its own stays muted until the switch is flipped');
+  await visit('popgun');
+  assert.deepEqual(await said(other), ['Sound: on', 'true']);
+  await page.click('#sound');
+  assert.deepEqual(await said(page), ['Sound: off', 'false']);
+  assert.equal(await page.evaluate(() => localStorage.getItem('free-play.sound')), '{"on":false}');
+  await other.waitForFunction(() => document.getElementById('sound').textContent === 'Sound: off', null, { timeout: 3000 }); // Popgun, open in the other tab
+  for (const m of Object.keys(hook)) {
+    await visit(m);
+    assert.deepEqual(await said(other, m === 'tilt' ? 'soundBtn' : 'sound'), ['Sound: off', 'false'], `${m} still has sound on`);
+  }
+  // Hoops, the last one open, flipped from its menu: on again, everywhere
+  await other.evaluate(() => document.getElementById('sound').click());
+  assert.deepEqual(await said(other), ['Sound: on', 'true']);
+  await page.waitForFunction(() => document.getElementById('sound').textContent === 'Sound: on', null, { timeout: 3000 });
+  await visit('topple');
+  assert.deepEqual(await said(other), ['Sound: on', 'true'], "the switch is Topple's too now");
+  await other.close();
+  await page.evaluate(([keys, saves]) => keys.forEach((k, i) => (saves[i] == null ? localStorage.removeItem(k) : localStorage.setItem(k, saves[i]))), [KEYS, was]);
+}
+
 // Records, at the end of the row of machines: each machine's top five with its days, what else it keeps worth a look,
 // and the all-time totals. (The saves there were are put back after.)
 {

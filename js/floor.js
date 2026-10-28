@@ -6,6 +6,7 @@
 import * as wallet from '../shared/wallet.js';
 import { openCounter, shelve, collected, fmt, tickets } from '../shared/counter.js';
 import { goal, goalShort } from '../shared/goal.js';
+import { soundOn, switchSound } from '../shared/sound.js';
 import { specialFor, madeToday, BONUS } from '../shared/special.js';
 import { dayKey, dayBefore } from '../shared/calendar.js';
 import { settle, BALLS } from '../roll-up/js/daily.js';
@@ -123,10 +124,10 @@ $('purse').addEventListener('click', counter);
 addEventListener('free-play:wallet', pocket);
 addEventListener('free-play:goal', pocket);
 // coming back from a machine (the browser may keep this page as it was): look again
-addEventListener('pageshow', () => { pocket(); machines(); special(); });
+addEventListener('pageshow', () => { pocket(); machines(); special(); soundLabel(); });
 // a machine played in another tab or window: its cabinet says so without a reload (the pocket hears about it from
 // ../shared/counter.js, as a free-play:wallet)
-addEventListener('storage', e => { if (e.key === null || e.key.startsWith('free-play.')) { machines(); special(); } });
+addEventListener('storage', e => { if (e.key === null || e.key.startsWith('free-play.')) { machines(); special(); soundLabel(); } });
 pocket();
 machines();
 special();
@@ -145,6 +146,20 @@ function backFrom() {
   } catch { /* no timing or no referrer: the top of the floor will do */ }
 }
 backFrom();
+
+// The arcade's one Sound switch (../shared/sound.js), at the foot of the floor. The floor makes no sound of its own: it
+// says whether the machines do, and flips them all. Before it's first flipped each machine has its own setting, and it
+// says on if any of them is.
+function soundNow() {
+  return soundOn(CABINETS.some(m => readSave(`free-play.${m}`).sound !== false));
+}
+function soundLabel(on = soundNow()) {
+  $('sound').textContent = `Sound: ${on ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(on));
+}
+$('sound').addEventListener('click', () => soundLabel(switchSound(!soundNow())));
+addEventListener('free-play:sound', () => soundLabel());
+soundLabel();
 
 // The row of machines under the pocket: a tap on one goes to its cabinet (or the prize counter at the back), gliding
 // there unless the phone is set to cut down motion, and leaves the address as it was, so the phone's Back still leaves

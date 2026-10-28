@@ -8,6 +8,7 @@ import * as sound from './sound.js';
 import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, ticketsFor, nineCalls, BALLS } from './daily.js';
 import { trophy } from '../../shared/prizes.js';
 import * as wallet from '../../shared/wallet.js';
+import { soundOn, switchSound } from '../../shared/sound.js';
 import { openCounter, bigPrize, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
 import { topFive, place, onList, count } from '../../shared/records.js';
@@ -77,7 +78,7 @@ function settleCard() {
   if (played) { count({ round: 'roll-up' }); wallet.pay(s.daily.won); }
 }
 settleCard();
-sound.setEnabled(saved.sound);
+sound.setEnabled(soundOn(saved.sound));
 
 // ---------- the scene ----------
 const canvas = $('stage');
@@ -526,15 +527,18 @@ $('resume').addEventListener('click', () => toggleMenu(false));
 document.addEventListener('visibilitychange', () => { if (document.hidden && $('title').hidden && $('over').hidden) { rollOut(); toggleMenu(true); } });
 $('restart').addEventListener('click', () => { start(!!game.card); toggleMenu(false); });
 $('sound').addEventListener('click', () => {
-  saved.sound = !saved.sound; save();
+  saved.sound = switchSound(!soundOn(saved.sound)); save();
   sound.setEnabled(saved.sound);
   soundLabel();
 });
 function soundLabel() {
-  $('sound').textContent = `Sound: ${saved.sound ? 'on' : 'off'}`;
-  $('sound').setAttribute('aria-pressed', String(saved.sound));
+  const on = soundOn(saved.sound);
+  $('sound').textContent = `Sound: ${on ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(on));
 }
 soundLabel();
+// flipped on the floor, or on any machine in another tab: this one follows
+addEventListener('free-play:sound', () => { sound.setEnabled(soundOn(saved.sound)); soundLabel(); });
 
 // ---------- the prize counter (the arcade's) ----------
 function openPrizes() {
@@ -562,7 +566,7 @@ function reread() {
   for (const k of Object.keys(saved)) delete saved[k];
   Object.assign(saved, now);
   settleCard();
-  sound.setEnabled(saved.sound);
+  sound.setEnabled(soundOn(saved.sound));
   soundLabel();
   dailyButton();
   titleBest();
