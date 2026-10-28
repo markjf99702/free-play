@@ -57,7 +57,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
    tickets on a wide screen and under them on a phone, and in gold once there's enough. */
 .purse .goal { color: var(--ink2); }
 .purse .goal.enough { color: var(--gold); }
-.purse .goal::before { content: "· " / ""; color: var(--ink3); }
+.purse .goal::before { content: "· "; content: "· " / ""; color: var(--ink3); } /* (the first for a Safari before 17.4) */
 .purse.saving .to { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 559.98px) {
   .purse.saving { flex-wrap: wrap; justify-content: center; row-gap: 0; padding: 5px 20px 6px; border-radius: 24px; }
