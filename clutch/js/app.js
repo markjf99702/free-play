@@ -1,7 +1,8 @@
 // Clutch: a claw machine, on the Free Play floor. This file runs it: the button, the goes, the plush won and the cards.
 // js/machine.js is the machine (matter-js moves the plush), js/draw.js draws it and js/sound.js makes the noises.
 // It's the one machine that pays in prizes, not tickets: each plush won goes straight on the arcade's shelf
-// (../shared/wallet.js). The prize counter is the arcade's too.
+// (../shared/wallet.js). The prize counter is the arcade's too. On its day as today's special (../shared/special.js),
+// the day's named plush pays 25 tickets as well, once.
 
 import { createMachine } from './machine.js';
 import { createDraw, drawPlush } from './draw.js';
@@ -9,7 +10,8 @@ import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { soundOn, switchSound } from '../../shared/sound.js';
 import { PLUSH } from '../../shared/prizes.js';
-import { openCounter, bigPrize, counterOpen, pocketButton, fmt } from '../../shared/counter.js';
+import { openCounter, bigPrize, counterOpen, pocketButton, fmt, bump } from '../../shared/counter.js';
+import { claim, titleLine, endLine } from '../../shared/special.js';
 import { insets } from '../../shared/insets.js';
 import { count } from '../../shared/records.js';
 
@@ -152,6 +154,7 @@ function happened() {
   }
 }
 
+let paid = 0; // today's special's tickets, paid by a plush on the way to the win card
 function won(w) {
   const prize = plushFor(w.kind);
   wallet.give(prize);
@@ -161,7 +164,10 @@ function won(w) {
   door = { ...w, t: 0 };
   glow = 2.4;
   sound.won(w.kind === 'star');
-  say(`You won ${prize.say}!`);
+  // today's special, on Clutch's day: the plush it names pays 25 tickets too, once, into the pocket
+  const bonus = claim('clutch', { kind: w.kind });
+  if (bonus) { paid += bonus; bump($('tixBtn')); }
+  say(`You won ${prize.say}!${bonus ? ` ${endLine(bonus)}` : ''}`);
   if (navigator.vibrate) try { navigator.vibrate([20, 50, 20]); } catch { /* not allowed */ }
   hud(true);
 }
@@ -185,6 +191,9 @@ function showWin() {
   $('winHow').textContent = got.some(w => w.kind === 'star')
     ? "The lucky star! They don't come along often. It's on your shelf now."
     : got.length > 1 ? `${['', '', 'Two', 'Three', 'Four', 'Five'][got.length] || got.length} at once! They're on your shelf now, with your prizes.` : "It's on your shelf now, with your prizes.";
+  $('winSpecial').textContent = endLine(paid);
+  $('winSpecial').hidden = !paid;
+  paid = 0;
   const art = $('winArt'), r = Math.min(2, devicePixelRatio || 1);
   art.width = 220 * r; art.height = 170 * r;
   const c = art.getContext('2d');
@@ -277,6 +286,12 @@ $('tixBtn').addEventListener('click', () => { sound.unlock(); openPrizes(); });
 for (const id of ['toPrizes', 'menuPrizes']) $(id).addEventListener('click', openPrizes);
 addEventListener('free-play:wallet', () => hud());
 addEventListener('pageshow', () => hud()); // back from the floor, where tickets may have been spent
+
+// Today's special, when it's Clutch's day: its plush on the title card (or that it's made).
+function special() { const t = titleLine('clutch'); $('titleSpecial').textContent = t; $('titleSpecial').hidden = !t; }
+special();
+addEventListener('pageshow', special);
+addEventListener('storage', e => { if (e.key === null || e.key?.startsWith('free-play.')) special(); });
 
 // Clutch open in another tab, or this page brought back by Back as it was: look at the save again, so a go here adds
 // to what's there now instead of writing an old copy over it.

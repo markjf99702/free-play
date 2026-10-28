@@ -370,11 +370,12 @@ test("the all-time totals count every ticket won, every trade and every round, i
 test("today's special: one machine a day, the same for everyone, every one in turn, and 25 tickets once a day", async () => {
   const { specialFor, claim, madeToday, meets, titleLine, endLine, MACHINES, GOALS, BONUS, KEY } = await import('../shared/special.js');
   const { dayKey } = await import('../shared/calendar.js');
-  assert.deepEqual(MACHINES, ['tilt', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops'], "every machine with a round's score to set a goal on");
+  assert.deepEqual(MACHINES, ['tilt', 'clutch', 'topple', 'highrise', 'popgun', 'bonkers', 'hoops'], 'every machine but Roll Up, which has its own card');
+  assert.deepEqual(GOALS.clutch, ['bear', 'chick', 'frog', 'ghost', 'penguin', 'alien'], "Clutch's: any plush but the lucky star");
   assert.deepEqual(specialFor('2026-10-28'), specialFor('2026-10-28'), 'the same for everyone');
-  // over two years: every run of six days from the first has each machine once, never the same two days running
+  // over two years: every run of seven days from the first has each machine once, never the same two days running
   let prev = null;
-  const seen = [];
+  const seen = [], plushes = new Set();
   for (let d = 0; d < 730; d++) {
     const s = specialFor(dayKey(new Date(2026, 0, 5 + d, 12)));
     assert.ok(MACHINES.includes(s.machine));
@@ -382,15 +383,19 @@ test("today's special: one machine a day, the same for everyone, every one in tu
     prev = s.machine;
     seen.push(s.machine);
     if (s.machine === 'tilt') assert.equal(s.goal, GOALS.tilt[s.table]);
+    else if (s.machine === 'clutch') assert.ok(GOALS.clutch.includes(s.plush) && s.goal === s.plush, `a plush for the day (${s.plush})`);
     else assert.equal(s.goal, GOALS[s.machine]);
+    if (s.machine === 'clutch') plushes.add(s.plush);
   }
-  for (let i = 0; i + 6 <= seen.length; i += 6) assert.equal(new Set(seen.slice(i, i + 6)).size, 6, `days ${i} to ${i + 5}`);
+  for (let i = 0; i + 7 <= seen.length; i += 7) assert.equal(new Set(seen.slice(i, i + 7)).size, 7, `days ${i} to ${i + 6}`);
+  assert.equal(plushes.size, 6, 'every plush has its days');
   // what it says
   const on = m => { for (let d = 0; ; d++) { const k = dayKey(new Date(2026, 9, 1 + d, 12)); if (specialFor(k).machine === m) return k; } };
   assert.equal(specialFor(on('bonkers')).goalText, 'score 250 in a round');
   assert.equal(specialFor(on('topple')).goalText, 'win 12 tickets in one cup');
   assert.equal(specialFor(on('highrise')).goalText, 'build 10 floors');
   assert.match(specialFor(on('tilt')).goalText, /^score (100,000 on Classic|400,000 on Space|50,000 on Haunted House)$/);
+  assert.match(specialFor(on('clutch')).goalText, /^win a plush (bear|chick|frog|ghost|penguin|alien)$/);
   // a round that makes it, on its day, pays once
   kept.clear();
   const day = on('bonkers');
@@ -411,6 +416,18 @@ test("today's special: one machine a day, the same for everyone, every one in tu
   const t = specialFor(on('tilt')), other = ['classic', 'space', 'haunted'].find(id => id !== t.table);
   assert.ok(meets(t, { score: t.goal, table: t.table }));
   assert.ok(!meets(t, { score: t.goal * 10, table: other }), 'not on another table');
+  // Clutch's is the day's plush, won
+  const c = specialFor(on('clutch')), not = GOALS.clutch.find(k => k !== c.plush);
+  assert.ok(meets(c, { kind: c.plush }));
+  assert.ok(!meets(c, { kind: not }) && !meets(c, { kind: 'star' }) && !meets(c, { score: 1000 }), 'not another plush, nor a score');
+  kept.clear();
+  const had = wallet.read().tickets;
+  assert.equal(titleLine('clutch', c.key), `Today's special: ${c.goalText} for 25 more tickets.`);
+  assert.equal(claim('clutch', { kind: not }, c.key), 0, 'another plush');
+  assert.equal(claim('clutch', { kind: c.plush }, c.key), BONUS);
+  assert.equal(claim('clutch', { kind: c.plush }, c.key), 0, 'once a day');
+  assert.equal(wallet.read().tickets, had + BONUS);
+  assert.deepEqual(JSON.parse(kept.get(KEY)), { key: c.key, machine: 'clutch' });
 });
 
 test("a trophy for each machine's hardest feat: on the shelf, together at the end, never at the counter", async () => {

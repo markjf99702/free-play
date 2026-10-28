@@ -23,6 +23,19 @@ const server = createServer(async (req, res) => {
 const base = `http://localhost:${server.address().port}/`;
 
 const browser = await pw.chromium.launch();
+// Today's special is made already in every page here, so its 25 tickets don't land in a pocket a test counts. (The
+// special has a test of its own, on a day of its own: openOn() opens a context without this.)
+const openOn = browser.newContext.bind(browser);
+browser.newContext = async (...a) => {
+  const c = await openOn(...a);
+  await c.addInitScript(() => {
+    try {
+      const d = new Date(), key = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-');
+      if (!localStorage.getItem('free-play.special')) localStorage.setItem('free-play.special', JSON.stringify({ key, machine: 'made by the tests' }));
+    } catch { /* storage off */ }
+  });
+  return c;
+};
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 // The machine's own loop sound (its motor, or the rumble of the ball), as the page makes it, so the test can listen.
 await ctx.addInitScript(() => {
@@ -282,6 +295,64 @@ assert.equal(await page.textContent('#winHow'), "Three at once! They're on your 
   const second = await still.screenshot({ clip: sign });
   assert.ok(first.equals(second), "with less motion asked for, the sign's bulbs still chase");
   await calm.close();
+}
+
+// Today's special, on a day that's Clutch's (Oct 20, 2026: a plush alien): the floor and the title card name the plush;
+// another plush won pays nothing more, the alien pays 25 tickets into the pocket and the win card says so, and that's
+// once a day. (The machine's own wins are held back, and the page handed these instead.)
+{
+  const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
+  await sc.clock.setFixedTime(new Date(2026, 9, 20, 12));
+  const sp = await sc.newPage();
+  sp.on('pageerror', e => problems.push('special: ' + e.message));
+  await sp.goto(base);
+  await sp.waitForFunction(() => !!window.freePlay);
+  assert.equal(await sp.textContent('#today'), "Today's special: Clutch. Win a plush alien for 25 more tickets.");
+  const badges = await sp.evaluate(() => [...document.querySelectorAll('.cab')].map(c => [c.id, c.querySelector('.coin').textContent]));
+  assert.deepEqual(badges.filter(([, t]) => t !== 'Free play'), [['clutch', 'Special']], "the badge says Special on Clutch's cabinet only");
+  await sp.click('#today a');
+  await sp.waitForURL(base + 'clutch/');
+  await sp.waitForFunction(() => !!window.clutch);
+  assert.equal(await sp.textContent('#titleSpecial'), "Today's special: win a plush alien for 25 more tickets.");
+  assert.ok(await sp.isVisible('#titleSpecial'));
+  await sp.click('#play');
+  await sp.evaluate(() => {
+    const m = clutch.machine, take = m.take, takeWon = m.takeWon;
+    window.__hand = { extra: [], won: [] };
+    m.take = () => [...take(), ...__hand.extra.splice(0)];
+    m.takeWon = () => { takeWon(); return __hand.won.splice(0); };
+  });
+  const pocket = () => sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
+  const win = async kind => {
+    await sp.evaluate(kind => { __hand.won.push({ kind, tone: 0.3 }); __hand.extra.push('ready'); }, kind);
+    await sp.waitForSelector('#win:not([hidden])', { timeout: 3000 });
+  };
+  const keepGoing = async () => { await sp.click('#more'); await sp.waitForTimeout(400); };
+  await win('frog');
+  assert.ok(await sp.isHidden('#winSpecial'), "a frog isn't the day's plush");
+  assert.equal(await pocket(), 0);
+  await keepGoing();
+  await win('alien');
+  assert.equal(await sp.textContent('#winT'), 'You got a plush alien.');
+  assert.equal(await sp.textContent('#winSpecial'), "Today's special! 25 more tickets.");
+  assert.ok(await sp.isVisible('#winSpecial'));
+  assert.equal(await pocket(), 25, 'into the pocket');
+  assert.equal(await sp.textContent('#tix'), '25', 'and the pocket in the corner says so');
+  assert.deepEqual(await sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.special'))), { key: '2026-10-20', machine: 'clutch' });
+  await keepGoing();
+  await win('alien');
+  assert.ok(await sp.isHidden('#winSpecial'), 'the special pays once a day');
+  assert.equal(await pocket(), 25);
+  await keepGoing();
+  await sp.reload();
+  await sp.waitForFunction(() => !!window.clutch);
+  assert.equal(await sp.textContent('#titleSpecial'), "Today's special: made. A new one tomorrow.");
+  // and on another machine's day, Clutch's title card says nothing of it
+  await sc.clock.setFixedTime(new Date(2026, 9, 21, 12));
+  await sp.reload();
+  await sp.waitForFunction(() => !!window.clutch);
+  assert.ok(await sp.isHidden('#titleSpecial'), "the special's line shows on another machine's day");
+  await sc.close();
 }
 
 assert.deepEqual(problems, [], 'problems while playing');

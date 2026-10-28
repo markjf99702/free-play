@@ -791,11 +791,11 @@ for (const reducedMotion of ['no-preference', 'reduce']) {
   }
 }
 
-// Today's special under the pocket, on a day that's Tilt's (Oct 29, 2026, on Haunted House): which machine, its goal,
+// Today's special under the pocket, on a day that's Tilt's (Oct 31, 2026, on Haunted House): which machine, its goal,
 // and the badge on its cabinet; and once it's made, that it's made. Tilt's title card says the goal too.
 {
   const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
-  await sc.clock.setFixedTime(new Date(2026, 9, 29, 12));
+  await sc.clock.setFixedTime(new Date(2026, 9, 31, 12));
   const sp = await sc.newPage();
   sp.on('pageerror', e => problems.push('special: ' + e.message));
   sp.on('request', r => { if (r.url().startsWith(base)) loaded.add(new URL(r.url()).pathname.slice(1) || './'); });
@@ -813,7 +813,7 @@ for (const reducedMotion of ['no-preference', 'reduce']) {
   await sp.waitForFunction(() => !!window.tilt);
   assert.equal(await sp.evaluate(() => document.querySelector('#tables input:checked').value), 'haunted', 'Tilt opens on the table the special is on');
   assert.equal(await sp.textContent('#titleSpecial'), "Today's special: score 50,000 on Haunted House for 25 more tickets.");
-  await sp.evaluate(() => localStorage.setItem('free-play.special', JSON.stringify({ key: '2026-10-29', machine: 'tilt' })));
+  await sp.evaluate(() => localStorage.setItem('free-play.special', JSON.stringify({ key: '2026-10-31', machine: 'tilt' })));
   await sp.goto(base);
   await sp.waitForFunction(() => !!window.freePlay);
   assert.equal(await sp.textContent('#today'), "Today's special: Tilt. You made it: 25 more tickets. A new one tomorrow.");

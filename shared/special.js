@@ -4,21 +4,26 @@
 // own (free-play.special: { key, machine }).
 //
 // The goals come from the simulated players at the machines' pay rates: each is about the middle of a casual player's
-// rounds (see the README). Clutch has no round with a score to set a goal on, so it isn't in the run yet.
+// rounds (see the README). Clutch has no round with a score, so its goal is a plush named for the day, which about
+// half of the simulated claw players' sittings of 20 goes win (6 in 10 aimed at the top of the heap, 4 in 10 dropped
+// anywhere, 7 in 10 going after that plush).
 
 import { dayKey, daysApart, seeded } from './calendar.js';
 import { pay } from './wallet.js';
 import { fmt } from './counter.js';
+import { PLUSH } from './prizes.js';
 
 export const KEY = 'free-play.special';
 export const BONUS = 25;
-// Tilt's goal is on one of its tables, drawn for the day with the machine.
+// Tilt's goal is on one of its tables, drawn for the day with the machine, and Clutch's is one of its plush (any but
+// the rare lucky star), drawn the same way.
 export const GOALS = {
   tilt: { classic: 100000, space: 400000, haunted: 50000 },
+  clutch: PLUSH.filter(p => !p.rare).map(p => p.kind),
   topple: 12, highrise: 10, popgun: 180, bonkers: 250, hoops: 55,
 };
 export const MACHINES = Object.keys(GOALS);
-const NAMES = { tilt: 'Tilt', topple: 'Topple', highrise: 'Highrise', popgun: 'Popgun', bonkers: 'Bonkers', hoops: 'Hoops' };
+const NAMES = { tilt: 'Tilt', clutch: 'Clutch', topple: 'Topple', highrise: 'Highrise', popgun: 'Popgun', bonkers: 'Bonkers', hoops: 'Hoops' };
 const TABLES = { classic: 'Classic', space: 'Space', haunted: 'Haunted House' };
 
 // The machines, a run of days at a time: each run has every one of them once, in an order drawn for that run, and a
@@ -35,19 +40,22 @@ function machineOn(key) {
   return order[d - n * MACHINES.length];
 }
 
-// The special for a day: { key, machine, name, goal, table (Tilt's), goalText ('score 250 in a round') }.
+// The special for a day: { key, machine, name, goal, table (Tilt's), plush (Clutch's, its kind, which is its goal too),
+// goalText ('score 250 in a round', 'win a plush frog') }.
 export function specialFor(key = dayKey()) {
   const machine = machineOn(key);
-  const s = { key, machine, name: NAMES[machine], table: null, goal: GOALS[machine] };
+  const s = { key, machine, name: NAMES[machine], table: null, plush: null, goal: GOALS[machine] };
   if (machine === 'tilt') {
     const ids = Object.keys(TABLES);
     s.table = ids[Math.floor(seeded('special-table:' + key)() * ids.length)];
     s.goal = GOALS.tilt[s.table];
   }
+  if (machine === 'clutch') s.goal = s.plush = GOALS.clutch[Math.floor(seeded('special-plush:' + key)() * GOALS.clutch.length)];
   s.goalText = machine === 'tilt' ? `score ${fmt(s.goal)} on ${TABLES[s.table]}`
-    : machine === 'topple' ? `win ${s.goal} tickets in one cup`
-      : machine === 'highrise' ? `build ${s.goal} floors`
-        : `score ${fmt(s.goal)} in a round`;
+    : machine === 'clutch' ? `win ${PLUSH.find(p => p.kind === s.plush).say}`
+      : machine === 'topple' ? `win ${s.goal} tickets in one cup`
+        : machine === 'highrise' ? `build ${s.goal} floors`
+          : `score ${fmt(s.goal)} in a round`;
   return s;
 }
 
@@ -56,8 +64,10 @@ export function madeToday(key = dayKey()) {
   try { return JSON.parse(localStorage.getItem(KEY))?.key === key; } catch { return false; }
 }
 
-// Whether a round makes the special: { score } (Highrise's floors built, Topple's tickets in the cup), and Tilt's table.
-export const meets = (s, r) => !!r && Number(r.score) >= s.goal && (s.machine !== 'tilt' || r.table === s.table);
+// Whether a round makes the special: { score } (Highrise's floors built, Topple's tickets in the cup), and Tilt's table;
+// or on Clutch, a plush won: { kind }.
+export const meets = (s, r) => !!r && (s.machine === 'clutch' ? r.kind === s.plush
+  : Number(r.score) >= s.goal && (s.machine !== 'tilt' || r.table === s.table));
 
 // A machine's round, at its end: if it's today's special, not made yet today, and the round makes it, it's made now and
 // pays its 25 tickets into the pocket. Gives the tickets it paid (0 when it didn't).

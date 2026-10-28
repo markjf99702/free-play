@@ -211,7 +211,7 @@ const phones = {};
   await page.context().close();
 }
 {
-  // (18 October is Tilt's special, on Classic: made already, so the picture is the game's own 53 tickets)
+  // (18 October's special made already, whichever machine's it is, so the picture is the game's own 53 tickets)
   const page = await open('tilt/', { width: 390, height: 844 }, 2, { ...SAVES, 'free-play.special': { key: '2026-10-18', machine: 'tilt' } });
   await page.click('#startBtn');
   await page.waitForTimeout(400);

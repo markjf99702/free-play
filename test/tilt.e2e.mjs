@@ -671,11 +671,11 @@ down = false;
   await tp.close();
 }
 
-// Today's special on its table, on a day that's Tilt's (Oct 29, 2026: 50,000 on Haunted House): the title card says
+// Today's special on its table, on a day that's Tilt's (Oct 31, 2026: 50,000 on Haunted House): the title card says
 // so, and a game there that makes it pays 25 more tickets with its own; on another table it doesn't.
 {
   const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, serviceWorkers: 'block' });
-  await sc.clock.setFixedTime(new Date(2026, 9, 29, 12));
+  await sc.clock.setFixedTime(new Date(2026, 9, 31, 12));
   const sp = await sc.newPage();
   sp.on('pageerror', e => problems.push('special: ' + e.message));
   const game = async (table, points) => {

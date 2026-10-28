@@ -274,11 +274,11 @@ await page.waitForSelector('#highriseStat');
 assert.equal(await tickets(), t3 + 2, 'a game left as its tower fell still pays');
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')).games), gamesThen + 1, 'and counts');
 
-// Today's special, on a day that's Highrise's (Oct 27, 2026): the title card says the goal, ten floors; a game that
+// Today's special, on a day that's Highrise's (Oct 22, 2026): the title card says the goal, ten floors; a game that
 // builds them pays 25 more tickets, out of the slot with the rest, and says so; and that's once a day.
 {
   const sc = await openOn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
-  await sc.clock.setFixedTime(new Date(2026, 9, 27, 12));
+  await sc.clock.setFixedTime(new Date(2026, 9, 22, 12));
   const sp = await sc.newPage();
   sp.on('pageerror', e => problems.push('special: ' + e.message));
   await sp.goto(base + 'highrise/');
@@ -307,7 +307,7 @@ assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-pla
   assert.ok(await sp.isVisible('#overSpecial'));
   assert.equal(await pocket(), before + 10 + 25, 'ten floors and the special');
   await sp.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '35', null, { timeout: 5000 });
-  assert.deepEqual(await sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.special'))), { key: '2026-10-27', machine: 'highrise' });
+  assert.deepEqual(await sp.evaluate(() => JSON.parse(localStorage.getItem('free-play.special'))), { key: '2026-10-22', machine: 'highrise' });
   // once a day
   const then = await pocket();
   await ten();
@@ -317,7 +317,7 @@ assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-pla
   await sp.waitForFunction(() => !!window.highrise);
   assert.equal(await sp.textContent('#titleSpecial'), "Today's special: made. A new one tomorrow.");
   // and on another machine's day, Highrise's title card says nothing of it
-  await sc.clock.setFixedTime(new Date(2026, 9, 28, 12));
+  await sc.clock.setFixedTime(new Date(2026, 9, 23, 12));
   await sp.reload();
   await sp.waitForFunction(() => !!window.highrise);
   assert.ok(await sp.isHidden('#titleSpecial'), "the special's line shows on another machine's day");
