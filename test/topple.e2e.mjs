@@ -88,6 +88,13 @@ assert.equal(await left(), 20, `the second tap of a double tap on Play, ${second
 assert.equal(await page.textContent('#left'), '20');
 // (what the pocket had as the cup began: everything the cup pushes over goes on top)
 const atStart = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets - topple.cup.won);
+// (and from here on, a count of the coins that go over the front edge, to check what they paid)
+const counting = await page.evaluate(() => {
+  const m = topple.machine, take = m.takeFalls;
+  window.__over = { coin: 0, gold: 0 };
+  m.takeFalls = () => { const fell = take(); for (const f of fell) if (f.edge !== 'side' && f.kind !== 'prize') __over[f.kind === 'gold' ? 'gold' : 'coin']++; return fell; };
+  return { tickets: JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets, odd: topple.saved.odd };
+});
 
 // Touching the glass moves the chute to the finger; letting go drops a coin there. A tap half a second after Play
 // is a tap like any other.
@@ -137,13 +144,17 @@ const wall = await page.evaluate(() => {
 });
 assert.deepEqual(wall, [], 'the chute covers the sign at these aims');
 
-// Every coin over the front edge is a ticket, paid as it goes over.
+// Every two coins over the front edge are a ticket, paid as the second goes over, and a gold coin is ten.
 await page.evaluate(() => { topple.speed = 4; });
 while (await left() > 3) { await reloaded(); await page.evaluate(() => topple.drop(40 + Math.random() * 220)); }
 // (read together: coins are still going over while the test looks)
-const [mid, shown] = await page.evaluate(() => [topple.cup.won, document.getElementById('won').textContent]);
+const [mid, shown, over] = await page.evaluate(() => [topple.cup.won, document.getElementById('won').textContent,
+  { ...__over, odd: topple.saved.odd, tickets: JSON.parse(localStorage.getItem('free-play.wallet')).tickets }]);
 assert.ok(mid > 0, 'some coins have gone over the edge');
 assert.equal(shown, String(mid), 'the scoreboard shows this cup\'s tickets');
+assert.ok(over.coin > 2, `${over.coin} coins went over the front edge`);
+assert.equal(over.tickets - counting.tickets, Math.floor((counting.odd + over.coin) / 2) + 10 * over.gold, `${over.coin} coins and ${over.gold} gold ones over the edge, after ${counting.odd} waiting`);
+assert.equal(over.odd, (counting.odd + over.coin) % 2, 'an odd coin waits for the next');
 
 // The cup keeps between visits: the page comes back with the same coins left, and the deck as it was.
 // The machine stands still while the deck is counted, so nothing goes over between the count and the reload.
@@ -194,10 +205,10 @@ const trinket = TRINKETS.find(t => t.kind === prize);
 assert.equal(await page.textContent('#overPrize'), `And ${trinket.say} for your shelf.${trinket.emoji}`);
 assert.ok(await page.isVisible('#overPrize'));
 await page.waitForFunction(() => topple.glow > 0, null, { timeout: 4000 }); // the sign's bulbs blaze for it, once the tickets are out
-// Coins the pile still pushes over while the card is up count for the cup: one nudged over the edge now, and any the
-// shelf pushes. Once the deck is quiet, the card says what the pocket got. (Read together, in case one more goes over
-// while the test looks.)
-await page.evaluate(() => { const c = topple.machine.pieces.find(p => p.layer === 'deck' && p.kind === 'coin'); window.Matter.Body.setPosition(c, { x: 150, y: 252 }); });
+// Coins the pile still pushes over while the card is up count for the cup: two nudged over the edge now (a ticket's
+// worth, whatever was waiting), and any the shelf pushes. Once the deck is quiet, the card says what the pocket got.
+// (Read together, in case one more goes over while the test looks.)
+await page.evaluate(() => { for (const [i, c] of topple.machine.pieces.filter(p => p.layer === 'deck' && p.kind === 'coin').slice(0, 2).entries()) window.Matter.Body.setPosition(c, { x: 130 + i * 40, y: 252 }); });
 await page.waitForFunction(n => Number(document.getElementById('overT').textContent.match(/(\d+) tickets?$/)[1]) > n, won, { timeout: 5000 });
 await page.waitForTimeout(3000);
 const [pocket, card, scoreboard, best] = await page.evaluate(() => [JSON.parse(localStorage.getItem('free-play.wallet')).tickets,

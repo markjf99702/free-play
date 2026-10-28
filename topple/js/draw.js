@@ -189,7 +189,7 @@ export function createDraw(canvas) {
     c.fillStyle = tg; c.fill();
     c.font = `400 ${Math.max(9, tray.h * 0.2)}px Bungee, Impact, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillStyle = 'rgba(251, 238, 210, .85)';
-    c.fillText('EVERY COIN OVER THE EDGE IS A TICKET', tray.x + tray.w / 2, tray.y + tray.h + tray.h * 0.55);
+    c.fillText('A TICKET FOR EVERY TWO COINS OVER THE EDGE', tray.x + tray.w / 2, tray.y + tray.h + tray.h * 0.55);
   }
 
   // ---------- each frame ----------

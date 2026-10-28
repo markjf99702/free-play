@@ -153,7 +153,7 @@ for (let i = 0; i < 6; i++) { await page.waitForFunction(() => topple.machine.re
 await page.waitForFunction(() => topple.cup.won > 0, null, { timeout: 20000 });
 // (read together: the coins keep going over while the test looks)
 const [paid, won] = await page.evaluate(() => [JSON.parse(localStorage.getItem('free-play.wallet')).tickets, topple.cup.won]);
-assert.equal(paid, beforeTopple + won, 'Topple pays a ticket for every coin over the edge');
+assert.equal(paid, beforeTopple + won, 'Topple pays its cup\'s tickets into the pocket as the coins go over');
 await page.click('#menuBtn');
 await page.click('#menu a.to-floor');
 await page.waitForURL(base);

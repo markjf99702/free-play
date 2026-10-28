@@ -25,6 +25,15 @@ const DRAG = { deck: 0.2, shelf: 0.8 };                        // how fast a sli
 // What can be on the deck besides coins: a gold coin (worth ten) and a prize, which goes on the arcade's shelf.
 export const PRIZE = { w: 40, h: 26 };
 
+// What a coin over the front edge pays, in tickets: one for every two silver coins, and ten for a gold one. `odd` is
+// the silver coin already over and waiting for the next to make a ticket (0 or 1); the page keeps it between visits.
+export const PAYS = { coins: 2, gold: 10 };
+export function edgePays(kind, odd = 0) {
+  if (kind === 'gold') return { tickets: PAYS.gold, odd };
+  const n = odd + 1;
+  return { tickets: Math.floor(n / PAYS.coins), odd: n % PAYS.coins };
+}
+
 export function createMachine(Matter, { random = Math.random, field = null, prizes = ['watch'] } = {}) {
   const { Engine, Bodies, Body, Composite } = Matter;
   const engine = Engine.create({ gravity: { x: 0, y: 0, scale: 0 }, positionIterations: 10, velocityIterations: 8 });

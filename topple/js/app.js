@@ -1,11 +1,11 @@
 // Topple: a coin pusher, on the Free Play floor. This file runs it: aiming the chute, the cup of coins, the tickets
 // and prizes that come over the edge, and the cards. js/machine.js is the machine (matter-js slides the coins),
 // js/draw.js draws it in perspective and js/sound.js makes the noises.
-// Every coin over the front edge is a ticket, paid into the arcade's wallet (../shared/wallet.js) as it goes over;
-// a prize pushed off goes on the arcade's shelf. The coins on the deck are kept between visits, so a pile left
-// hanging over the edge is still hanging there next time.
+// Every two coins over the front edge are a ticket (and a gold one is ten), paid into the arcade's wallet
+// (../shared/wallet.js) as the second goes over; a prize pushed off goes on the arcade's shelf. The coins on the deck
+// are kept between visits, so a pile left hanging over the edge is still hanging there next time.
 
-import { createMachine, DECK } from './machine.js';
+import { createMachine, edgePays, DECK, PAYS } from './machine.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
@@ -16,11 +16,11 @@ import { insets } from '../../shared/insets.js';
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.topple';
 const CUP = 20;          // coins in a cup
-const GOLD = 10;         // tickets for a gold coin
 const STEP = 1000 / 60;  // the machine runs in steps of 1/60 s, whatever the screen's frame rate
 
 // ---------- what's kept between visits ----------
-// Topple's own: the best cup, how many cups, the sound, the coins on the deck, and a cup still being played.
+// Topple's own: the best cup, how many cups, the sound, the coins on the deck, a cup still being played, and a coin
+// over the edge still waiting for the next to make a ticket (odd).
 const saved = load();
 function load() {
   let s = null;
@@ -32,6 +32,7 @@ function load() {
   const cup = s.cup && Number.isInteger(s.cup.left) && s.cup.left >= 0 && s.cup.left <= CUP ? { left: s.cup.left, won: Math.max(0, Math.floor(s.cup.won) || 0), prizes } : null;
   s = { best: 0, cups: 0, sound: true, ...s, cup };
   for (const k of ['best', 'cups', 'prizes']) if (k in s) s[k] = Number.isFinite(+s[k]) ? +s[k] : 0; // a hand-edited or broken number
+  s.odd = Number.isInteger(s.odd) && s.odd > 0 && s.odd < PAYS.coins ? s.odd : 0;
   return s;
 }
 function save() {
@@ -173,11 +174,14 @@ function happened() {
       glow = 2.4;
       restockSoon();
     } else {
-      const n = f.kind === 'gold' ? GOLD : 1;
+      // every second silver coin pays a ticket, and a gold one pays ten
+      const pay = edgePays(f.kind, saved.odd), n = pay.tickets;
+      saved.odd = pay.odd;
+      sound.won(f.kind === 'gold');
+      if (!n) continue;
       wallet.pay(n);
       if (cup) cup.won += n;
       else if (done) lateCoins(n);
-      sound.won(f.kind === 'gold');
       // coins going over together add up in one pop, rather than a row of +1s on top of each other
       const near = pops.find(p => p.n && p.t < 0.4 && Math.abs(p.x - f.x) < 75);
       if (near) { near.n += n; near.big ||= n > 1; near.x = (near.x + f.x) / 2; near.t = Math.min(near.t, 0.1); }
@@ -334,9 +338,10 @@ addEventListener('free-play:wallet', () => hud());
 addEventListener('pageshow', () => hud()); // back from the floor, where tickets may have been spent
 
 // Topple open in another tab, or this page brought back by Back as it was: look at the save again, so a cup ending here
-// adds to what's there now instead of writing an old copy over it. The deck and the cup are this page's own.
+// adds to what's there now instead of writing an old copy over it. The deck, the cup and the coin waiting for its
+// pair are this page's own.
 function reread() {
-  Object.assign(saved, { ...load(), field: saved.field, cup: saved.cup });
+  Object.assign(saved, { ...load(), field: saved.field, cup: saved.cup, odd: saved.odd });
   sound.setEnabled(saved.sound);
   soundLabel();
   hud();

@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { createMachine, DECK, PUSHER, POCKETS } from '../topple/js/machine.js';
+import { createMachine, edgePays, DECK, PUSHER, POCKETS } from '../topple/js/machine.js';
 import { TRINKETS, PRIZES, PLUSH } from '../shared/prizes.js';
 
 new vm.Script(readFileSync(new URL('../shared/matter.min.js', import.meta.url), 'utf8')).runInThisContext();
@@ -78,6 +78,14 @@ test('coins dropped on the shelf push coins over the front edge, about as many a
   assert.ok(Math.abs(m.pieces.length - start) < 25, `the field held steady (${start} to ${m.pieces.length})`);
   const sides = t.lost / (t.won + t.gold + t.lost);
   assert.ok(sides > 0.02 && sides < 0.25, `${(sides * 100).toFixed(0)}% went off the sides`);
+});
+
+test('a ticket for every two silver coins over the front edge, and ten for a gold one', () => {
+  let odd = 0;
+  const paid = ['coin', 'coin', 'coin', 'gold', 'coin', 'coin', 'gold'].map(kind => { const p = edgePays(kind, odd); odd = p.odd; return p.tickets; });
+  assert.deepEqual(paid, [0, 1, 0, 10, 1, 0, 10], 'the second coin of each pair pays, and a gold coin pays whatever the count');
+  assert.equal(odd, 1, 'the last coin waits for the next');
+  assert.deepEqual(edgePays('coin'), { tickets: 0, odd: 1 }, 'a first coin pays nothing yet');
 });
 
 test('nothing gets through the walls: every piece stays on the machine until it goes over an edge', () => {
