@@ -3,30 +3,16 @@
 // The day is the player's own calendar day, so the card changes at their midnight. Once its first ball is rolled, a
 // card is yours: left part-way, it's kept where it was (settle() below), and it can't be started again.
 
+import { dayKey, dayBefore, seeded } from '../../shared/calendar.js';
+export { dayKey, dayBefore }; // (the days are the arcade's: ../../shared/calendar.js)
+
 export const BALLS = 9;
 export const ticketsFor = score => Math.floor(score / 10); // a ticket for every 10 points
 
 // How often each hole gets called: mostly the middle rings, a 50 now and then, a 100 rarely.
 const DRAW = [20, 20, 30, 30, 30, 40, 40, 40, 50, 50, 100];
 
-export function dayKey(d = new Date()) {
-  const p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-export function dayBefore(key) {
-  const [y, m, d] = key.split('-').map(Number);
-  return dayKey(new Date(y, m - 1, d - 1, 12));
-}
-
-// A small seeded random from the date (FNV-1a into mulberry32), so every phone draws the same card.
-function seeded(text) {
-  let h = 2166136261;
-  for (const c of text) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); }
-  let a = h >>> 0;
-  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
-
+// The card for a day: drawn from the date with the arcade's seeded random, so every phone draws the same one.
 export function cardFor(key) {
   const r = seeded('roll-up:' + key);
   const calls = [];

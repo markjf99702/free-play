@@ -224,3 +224,22 @@ test('sw.js changes whenever a file in the offline copy does', async () => {
   const kept = sw.replace(/SHELL = \[[^\]]*\]/, '').match(/const FILES = '([0-9a-f]*)'; \/\/ test\/arcade\.test\.mjs checks this/)?.[1];
   assert.equal(kept, files, `a file sw.js keeps for offline has changed: set FILES in sw.js to '${files}'`);
 });
+
+test("the arcade's calendar: the player's own day, the day before, days apart, and a day as people say it", async () => {
+  const { dayKey, dayBefore, daysApart, dayName, seeded } = await import('../shared/calendar.js');
+  assert.equal(dayKey(new Date(2026, 9, 28, 23, 59)), '2026-10-28', "late in the evening it's still the player's own day");
+  assert.equal(dayKey(new Date(2026, 0, 5, 0, 1)), '2026-01-05');
+  assert.equal(dayBefore('2026-03-01'), '2026-02-28');
+  assert.equal(dayBefore('2027-01-01'), '2026-12-31');
+  assert.equal(daysApart('2026-10-27', '2026-10-28'), 1);
+  assert.equal(daysApart('2026-10-28', '2026-03-08'), -234);
+  assert.equal(daysApart('2026-03-07', '2026-03-09'), 2, 'across the clocks going forward');
+  assert.equal(dayName('2026-10-27', '2026-10-28'), 'Oct 27');
+  assert.equal(dayName('2025-12-31', '2026-10-28'), 'Dec 31, 2025', 'with the year when it is not this one');
+  assert.equal(dayName(null), '');
+  const a = seeded('special:2026-10-28'), b = seeded('special:2026-10-28'), c = seeded('special:2026-10-29');
+  const run = r => Array.from({ length: 5 }, r);
+  assert.deepEqual(run(a), run(b), 'the same text, the same numbers');
+  assert.notDeepEqual(run(seeded('special:2026-10-28')), run(c));
+  assert.ok(run(seeded('x')).every(x => x >= 0 && x < 1));
+});

@@ -6,7 +6,8 @@
 import * as wallet from '../shared/wallet.js';
 import { openCounter, shelfItem, fmt, tickets } from '../shared/counter.js';
 import { SHELF } from '../shared/prizes.js';
-import { dayKey, dayBefore, settle, BALLS } from '../roll-up/js/daily.js';
+import { dayKey, dayBefore } from '../shared/calendar.js';
+import { settle, BALLS } from '../roll-up/js/daily.js';
 
 const $ = id => document.getElementById(id);
 const readSave = key => {

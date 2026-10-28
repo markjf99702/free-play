@@ -182,6 +182,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `shared/prizes.js`: what's at the prize counter and what it costs, the plush Clutch gives out, the prizes on Topple's deck and Highrise's trophy.
 - `shared/matter.min.js`: matter-js, the 2D physics Clutch and Topple run on (MIT licence, kept here so it works offline).
 - `shared/carry.js`: brings saves over from the machines' old addresses on the first visit.
+- `shared/calendar.js`: the day where the player is (so everything daily changes at their midnight), and a random seeded from it, so every phone draws the same thing on the same day.
 - `shared/insets.js`: how far a phone's notch, rounded corners and home indicator reach in, so each machine keeps its cabinet clear of them.
 - `roll-up/`: Roll Up. `js/physics.js` is the machine in centimetres and the ball on it, `js/scene.js` draws it in perspective, `js/daily.js` is today's card, `js/app.js` runs the game and `js/sound.js` makes every sound with Web Audio.
 - `tilt/`: Tilt. `js/physics.js` and `js/game.js` are the machine every table shares, `js/tables/` holds the three tables (layout, rules, drawing and skins each), and `js/main.js` wires it all to the page.

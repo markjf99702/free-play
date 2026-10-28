@@ -10,6 +10,7 @@ import { NORMAL } from './settings.js';
 import { play, unlock, setSound } from './sound.js';
 import { TABLES } from './tables.js';
 import * as wallet from '../../shared/wallet.js';
+import { dayKey } from '../../shared/calendar.js';
 import { openCounter, counterOpen, feed, tickets, shortOfATicket, PAYOUT } from '../../shared/counter.js';
 
 const $ = id => document.getElementById(id);
@@ -305,9 +306,8 @@ function gameOver(g, { ended = false } = {}) {
   const score = g.score;
   game.mode = 'over';
   const list = topFive();
-  // The day it was played where the player is: toISOString's date is UTC's, already tomorrow on a US evening.
-  const d = new Date(), date = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-');
-  const entry = { score, date };
+  // The day it was played where the player is (toISOString's date is UTC's, already tomorrow on a US evening).
+  const entry = { score, date: dayKey() };
   list.push(entry);
   list.sort((a, b) => b.score - a.score);
   store[table.scoresKey] = list.slice(0, 5);
