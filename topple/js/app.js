@@ -6,12 +6,14 @@
 // are kept between visits, so a pile left hanging over the edge is still hanging there next time.
 
 import { createMachine, edgePays, DECK, PAYS } from './machine.js';
+import { dayKey } from '../../shared/calendar.js';
 import { createDraw } from './draw.js';
 import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { TRINKETS } from '../../shared/prizes.js';
 import { openCounter, counterOpen, toast, feed, bestLine, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { topFive, place, onList } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.topple';
@@ -87,7 +89,8 @@ if (document.fonts) Promise.all([document.fonts.load('400 20px Bungee'), documen
 // ---------- the cup, and dropping coins ----------
 let cup = saved.cup;     // { left, won, prizes }: the coins still in it, the tickets and the prizes (kinds) this cup has won, or null between cups
 // The cup just finished, while its card is up: coins that still go over count for it, on the card and towards the
-// best cup, until Another cup. { won, prizes, before: the best cup before it, first: whether it was the first cup }
+// best cup and the top five, until Another cup. { won, prizes, before: the best cup before it, first: whether it was
+// the first cup, top: the top five before it, date: the day it was played }
 let done = null;
 let aim = DECK.W / 2;    // where the chute is, mm across
 let paused = false, timeScale = 1, lastDrop = 0, lastFall = 0, ended = false;
@@ -215,7 +218,7 @@ let feeding = () => {};
 $('payout').innerHTML = PAYOUT;
 function endCup() {
   ended = true;
-  done = { won: cup.won, prizes: cup.prizes, before: saved.best || 0, first: !saved.cups };
+  done = { won: cup.won, prizes: cup.prizes, before: saved.best || 0, first: !saved.cups, top: topFive(saved), date: dayKey() };
   saved.cups = (saved.cups || 0) + 1;
   cup = null;
   showDone();
@@ -234,11 +237,14 @@ function lateCoins(n) {
 const newBest = () => done.won > done.before && !done.first;
 function showDone() {
   const { won, before } = done;
+  // onto the top five (again, with late coins: from the five as they were before it)
+  const { list, rank, entry } = place(done.top, won, done.date);
+  if (entry) saved.top = list;
   if (won > (saved.best || 0)) saved.best = won;
   save();
   $('overT').textContent = `${CUP} coins, ${tickets(won)}`;
   wonPrizes(done.prizes);
-  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${tickets(before)}.`], `Best cup: ${tickets(saved.best)}.`);
+  bestLine($('overBest'), newBest() && ['A new best cup!', `The old one was ${tickets(before)}.`], `${onList(rank)}Best cup: ${tickets(saved.best)}.`);
   hud();
 }
 // The prizes a cup pushed off, under its card's heading: 'And a toy car and a lucky keyring for your shelf.'

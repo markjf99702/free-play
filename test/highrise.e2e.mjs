@@ -135,7 +135,7 @@ assert.equal(await page.evaluate(() => highrise.tower.built), built + 1, 'Space 
 
 // Floor 11, taking the minor prize: 11 tickets and 25 more.
 const t0 = await tickets();
-await page.evaluate(() => Object.assign(highrise.saved, { best: 6, games: 2 })); // (after games as high as floor 6)
+await page.evaluate(() => { Object.assign(highrise.saved, { best: 6, games: 2 }); delete highrise.saved.top; }); // (after games as high as floor 6)
 await page.evaluate(() => highrise.start());
 await build(11);
 await page.waitForSelector('#choose:not([hidden])');
@@ -162,7 +162,10 @@ await page.evaluate(() => highrise.stopAt(0));
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await tickets(), t1 + 11);
 assert.match(await page.textContent('#overT'), /Eleven floors\. So close\./);
-assert.deepEqual(await bestLine(), { text: 'Highest: floor 11.', big: false, size: '13px' }, 'as high as the highest is not higher');
+assert.deepEqual(await bestLine(), { text: 'Number 2 on your list. Highest: floor 11.', big: false, size: '13px' }, 'as high as the highest is not higher, and goes on the list under it');
+// the top five, best first, with the day each was set
+const today = await page.evaluate(() => { const d = new Date(); return [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-'); });
+assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')).top), [{ score: 11, date: today }, { score: 11, date: today }, { score: 6, date: null }]);
 
 // Highrise open in a second tab too, from before the next game.
 const other = await ctx.newPage();
@@ -199,7 +202,8 @@ await other.evaluate(() => highrise.stopAt(0));
 await other.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const kept = await other.evaluate(() => JSON.parse(localStorage.getItem('free-play.highrise')));
 assert.deepEqual([kept.best, kept.tops, kept.games], [15, 1, gamesBefore + 2], 'the top-out in the other tab is kept, and both games count');
-assert.equal(await other.textContent('#overBest'), 'Highest: floor 15.');
+assert.equal(await other.textContent('#overBest'), 'Number 5 on your list. Highest: floor 15.', "and it goes on the list as it is now, the top-out at the top");
+assert.deepEqual(kept.top.map(e => e.score), [15, 11, 11, 6, 2]);
 await other.close();
 
 // The menu opened just as floor 11 lands, before the choice comes up, by Escape or by leaving the page, holds the

@@ -8,8 +8,8 @@
 // fingerprint of every file in SHELL: change any of them and test/arcade.test.mjs fails until FILES is changed to
 // match (it says what to), which changes this file, so every copy is made whole again at once. Bump CACHE's number
 // as well when the list itself changes.
-const CACHE = 'free-play-v10';
-const FILES = '5e0a2599'; // test/arcade.test.mjs checks this
+const CACHE = 'free-play-v11';
+const FILES = '44cfefcb'; // test/arcade.test.mjs checks this
 const SHELL = [
   './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   // the page for an address that is not there
@@ -21,7 +21,7 @@ const SHELL = [
   'floor/popgun.jpg', 'floor/roll-up.jpg', 'floor/tilt.jpg', 'floor/topple.jpg',
   // shared
   'shared/arcade.css', 'shared/calendar.js', 'shared/carry.js', 'shared/counter.js', 'shared/insets.js', 'shared/matter.min.js',
-  'shared/prizes.js', 'shared/wallet.js',
+  'shared/prizes.js', 'shared/records.js', 'shared/wallet.js',
   'fonts/bungee-outline.woff2', 'fonts/bungee.woff2', 'fonts/figtree.woff2',
   // Roll Up
   'roll-up/css/app.css', 'roll-up/index.html', 'roll-up/js/app.js', 'roll-up/js/daily.js', 'roll-up/js/physics.js',

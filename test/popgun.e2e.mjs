@@ -259,8 +259,8 @@ await page.goto(base + 'popgun/');
 await page.click('#play');
 
 // A round of one hit says so in the singular, and a round that pays no ticket says how far off one it was: one duck,
-// and the other nineteen corks at the moon.
-await page.evaluate(() => { popgun.speed = 3; });
+// and the other nineteen corks at the moon. (After rounds of 900 and 50: it goes third on the list.)
+await page.evaluate(() => { Object.assign(popgun.saved, { best: 900, top: [{ score: 900, date: '2026-10-01' }, { score: 50, date: '2026-10-02' }] }); popgun.speed = 3; });
 while (!(await page.evaluate(() => popgun.gallery.over))) {
   await page.waitForFunction(() => popgun.gallery.ready || popgun.gallery.over);
   await page.evaluate(() => {
@@ -275,6 +275,8 @@ await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 const [hit, scored] = await page.evaluate(() => [popgun.gallery.hits, popgun.gallery.score]);
 assert.deepEqual([hit, scored], [1, 10], 'one duck hit, and nothing else');
 assert.equal(await page.textContent('#overHow'), "1 hit from 20 corks. Twenty more points and it's a ticket.");
+assert.equal(await page.textContent('#overBest'), 'Number 3 on your list. Best: 900.');
+assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.popgun')).top.map(e => e.score)), [900, 50, 10]);
 // Behind the end card the booth goes on turning, quietly: a golden duck or a bell coming round doesn't chime there.
 assert.equal(await page.evaluate(() => popgun.saved.sound), true, 'the sound is on');
 await page.evaluate(() => { window.__sounds.length = 0; popgun.speed = 10; });

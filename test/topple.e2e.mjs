@@ -211,7 +211,7 @@ await hide(false);
 await page.click('#resume');
 
 // The last coins, and the cup's done once the pile goes quiet: the card says what it paid. (After cups with a best of 1.)
-await page.evaluate(() => { topple.speed = 4; Object.assign(topple.saved, { best: 1, cups: 2 }); });
+await page.evaluate(() => { topple.speed = 4; Object.assign(topple.saved, { best: 1, cups: 2 }); delete topple.saved.top; });
 while (await left() > 0) { await reloaded(); await page.evaluate(() => topple.drop(150)); }
 assert.ok(await page.isDisabled('#drop'), 'an empty cup has nothing to drop');
 await page.waitForFunction(() => !document.getElementById('over').hidden, null, { timeout: 20000 });
@@ -237,6 +237,8 @@ const [pocket, card, scoreboard, best] = await page.evaluate(() => [JSON.parse(l
 assert.equal(pocket - atStart, card, 'the card counts every ticket the cup paid');
 assert.equal(scoreboard, String(card), "the scoreboard keeps the cup's figure while its card is up");
 assert.equal(best, card, 'and the best cup is all of it');
+// and on the top five, once, with all of it (seeded from the best of 1 there was before the list)
+assert.deepEqual(await page.evaluate(() => topple.saved.top.map(e => e.score)), [card, 1]);
 await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === String(n), card, { timeout: 5000 });
 await page.click('#again');
 assert.equal(await left(), 20, 'another cup');

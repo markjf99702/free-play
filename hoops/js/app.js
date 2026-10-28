@@ -8,6 +8,7 @@ import * as sound from './sound.js';
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, feed, bestLine, bump, pocketButton, tickets, shortOfATicket, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { topFive, place, onList } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.hoops';
@@ -155,6 +156,9 @@ function endRound() {
   wallet.pay(won);
   saved.rounds++;
   const old = saved.best, isBest = score > old && !first;
+  // onto the top five, with the day
+  const { list, rank, entry } = place(topFive(saved), score);
+  if (entry) saved.top = list;
   if (score > saved.best) saved.best = score;
   save();
   const n = court.baskets, swish = court.swishes;
@@ -165,7 +169,7 @@ function endRound() {
   const swishes = !swish ? '' : n === 1 ? ', a swish' : swish === n ? (n === 2 ? ', both of them swishes' : `, all ${n} of them swishes`) : swish === 1 ? ', 1 of them a swish' : `, ${swish} of them swishes`;
   $('overHow').textContent = `${n} ${n === 1 ? 'basket' : 'baskets'} from ${court.shots} ${court.shots === 1 ? 'shot' : 'shots'}${swishes}. `
     + (won ? 'A ticket for every 4 points.' : shortOfATicket(score, 4));
-  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `Best: ${saved.best.toLocaleString('en-US')}.`);
+  bestLine($('overBest'), isBest && ['A new best!', `Your old one was ${fmt(old)}.`], `${onList(rank)}Best: ${saved.best.toLocaleString('en-US')}.`);
   say(`${fmt(score)} ${score === 1 ? 'point' : 'points'}. ${tickets(won)}.`);
   $('over').hidden = false;
   feeding();

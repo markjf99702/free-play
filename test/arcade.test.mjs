@@ -243,3 +243,22 @@ test("the arcade's calendar: the player's own day, the day before, days apart, a
   assert.notDeepEqual(run(seeded('special:2026-10-28')), run(c));
   assert.ok(run(seeded('x')).every(x => x >= 0 && x < 1));
 });
+
+test("each machine's top five: best first, with the day, from the best it kept before there was a list", async () => {
+  const { topFive, place, onList } = await import('../shared/records.js');
+  assert.deepEqual(topFive({ best: 340 }), [{ score: 340, date: null }], 'a save from before the list starts it from its best');
+  assert.deepEqual(topFive({ best: 0 }), []);
+  assert.deepEqual(topFive({}), []);
+  assert.deepEqual(topFive({ best: 340, top: [{ score: 300, date: '2026-10-27' }, null, { score: 'x' }, { score: 0 }, { score: 120, date: '2026-10-20' }] }),
+    [{ score: 300, date: '2026-10-27' }, { score: 120, date: '2026-10-20' }], 'only what can be read, and the list over the old best');
+  let list = [];
+  const ranks = [];
+  for (const score of [200, 500, 200, 50, 800, 10, 5, 0]) { const p = place(list, score, '2026-10-28'); list = p.list; ranks.push(p.rank); }
+  assert.deepEqual(ranks, [0, 0, 2, 3, 0, -1, -1, -1], 'a level score goes in under the one already there; one under a full list, or a 0, goes nowhere');
+  assert.deepEqual(list.map(e => e.score), [800, 500, 200, 200, 50]);
+  assert.ok(list.every(e => e.date === '2026-10-28'));
+  assert.equal(onList(0), '', 'the top is a new best, said on its own');
+  assert.equal(onList(1), 'Number 2 on your list. ');
+  assert.equal(onList(4), 'Number 5 on your list. ');
+  assert.equal(onList(-1), '');
+});

@@ -9,6 +9,7 @@ import { dayKey, dayBefore, cardFor, points, shareLine, settle as settleOld, tic
 import * as wallet from '../../shared/wallet.js';
 import { openCounter, counterOpen, toast, feed, bestLine, bump, pocketButton, tickets, PAYOUT, fmt } from '../../shared/counter.js';
 import { insets } from '../../shared/insets.js';
+import { topFive, place, onList } from '../../shared/records.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'free-play.roll-up';
@@ -257,6 +258,10 @@ function gameOver() {
   } else {
     result.isBest = game.score > saved.best && !first;
     result.was = saved.best;
+    // onto the top five, with the day
+    const p = place(topFive(saved), game.score);
+    if (p.entry) saved.top = p.list;
+    result.rank = p.rank;
     if (game.score > saved.best) saved.best = game.score;
   }
   save();
@@ -309,7 +314,7 @@ function showOver(r, fresh) {
     b.textContent = r.balls.map(x => (x.hit ? '★' : '☆')).join('');
     $('stars').append(b, `${hits} of 9 calls${r.streak > 1 ? ` · ${r.streak} days in a row` : ''}`);
   }
-  bestLine($('overBest'), !daily && r.isBest && ['A new best!', `Your old one was ${fmt(r.was)}.`], daily ? 'A new card comes at midnight.' : `Best: ${fmt(saved.best)}.`);
+  bestLine($('overBest'), !daily && r.isBest && ['A new best!', `Your old one was ${fmt(r.was)}.`], daily ? 'A new card comes at midnight.' : `${onList(r.rank)}Best: ${fmt(saved.best)}.`);
   $('share').hidden = !daily;
   $('again').textContent = daily ? 'Play a regular game' : 'Roll again';
   $('over').hidden = false;
