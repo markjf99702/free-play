@@ -15,7 +15,7 @@ export default {
   paint,
   draw,
   scoresKey: 'spaceScores',
-  perTicket: 10000,    // Free Play pays a ticket for every this many points: about 30 for a fair game
+  perTicket: 5000,     // Free Play pays a ticket for every this many points: about 60 for a fair game
   howTo: [
     '<b>Ramp:</b> shoot it with the left flipper. It lights the lock and brings the ball back to the left flipper for another go.',
     '<b>Lock:</b> the right side works the upper flipper too. Shoot the orbit with the right flipper and keep holding: the ball comes round onto the upper flipper. From there, shoot the dock under the ramp to lock it, then light the lock again for two-ball <b>multiball</b>. The ramp scores the <b>jackpot</b>, and the dock lights it again.',

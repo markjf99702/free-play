@@ -235,7 +235,7 @@ await page.waitForFunction(() => window.tilt.table.name === 'Haunted House');
 assert.equal(await page.evaluate(() => window.tilt.game.table.flippers.length), 4);
 assert.match(await page.textContent('#howTo'), /the stairs back up/);
 assert.equal(await page.textContent('#rate'), await rateLine(page));
-assert.notEqual(await rateLine(page), 'A ticket for every 10,000 points.', 'the hard table pays what the others do');
+assert.notEqual(await rateLine(page), 'A ticket for every 5,000 points.', 'the hard table pays what the others do');
 assert.equal(new URL(page.url()).searchParams.get('table'), 'haunted');
 const beforeHaunted = await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet') || '{"tickets":0}').tickets);
 await page.keyboard.press('Enter');
@@ -259,9 +259,9 @@ for (let i = 0; i < 3; i++) {
 await page.waitForSelector('#over:not([hidden])', { timeout: 5000 });
 assert.equal(await page.evaluate(() => window.tilt.store.hauntedScores.length), 1, 'Haunted House keeps its own scores');
 // It pays a ticket for every 5,000 points, into the pocket and out of the slot.
-const haunted = Number((await page.textContent('#final')).replace(/,/g, '')), hauntedPaid = Math.floor(haunted / 5000);
+const haunted = Number((await page.textContent('#final')).replace(/,/g, '')), hauntedPaid = Math.floor(haunted / 2500);
 assert.ok(hauntedPaid > 0, `a game of ${haunted} on Haunted House paid nothing`);
-assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), beforeHaunted + hauntedPaid, 'Haunted House pays a ticket for every 5,000 points');
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), beforeHaunted + hauntedPaid, 'Haunted House pays a ticket for every 2,500 points');
 await page.waitForFunction(n => document.querySelector('#over .fp-won b').textContent === n, hauntedPaid.toLocaleString('en-US'), { timeout: 8000 });
 assert.equal(await page.evaluate(() => JSON.stringify(window.tilt.store.scores)), classicScores, "Classic's scores are left alone");
 await page.goto(base + '?table=classic');
@@ -320,8 +320,8 @@ assert.equal(await west.evaluate(() => window.tilt.store.scores[0].date), '2026-
 assert.equal(await west.textContent('#scores li.me small'), '10/13');
 // A game that pays nothing says how close it came, in place of the rate.
 const under = Number((await west.textContent('#final')).replace(/,/g, ''));
-assert.ok(under < 10000, `a game of ${under} paid a ticket`);
-assert.equal(await west.textContent('#overNote'), `Number 1 on your list. ${(10000 - under).toLocaleString('en-US')} more points and it's a ticket.`);
+assert.ok(under < 5000, `a game of ${under} paid a ticket`);
+assert.equal(await west.textContent('#overNote'), `Number 1 on your list. ${(5000 - under).toLocaleString('en-US')} more points and it's a ticket.`);
 await west.context().close();
 
 // Only the first game of a visit says how to flip, and not while it's paused.
@@ -369,7 +369,7 @@ await short.waitForFunction(() => window.tilt);
 await short.evaluate(() => document.fonts.ready);
 await short.evaluate(() => { window.tilt.startGame(); window.tilt.game.score = 888880; document.getElementById('menuBtn').click(); document.getElementById('quitBtn').click(); document.getElementById('quitBtn').click(); });
 await short.waitForSelector('#over:not([hidden])', { timeout: 5000 });
-await short.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '88', null, { timeout: 10000 });
+await short.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '177', null, { timeout: 10000 });
 const endCard = await short.evaluate(() => {
   const card = document.querySelector('#over .card').getBoundingClientRect(), at = id => document.getElementById(id).getBoundingClientRect();
   return { top: card.top, bottom: Math.min(card.bottom, innerHeight), score: at('final').top, again: at('againBtn').bottom, list: document.querySelectorAll('#scores li').length };

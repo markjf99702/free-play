@@ -108,8 +108,8 @@ await page.click('#menuBtn');
 await page.click('#quitBtn'); // (End game asks first)
 await page.click('#quitBtn');
 await page.waitForFunction(() => !document.getElementById('over').hidden, null, { timeout: 5000 });
-assert.equal(await tickets(), before + 15, 'Classic pays a ticket for every 10,000 points');
-await page.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '15', null, { timeout: 8000 });
+assert.equal(await tickets(), before + 30, 'Classic pays a ticket for every 5,000 points');
+await page.waitForFunction(() => document.querySelector('#over .fp-won b').textContent === '30', null, { timeout: 8000 });
 await page.click('#over a.ghost');
 await page.waitForURL(base);
 assert.equal(await page.textContent('#tiltStat'), 'Best: 154,320, on Classic.');

@@ -171,6 +171,8 @@ test('the prize counter and the tables pay-outs', () => {
   for (let i = 1; i < PRIZES.length; i++) assert.ok(PRIZES[i].cost > PRIZES[i - 1].cost, 'cheapest first');
   for (const p of PRIZES) assert.match(p.say, /^(a|an) /, `${p.name} is handed over as "a …"`);
   for (const [id, t] of Object.entries(TABLES)) assert.ok(t.perTicket > 0, `Tilt's ${id} table says what a ticket costs`);
+  // a ticket for every 5,000 on Classic and Space, and every 2,500 on Haunted House, the hard one
+  assert.deepEqual(Object.fromEntries(Object.entries(TABLES).map(([id, t]) => [id, t.perTicket])), { classic: 5000, space: 5000, haunted: 2500 });
 });
 
 // A .fp-payout box as feed() sees it: the strip, the count and its word.

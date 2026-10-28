@@ -18,7 +18,7 @@ export default {
   paint,                // paint(c, layout, skin): what never changes, into the static layer
   draw,                 // draw(c, game, skin, now): lamps, toys, balls, flippers, plunger and apron, each frame
   scoresKey: 'scores',  // where its top five are saved; Classic keeps the one from before there were tables
-  perTicket: 10000,    // Free Play pays a ticket for every this many points: about 30 for a fair game
+  perTicket: 5000,     // Free Play pays a ticket for every this many points: about 60 for a fair game
   howTo: [              // its rules, under the controls in How to play on the title card
     '<b>Skill shot:</b> launch into the flashing top lane for 25,000. The flippers move it.',
     '<b>Top lanes</b> raise the bonus multiplier and light the bumpers. <b>Standups</b> light the spinner. <b>Drop targets</b> light an extra ball at the kickout in the middle.',

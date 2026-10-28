@@ -151,7 +151,8 @@ a.ghost { display: flex; align-items: center; justify-content: center; text-deco
 .how li { margin: 6px 0; }
 .how b { color: var(--ink); }
 .final { margin: 10px 0 0; font: 40px/1 var(--disp); color: var(--ink); font-variant-numeric: tabular-nums; }
-.note { margin: 6px 0 0; color: var(--amber); min-height: 1.4em; }
+/* (pretty: the end card's line doesn't leave its last word on a line of its own) */
+.note { margin: 6px 0 0; color: var(--amber); min-height: 1.4em; text-wrap: pretty; }
 .scores { margin: 14px auto 18px; padding: 0; list-style: none; max-width: 240px; counter-reset: n; }
 .scores li {
   counter-increment: n; display: flex; justify-content: space-between; gap: 10px; padding: 4px 0;

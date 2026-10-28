@@ -17,7 +17,7 @@ export default {
   draw,
   floors: [0, BASEMENT], // the house, then the basement under it: the screen shows the one the ball is on
   scoresKey: 'hauntedScores',
-  perTicket: 5000,    // Free Play pays a ticket for every this many points: the hard one pays double, so a fair game earns about the same
+  perTicket: 2500,    // Free Play pays a ticket for every this many points: the hard one pays double, so a fair game earns about the same
   howTo: [
     '<b>Ghosts</b> glow now and then, in the windows and on the walls. Hit one while it glows to catch it. Each one lights a candle under the house, and once they\'re all lit the <b>front door</b> opens. While it\'s shut, a hard shot knocks on it and wakes a ghost.',
     '<b>Trapdoor:</b> shoot through the open door and the ball drops into the <b>basement</b>, a little table of its own. Knock the lid off the coffin to light an <b>extra ball</b>, then take the stairs back up.',
