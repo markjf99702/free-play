@@ -129,10 +129,18 @@ await page.keyboard.press('ArrowDown');
 await page.waitForTimeout(300);
 const tapped = await page.evaluate(() => ({ pull: window.tilt.game.table.plunger.pull, state: window.tilt.game.state }));
 assert.deepEqual(tapped, { pull: 0, state: 'lane' }, 'a tap of ↓ launched the ball');
+// (the pull is read from the plunger's sound as it fires: by the time the page is asked afterwards, the plunger is
+// springing back, and how far back depends on how many frames have run in between)
+await page.evaluate(() => {
+  const g = window.tilt.game, own = g.sound;
+  window.__plunged = null;
+  g.sound = function (name, o) { if (name === 'plunge') window.__plunged = o.power; return own.call(this, name, o); };
+});
 await page.keyboard.down('ArrowDown');
 await page.waitForTimeout(600);
 await page.keyboard.up('ArrowDown');
-const held = await page.evaluate(() => window.tilt.game.table.plunger.pull);
+const held = await page.evaluate(() => { delete window.tilt.game.sound; return window.__plunged; });
+assert.ok(held !== null, '↓ held for 0.6 s and let go did not fire the plunger');
 assert.ok(held > 0.3, `↓ held for 0.6 s pulled the plunger ${held.toFixed(2)} of the way`);
 await page.waitForFunction(() => window.tilt.game.state === 'live', null, { timeout: 5000 });
 
