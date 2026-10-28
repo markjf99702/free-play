@@ -528,7 +528,7 @@ for (const [label, said] of [
   ['Something rare from Clutch, not won yet', "Something rare. Not won yet. It turns up in Clutch's heap now and then."],
   ['Toy car, not won yet', "Toy car. Not won yet. It turns up on Topple's deck."],
   ['Something rare from Topple, not won yet', "Something rare. Not won yet. It turns up on Topple's deck now and then."],
-  ['Hoops trophy, not won yet', 'Hoops trophy, for 65 baskets in a round. Not won yet.'],
+  ['Hoops trophy, not won yet', 'Hoops trophy, for 32 baskets in a round. Not won yet.'],
 ]) {
   await page.tap(`#shelf [aria-label="${label}"]`);
   assert.equal(await page.textContent('.fp-toast'), said, `a tap on ${label}`);

@@ -162,7 +162,7 @@ function endRound() {
   // the trophy, for the machine's hardest feat: onto the shelf now
   const feated = feat(court);
   if (feated) wallet.give(trophy('trophy-hoops'));
-  $('overFeat').textContent = feated ? `🏆 Sixty-five baskets! The ${trophy('trophy-hoops').name} is on your shelf.` : '';
+  $('overFeat').textContent = feated ? `🏆 Thirty-two baskets! The ${trophy('trophy-hoops').name} is on your shelf.` : '';
   $('overFeat').hidden = !feated;
   // today's special: 25 more tickets, out of the slot with the rest
   const bonus = claim('hoops', { score });

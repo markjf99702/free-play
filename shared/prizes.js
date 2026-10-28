@@ -45,8 +45,8 @@ export const TRINKETS = [
 
 // Trophies, one for each machine's hardest feat, won outright and never sold: each goes on the shelf the moment it's
 // earned (another one each time), and they stand together at the end of it, each on a plinth in its machine's colours.
-// feat is what it's for, as a tap on the shelf says. Each feat is one the simulated players manage in fewer than one
-// round in 50 (see the README).
+// feat is what it's for, as a tap on the shelf says. Each feat is one the best of the simulated players manages in
+// fewer than one round in 50, but for Hoops', set within reach of a casual player (see the README).
 export const TROPHIES = [
   { id: 'trophy-roll-up', machine: 'roll-up', emoji: '🏆', name: 'Roll Up trophy', say: 'the Roll Up trophy', plinth: '#c23a2e', feat: "all nine calls on today's card" },
   { id: 'trophy-tilt-classic', machine: 'tilt', emoji: '🏆', name: 'Tilt Classic trophy', say: 'the Tilt Classic trophy', plinth: '#ffa53a', feat: 'a 5x bonus, the top lanes made four times on one ball' },
@@ -55,7 +55,7 @@ export const TROPHIES = [
   { id: 'trophy-highrise', machine: 'highrise', emoji: '🏆', name: 'Highrise trophy', say: 'the Highrise trophy', plinth: '#5cc8ff', feat: 'all fifteen floors' },
   { id: 'trophy-popgun', machine: 'popgun', emoji: '🏆', name: 'Popgun trophy', say: 'the Popgun trophy', plinth: '#d63a2f', feat: 'a round with every cork a hit, the bell among them' },
   { id: 'trophy-bonkers', machine: 'bonkers', emoji: '🏆', name: 'Bonkers trophy', say: 'the Bonkers trophy', plinth: '#ffc93c', feat: 'a round of 40 moles bonked and not one miss' },
-  { id: 'trophy-hoops', machine: 'hoops', emoji: '🏆', name: 'Hoops trophy', say: 'the Hoops trophy', plinth: '#ff8a1f', feat: '65 baskets in a round' },
+  { id: 'trophy-hoops', machine: 'hoops', emoji: '🏆', name: 'Hoops trophy', say: 'the Hoops trophy', plinth: '#ff8a1f', feat: '32 baskets in a round' },
 ];
 export const trophy = id => TROPHIES.find(t => t.id === id);
 

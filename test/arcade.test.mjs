@@ -438,8 +438,9 @@ test("a trophy for each machine's hardest feat: on the shelf, together at the en
   assert.ok(!bonkers({ over: true, misses: 1, bonks: 52 }));
   assert.ok(!bonkers({ over: true, misses: 0, bonks: 0 }), "a round with no swings isn't it");
   const { feat: hoops } = await import('../hoops/js/court.js');
-  assert.ok(hoops({ over: true, baskets: 65 }));
-  assert.ok(!hoops({ over: true, baskets: 64 }));
+  assert.ok(hoops({ over: true, baskets: 32 }));
+  assert.ok(!hoops({ over: true, baskets: 31 }));
+  assert.ok(!hoops({ over: false, baskets: 40 }), 'not until the round is over');
   const { nineCalls } = await import('../roll-up/js/daily.js');
   const ball = hit => ({ value: 30, points: 60, hit });
   assert.ok(nineCalls(Array.from({ length: 9 }, () => ball(true))));
