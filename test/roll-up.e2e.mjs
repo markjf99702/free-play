@@ -72,6 +72,7 @@ const ballOnScreen = () => page.evaluate(() => { const b = rollUp.ball; const s 
 
 // The title card, then a game.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 await hide(true);
 assert.ok(await page.isHidden('#menu'), 'leaving the page from the title card opened the menu');
 await hide(false);
@@ -184,6 +185,7 @@ await page.click('.fp-x');
 // Everything is still there after a reload.
 await page.reload();
 await page.evaluate(() => document.fonts.ready);
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a game, the title card is the small one, with how to play folded under How to play');
 assert.match(await page.textContent('#titleBest'), new RegExp(`Best: ${score.toLocaleString('en-US')}`));
 assert.equal(await page.textContent('#tix'), String(stored.tickets - 5));
 

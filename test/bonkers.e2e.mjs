@@ -101,6 +101,7 @@ const upHole = (any = false) => page.waitForFunction(any => {
 
 // The title card, and the moles already about their business behind it.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 await page.click('#play');
 assert.equal(await page.textContent('#left'), '45');
 
@@ -213,6 +214,7 @@ assert.equal(await page.textContent('#bonkersStat'), `Best: ${score.toLocaleStri
 // The menu opened in the moment between the buzzer and the end card, by Escape or by leaving the page, holds the card
 // back: only the menu shows, and after Keep playing the end card comes up by itself, with its buttons working.
 await page.goto(base + 'bonkers/');
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a round, the title card is the small one, with how to play folded under How to play');
 await page.click('#play');
 for (const leave of ['Escape', 'hide']) {
   await page.evaluate(() => { bonkers.speed = 20; });

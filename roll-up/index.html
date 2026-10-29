@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script src="../shared/carry.js"></script>
+  <script src="../shared/title.js" data-save="free-play.roll-up" data-played="games"></script>
   <title>Roll Up · Free Play</title>
   <meta name="description" content="Skee-ball on your phone. Flick the ball up the lane, hop the ramp and drop it in the rings. Nine balls a game, tickets for your score, and a prize counter to spend them at.">
   <meta property="og:title" content="Roll Up, at Free Play">
@@ -54,9 +55,13 @@
     <div class="words">
       <a class="floor to-floor" href="../">← Free Play</a>
       <div class="marquee"><h1>Roll Up</h1></div>
-      <p class="lede">Skee-ball, the boardwalk kind. Nine balls a game, and a ticket for every 10 points.</p>
-      <p class="how">Drag the ball where you want it and flick it up the lane, before the red line. It hops the ramp and drops into a ring. Harder isn't better: the 50 wants a medium roll, and the 100s want an angle. One ball in every game is golden, and scores double.</p>
-      <p class="how keys">On a keyboard: ← and → move the ball, hold Space to wind up, let go to roll.</p>
+      <button type="button" class="fp-fold" id="fold" aria-expanded="false" aria-controls="rules">How to play</button>
+      <div class="fp-rules" id="rules">
+        <p class="lede">Skee-ball, the boardwalk kind. Nine balls a game, and a ticket for every 10 points.</p>
+        <p class="how">Drag the ball where you want it and flick it up the lane, before the red line. It hops the ramp and drops into a ring. Harder isn't better: the 50 wants a medium roll, and the 100s want an angle. One ball in every game is golden, and scores double.</p>
+        <p class="how daily-rule">Today's card: nine called shots, the same for everyone today. One go a day, kept where you leave it. Hit the call for double.</p>
+        <p class="how keys">On a keyboard: ← and → move the ball, hold Space to wind up, let go to roll.</p>
+      </div>
     </div>
     <div class="acts">
       <div class="row">

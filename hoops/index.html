@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script src="../shared/carry.js"></script>
+  <script src="../shared/title.js" data-save="free-play.hoops" data-played="rounds"></script>
   <title>Hoops · Free Play</title>
   <meta name="description" content="The basketball machine from the ticket floor, on your phone: flick the balls up at the hoop as fast as they roll back to you. Forty-five seconds a round, a hoop that starts to slide, and tickets for your score.">
   <meta property="og:title" content="Hoops, at Free Play">
@@ -53,9 +54,12 @@
     <div class="words">
       <a class="floor to-floor" href="../">← Free Play</a>
       <div class="marquee"><h1>Hoops</h1></div>
-      <p class="lede">The basketball machine from the end of the row.</p>
-      <p class="how">Flick a ball up the screen at the hoop to shoot: how hard you flick is how far it goes. Four balls roll back down to you, so keep them coming. A basket is 2 points. Twenty seconds in, the hoop starts to slide from side to side, and in the last ten seconds a basket is worth 3. The gold ball is worth double, and three in a row set the rim alight: a point more a basket until you miss. A ticket for every 4 points.</p>
-      <p class="how keys">On a keyboard: the arrows aim, and holding Space winds up a throw. Let go in the light.</p>
+      <button type="button" class="fp-fold" id="fold" aria-expanded="false" aria-controls="rules">How to play</button>
+      <div class="fp-rules" id="rules">
+        <p class="lede">The basketball machine from the end of the row.</p>
+        <p class="how">Flick a ball up the screen at the hoop to shoot: how hard you flick is how far it goes. Four balls roll back down to you, so keep them coming. A basket is 2 points. Twenty seconds in, the hoop starts to slide from side to side, and in the last ten seconds a basket is worth 3. The gold ball is worth double, and three in a row set the rim alight: a point more a basket until you miss. A ticket for every 4 points.</p>
+        <p class="how keys">On a keyboard: the arrows aim, and holding Space winds up a throw. Let go in the light.</p>
+      </div>
     </div>
     <div class="acts">
       <p class="fp-special" id="titleSpecial" hidden></p>

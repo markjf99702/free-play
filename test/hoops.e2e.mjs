@@ -105,6 +105,7 @@ const flickAt = (speed, x = 195, y = 640, across = 0) => page.evaluate(([speed, 
 
 // The title card, and the machine shooting by itself behind it.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 await page.waitForFunction(() => hoops.court.shots > 0, null, { timeout: 5000 });
 assert.equal(await court('score'), 0, 'the machine playing by itself scores nothing');
 await page.click('#play');
@@ -294,6 +295,7 @@ assert.equal(await page.textContent('#hoopsStat'), `Best: ${score.toLocaleString
 // The menu opened in the moment between the buzzer and the end card, by Escape or by leaving the page, holds the card
 // back: only the menu shows, and after Keep playing the end card comes up by itself, with its buttons working.
 await page.goto(base + 'hoops/');
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a round, the title card is the small one, with how to play folded under How to play');
 await page.click('#play');
 for (const leave of ['Escape', 'hide']) {
   await page.evaluate(() => { hoops.speed = 20; });

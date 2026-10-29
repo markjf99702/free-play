@@ -602,7 +602,9 @@ await page.waitForFunction(() => !!window.freePlay);
 assert.equal(await page.textContent('#rollUpStat'), "Today's card is ready. Play it to make it 4 days in a row. Best: 450.");
 await page.goto(base + 'roll-up/');
 await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
-assert.match(await page.textContent('#dailyHow'), / Play it to make it 4 days in a row\.$/);
+// (on Roll Up's small title card, back after a game, the line under its buttons is just the run of days)
+assert.equal(await page.textContent('#dailyHow'), 'Play it to make it 4 days in a row.');
+assert.ok(await page.isVisible('#dailyHow'));
 await page.goto(base);
 await page.waitForFunction(() => !!window.freePlay, null, { timeout: 5000 });
 // Today's card part-way through: the cabinet says how many balls are left.
@@ -624,7 +626,7 @@ for (let visit = 0; visit < 2; visit++) {
   await page.goto(base + 'roll-up/');
   await page.waitForFunction(() => !!window.rollUp, null, { timeout: 5000 });
   assert.ok(await page.isVisible('#title'), "yesterday's card isn't today's: Roll Up opens on its title card");
-  assert.match(await page.textContent('#dailyHow'), / Play it to make it 4 days in a row\.$/);
+  assert.equal(await page.textContent('#dailyHow'), 'Play it to make it 4 days in a row.');
   assert.deepEqual(await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('free-play.roll-up')); return [s.going, s.games, s.daily.key, s.daily.score, s.daily.streak]; }), [undefined, 10, yesterday, 90, 3]);
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('free-play.wallet')).tickets), pocketBefore + 9, `paid for its three balls, once (visit ${visit + 1})`);
 }
@@ -1217,6 +1219,106 @@ await ended();
 await sideways('hoops', 'over');
 assert.ok(await sp.evaluate(() => document.getElementById('overBest').classList.contains('fp-best')), "Hoops' end card has no new best on it");
 await side.close();
+
+// A machine's title card, back after a round. On a first visit it has it all: the sign, what the machine is, how to
+// play it, and Play. Once the machine has been played, it's the sign, Play, the prize counter and the best, at the
+// foot of the screen and not much more than half as tall, so the machine playing by itself shows above it; what the
+// machine is and how to play it fold under How to play, which opens and shuts them with Play still in sight. The page
+// knows which it is from its <head> (the mark is on <html> once the page is read, before its own scripts run), so the
+// whole card doesn't show first and then shrink. Upright on a phone, on a computer and on a phone on its side (in two columns, every button in sight, clear of
+// the notch and the home indicator). Roll Up's line under its buttons, on the small card, says only how today's card
+// went; what today's card is goes under How to play.
+const PLAYED = { 'roll-up': ['rollUp', 'games'], clutch: ['clutch', 'goes'], topple: ['topple', 'cups'], highrise: ['highrise', 'games'], popgun: ['popgun', 'rounds'], bonkers: ['bonkers', 'rounds'], hoops: ['hoops', 'rounds'] };
+const TITLE_SIZES = [[390, 844, { top: 47, bottom: 34, left: 0, right: 0 }, 12], [1280, 800, { top: 0, bottom: 0, left: 0, right: 0 }, 12], [844, 390, { top: 0, bottom: 21, left: 47, right: 47 }, 8], [667, 375, { top: 0, bottom: 0, left: 0, right: 0 }, 8]];
+const wholeCard = {};
+for (const back of [false, true]) {
+  for (const [width, height, insets, foot] of TITLE_SIZES) {
+    const phone = width !== 1280;
+    const tc = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: phone ? 2 : 1, hasTouch: phone, isMobile: phone, serviceWorkers: 'block' });
+    await tc.addInitScript(([back, played]) => {
+      if (back && !sessionStorage.getItem('seeded')) {
+        sessionStorage.setItem('seeded', '1');
+        for (const [m, [, field]] of Object.entries(played)) localStorage.setItem('free-play.' + m, JSON.stringify({ best: 40, [field]: 1, ...(m === 'clutch' && { won: { frog: 1 } }) }));
+      }
+      // whether the page is marked as played once it's read, before its scripts run
+      document.addEventListener('readystatechange', () => { if (document.readyState === 'interactive') window.__markedFirst = document.documentElement.classList.contains('fp-back'); });
+    }, [back, PLAYED]);
+    const p = await tc.newPage();
+    p.on('pageerror', e => problems.push(e.message));
+    await (await tc.newCDPSession(p)).send('Emulation.setSafeAreaInsetsOverride', { insets });
+    for (const [m, [hook]] of Object.entries(PLAYED)) {
+      const at = `${m}'s title card ${back ? 'back after a round' : 'on a first visit'} at ${width} x ${height}`;
+      await p.goto(base + m + '/');
+      await p.waitForFunction(hook => !!window[hook], hook, { timeout: 10000 });
+      await p.evaluate(() => document.fonts.ready);
+      const look = () => p.evaluate(([insets, side]) => {
+        const card = document.getElementById('title'), b = card.getBoundingClientRect(), out = [];
+        const shown = el => !!el && el.getClientRects().length > 0;
+        for (const el of card.querySelectorAll('button, a')) {
+          if (!shown(el)) continue;
+          const r = el.getBoundingClientRect(), what = `"${el.textContent.trim().slice(0, 24)}"`;
+          if (r.top < Math.max(0, b.top) - 1 || r.bottom > Math.min(innerHeight - insets.bottom, b.bottom) + 1) out.push(`${what} out of sight, ${Math.round(r.top)} to ${Math.round(r.bottom)} px down`);
+          if (r.left < insets.left || r.right > innerWidth - insets.right) out.push(`${what} under the notch`);
+        }
+        if (side) {
+          const words = card.querySelector('.words').getBoundingClientRect(), acts = card.querySelector('.acts').getBoundingClientRect();
+          if (acts.left < words.right - 1) out.push('not in two columns');
+        }
+        const fold = document.getElementById('fold'), f = fold.getBoundingClientRect();
+        return {
+          out, top: b.top, bottom: b.bottom, height: b.height, marked: document.documentElement.classList.contains('fp-back'), first: window.__markedFirst,
+          rules: [...card.querySelectorAll('.lede, .how:not(.daily-rule, .keys)')].map(shown), fold: shown(fold) && { w: f.width, h: f.height, open: fold.getAttribute('aria-expanded') },
+          kept: ['play', 'toPrizes', 'titleBest'].map(id => shown(document.getElementById(id)) && !!document.getElementById(id).textContent.trim()),
+        };
+      }, [insets, width > height && height <= 500]);
+      const l = await look();
+      assert.deepEqual(l.out, [], at);
+      assert.equal(l.marked, back, `${at}: the page is ${back ? 'not ' : ''}marked as played`);
+      assert.equal(l.first, back, `${at}: the page is marked only by its own scripts, once it's drawn`);
+      assert.deepEqual(l.kept, [true, true, back], `${at}: Play, the prize counter and the best`);
+      if (!back) {
+        assert.ok(l.rules.every(Boolean) && !l.fold, `${at}: what the machine is and how to play it aren't all on it`);
+        wholeCard[at.replace(' on a first visit', '')] = l.height;
+        continue;
+      }
+      assert.ok(l.rules.every(r => !r), `${at}: what the machine is and how to play it aren't folded away`);
+      assert.ok(l.fold && l.fold.open === 'false' && l.fold.w >= 44 && l.fold.h >= 44, `${at}: How to play is ${JSON.stringify(l.fold)}`);
+      assert.ok(Math.abs(height - insets.bottom - foot - l.bottom) <= 1, `${at}: it ends ${Math.round(height - l.bottom)} px from the foot of the screen`);
+      const whole = wholeCard[at.replace(' back after a round', '')];
+      assert.ok(l.height <= 0.6 * whole, `${at}: ${Math.round(l.height)} px tall, against ${Math.round(whole)} px for the whole card`);
+      await p.click('#fold');
+      const o = await look();
+      assert.deepEqual(o.out, [], `${at}, How to play open`);
+      assert.ok(o.rules.every(Boolean) && o.fold.open === 'true', `${at}: How to play doesn't open`);
+      await p.click('#fold');
+      assert.ok((await look()).rules.every(r => !r), `${at}: How to play doesn't shut`);
+    }
+    await tc.close();
+  }
+}
+// (Roll Up's line under its buttons: what today's card is, on a first visit; on the small card, nothing until today's
+// is played, and then how it went, with what it is under How to play)
+{
+  const rc = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+  const rp = await rc.newPage();
+  rp.on('pageerror', e => problems.push(e.message));
+  const daily = async () => {
+    await rp.goto(base + 'roll-up/');
+    await rp.waitForFunction(() => !!window.rollUp, null, { timeout: 10000 });
+    return rp.evaluate(() => {
+      const shown = el => el.getClientRects().length > 0, line = document.getElementById('dailyHow'), rule = document.querySelector('#title .daily-rule');
+      const was = shown(rule);
+      document.getElementById('fold').click();
+      return { line: shown(line) ? line.textContent : null, rule: [was, shown(rule)] };
+    });
+  };
+  assert.deepEqual(await daily(), { line: 'Nine called shots, the same for everyone today. One go a day, kept where you leave it. Hit the call for double.', rule: [false, false] }, "Roll Up's line about today's card on a first visit");
+  await rp.evaluate(() => localStorage.setItem('free-play.roll-up', JSON.stringify({ best: 120, games: 1 })));
+  assert.deepEqual(await daily(), { line: null, rule: [false, true] }, "Roll Up's line about today's card, back after a game");
+  await rp.evaluate(today => localStorage.setItem('free-play.roll-up', JSON.stringify({ best: 120, games: 1, daily: { key: today, balls: [{ hit: true }, { hit: false }], score: 120, streak: 3 } })), today);
+  assert.deepEqual(await daily(), { line: '1 of 9 calls, 3 days in a row. A new card comes at midnight.', rule: [false, true] }, "Roll Up's line about today's card, played today");
+  await rc.close();
+}
 
 // Everything to tap on the floor and on every card is 44 px each way at least (Apple's Human Interface Guidelines,
 // and WCAG 2.2's 2.5.5): the way back to the floor, the links at the foot of each card, the counter's close. The

@@ -488,9 +488,15 @@ function dailyButton() {
   $('daily').textContent = done ? `Today: ${fmt(d.score)}` : "Today's card";
   // yesterday's card played, the run of days goes on with today's
   const y = saved.daily, run = !done && y?.key === dayBefore(dayKey()) && Array.isArray(y.balls) ? (Number(y.streak) || 1) + 1 : 0;
-  $('dailyHow').textContent = done
+  const now = done
     ? `${d.balls.filter(b => b.hit).length} of 9 calls${d.streak > 1 ? `, ${d.streak} days in a row` : ''}. A new card comes at midnight.`
-    : `Nine called shots, the same for everyone today. One go a day, kept where you leave it. Hit the call for double.${run ? ` Play it to make it ${run} days in a row.` : ''}`;
+    : run ? `Play it to make it ${run} days in a row.` : '';
+  // Under the buttons, how today's card went, or the run of days it keeps going. On the whole title card, a card not
+  // played yet says what it is first; on the small one, back after a game, that's under How to play, and the line
+  // shows only with something to say (see css/app.css).
+  const back = document.documentElement.classList.contains('fp-back');
+  $('dailyHow').textContent = done || back ? now : `Nine called shots, the same for everyone today. One go a day, kept where you leave it. Hit the call for double.${run ? ` ${now}` : ''}`;
+  $('dailyHow').classList.toggle('now', !!now);
 }
 $('daily').addEventListener('click', () => {
   sound.unlock();

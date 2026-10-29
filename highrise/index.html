@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script src="../shared/carry.js"></script>
+  <script src="../shared/title.js" data-save="free-play.highrise" data-played="games"></script>
   <title>Highrise · Free Play</title>
   <meta name="description" content="A stacker on your phone. Build a tower a floor at a time: stop the sliding row on the one below, and whatever hangs over falls off. Floor 11 pays a bonus, and the top floor pays the trophy.">
   <meta property="og:title" content="Highrise, at Free Play">
@@ -54,9 +55,12 @@
     <div class="words">
       <a class="floor to-floor" href="../">← Free Play</a>
       <div class="marquee"><h1>Highrise</h1></div>
-      <p class="lede">A stacker. Build the tower a floor at a time, all the way to the top.</p>
-      <p class="how">A row of lit windows slides along each floor: press Stop to set it down on the floor below. Windows hanging over the edge fall off, and the next row is only as wide as what stayed up. It speeds up as it climbs, with two windows at most from floor 6 and one from floor 11. Every floor is a ticket. At floor 11 you can take 25 more and stop, or keep going: the top floor pays the trophy and 100.</p>
-      <p class="how keys">On a keyboard: Space (or ↓) stops the row.</p>
+      <button type="button" class="fp-fold" id="fold" aria-expanded="false" aria-controls="rules">How to play</button>
+      <div class="fp-rules" id="rules">
+        <p class="lede">A stacker. Build the tower a floor at a time, all the way to the top.</p>
+        <p class="how">A row of lit windows slides along each floor: press Stop to set it down on the floor below. Windows hanging over the edge fall off, and the next row is only as wide as what stayed up. It speeds up as it climbs, with two windows at most from floor 6 and one from floor 11. Every floor is a ticket. At floor 11 you can take 25 more and stop, or keep going: the top floor pays the trophy and 100.</p>
+        <p class="how keys">On a keyboard: Space (or ↓) stops the row.</p>
+      </div>
     </div>
     <div class="acts">
       <p class="fp-special" id="titleSpecial" hidden></p>

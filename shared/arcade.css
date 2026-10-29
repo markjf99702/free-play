@@ -214,6 +214,47 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 @media (prefers-reduced-motion: reduce) { .fp-strip, .hud .tix.bump, .fp-big i { animation: none; } .fp-item { transition: none; } }
 
+/* ---------- a machine's title card, back after a round ---------- */
+/* On a first visit a machine's title card has it all. Once the machine has been played (shared/title.js marks the
+   page fp-back before it's drawn), the card is just the sign, a size smaller, Play, the prize counter and the best,
+   at the foot of the screen, so the machine playing by itself behind it shows. What the machine is and how to play it
+   fold under How to play, on the line with the way back to the floor, and open under the sign. On a phone on its side
+   the card keeps its two columns, the sign on the left and the buttons on the right, and leaves the rest of the screen
+   undimmed. (Tilt's card is its own, with How to play on every visit.) */
+.fp-fold { display: none; }
+.fp-back #title.card {
+  top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px));
+}
+.fp-back #title .marquee { margin-bottom: 10px; padding: 8px 10px 6px; }
+.fp-back #title .marquee h1 { margin: 4px 0 2px; font-size: 34px; }
+/* (44 px tall to tap, its words level with the way back's) */
+.fp-back #title .fp-fold {
+  position: absolute; top: 6.5px; right: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; margin: 0; padding: 0 10px; border: 0; border-radius: 12px; background: none; color: var(--ink2);
+  font: 600 14px var(--body); cursor: pointer; touch-action: manipulation;
+}
+.fp-fold::before { content: ""; border: solid transparent; border-width: 5px 0 5px 8px; border-left-color: currentColor; transition: transform .15s ease; }
+.fp-fold[aria-expanded="true"]::before { transform: rotate(90deg); }
+@media (hover: hover) { .fp-back #title .fp-fold:hover { color: var(--ink); } }
+.fp-back #title .fp-fold[aria-expanded="false"] + .fp-rules { display: none; }
+.fp-back #title .fp-rules { padding-top: 2px; }
+/* (in a copy of the page on its own, which has no way back to share a line with, under the sign) */
+.fp-back[data-single] #title .fp-fold { position: static; width: 100%; margin: -4px 0 2px; }
+/* On a phone on its side, the buttons have the wider column, side by side where they fit, so the card is low, and How
+   to play is on the way back's line in the left one. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .fp-back #title.card {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px)); max-height: calc(100dvh - 16px - env(safe-area-inset-bottom, 0px));
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+  }
+  .fp-back #title .words { position: relative; }
+  .fp-back:not([data-single]) #title .fp-fold { top: -15.5px; right: -10px; }
+  .fp-back #title .row { flex-direction: row; }
+  .fp-back #title .row > * { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) { .fp-fold::before { transition: none; } }
+
 /* ---------- between pages, and the cards ---------- */
 /* Between the floor and a machine (or Records), the pages crossfade over a fifth of a second in a browser that can
    (Chrome 126 and Safari 18.2 on, in MDN's compatibility data: the rest cut straight across), and a machine's cards (its

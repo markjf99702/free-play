@@ -84,6 +84,7 @@ async function tap({ x, y }) {
 
 // The title card, and the claw stays put while it's up.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 assert.equal(await page.textContent('#won'), '0');
 const box = await page.locator('#hold').boundingBox();
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -251,6 +252,7 @@ assert.match((await page.locator('#shelf .fp-item:not(.fp-yet)').allTextContents
 
 // Back at the claw. (The machine's report of a go is held back here, to make the goes the test needs.)
 await page.goto(base + 'clutch/');
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a go, the title card is the small one, with how to play folded under How to play');
 await page.click('#play');
 await page.evaluate(() => {
   clutch.speed = 4;

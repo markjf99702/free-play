@@ -82,6 +82,7 @@ const middle = sel => page.evaluate(sel => { const r = document.querySelector(se
 // The title card, then a cup of twenty. A quick double tap on Play starts it: the second tap lands on the glass where
 // the button was, and doesn't drop a coin.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 assert.equal(await page.textContent('#play'), 'Play');
 // Under it, the deck shows the cup full, with Drop waiting for Play, and the scoreboard says what it counts.
 assert.equal(await page.textContent('#left'), '20', 'a full cup waits under the title card');
@@ -292,6 +293,11 @@ await page.setViewportSize({ width: 390, height: 844 });
 // Back on the floor, Topple's cabinet has the best cup and the prize.
 await page.goto(base);
 assert.match(await page.textContent('#toppleStat'), new RegExp(`^Best cup: \\d+ tickets\\. 1 prize pushed off\\.`));
+
+// Back at the pusher, the title card is the small one.
+await page.goto(base + 'topple/');
+await page.waitForFunction(() => !!window.topple, null, { timeout: 10000 });
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a cup, the title card is the small one, with how to play folded under How to play');
 
 assert.deepEqual(problems, [], 'problems while playing');
 await browser.close();

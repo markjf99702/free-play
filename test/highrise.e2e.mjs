@@ -75,6 +75,7 @@ async function build(to, at = 3) {
 
 // The title card, with the row already sliding along the ground floor behind it.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 const box = await page.locator('#stop').boundingBox();
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 await page.mouse.down(); await page.mouse.up();
@@ -261,6 +262,7 @@ assert.equal(await page.getAttribute('#shelf .fp-trophy:not(.fp-yet)', 'aria-lab
 // Leaving while the tower falls, before its card, by the menu's Back to the arcade: the game is over all the same, and
 // it pays as the page goes.
 await page.goto(base + 'highrise/');
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a game, the title card is the small one, with how to play folded under How to play');
 await page.click('#play');
 await build(2);
 await ready();

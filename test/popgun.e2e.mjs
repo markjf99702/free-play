@@ -103,6 +103,7 @@ const middle = sel => page.evaluate(sel => { const r = document.querySelector(se
 
 // The title card, and the targets already running behind it.
 assert.ok(await page.isVisible('#title'), 'the title card shows first');
+assert.ok(await page.isVisible('#title .lede') && await page.isHidden('#fold'), 'a first visit has the whole title card, with how to play on it');
 await page.click('#play');
 assert.equal(await corks(), 20);
 assert.equal(await page.locator('#tray i').count(), 20, 'twenty corks on the counter');
@@ -235,6 +236,7 @@ assert.equal(await page.textContent('#popgunStat'), `Best: ${score.toLocaleStrin
 // The menu opened in the moment between the last cork landing and the end card, by Escape or by leaving the page,
 // holds the card back: only the menu shows, and after Keep playing the end card comes up by itself, buttons working.
 await page.goto(base + 'popgun/');
+assert.ok(await page.isVisible('#fold') && await page.isHidden('#title .lede'), 'back after a round, the title card is the small one, with how to play folded under How to play');
 await page.click('#play');
 for (const leave of ['Escape', 'hide']) {
   await page.evaluate(() => { popgun.speed = 10; });
