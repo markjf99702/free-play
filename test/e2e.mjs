@@ -1260,6 +1260,11 @@ for (const back of [false, true]) {
           if (r.top < Math.max(0, b.top) - 1 || r.bottom > Math.min(innerHeight - insets.bottom, b.bottom) + 1) out.push(`${what} out of sight, ${Math.round(r.top)} to ${Math.round(r.bottom)} px down`);
           if (r.left < insets.left || r.right > innerWidth - insets.right) out.push(`${what} under the notch`);
         }
+        // (one button over another keeps clear of it, a little more than the depth of a big button's edge)
+        const buttons = [...card.querySelectorAll('button')].filter(shown).map(el => [el.textContent.trim().slice(0, 24), el.getBoundingClientRect()]);
+        for (const [i, [n, r]] of buttons.entries()) for (const [o, s] of buttons.slice(i + 1)) {
+          if (r.left < s.right && s.left < r.right && r.top < s.bottom + 8 && s.top < r.bottom + 8) out.push(`"${n}" and "${o}" touch`);
+        }
         if (side) {
           const words = card.querySelector('.words').getBoundingClientRect(), acts = card.querySelector('.acts').getBoundingClientRect();
           if (acts.left < words.right - 1) out.push('not in two columns');
@@ -1285,7 +1290,8 @@ for (const back of [false, true]) {
       assert.ok(l.fold && l.fold.open === 'false' && l.fold.w >= 44 && l.fold.h >= 44, `${at}: How to play is ${JSON.stringify(l.fold)}`);
       assert.ok(Math.abs(height - insets.bottom - foot - l.bottom) <= 1, `${at}: it ends ${Math.round(height - l.bottom)} px from the foot of the screen`);
       const whole = wholeCard[at.replace(' back after a round', '')];
-      assert.ok(l.height <= 0.6 * whole, `${at}: ${Math.round(l.height)} px tall, against ${Math.round(whole)} px for the whole card`);
+      // (Roll Up's, with its second row of buttons, is the tallest: about 0.62 of its whole card on a phone on its side)
+      assert.ok(l.height <= 0.65 * whole, `${at}: ${Math.round(l.height)} px tall, against ${Math.round(whole)} px for the whole card`);
       await p.click('#fold');
       const o = await look();
       assert.deepEqual(o.out, [], `${at}, How to play open`);

@@ -128,6 +128,7 @@ svg { width: 1.3em; height: .9em; flex: none; }
 .daily-rule { display: none; }
 .fp-back .daily-rule { display: block; }
 .fp-back .daily-how:not(.now) { display: none; }
+.fp-back .daily-how:not(.now) + .row { margin-top: 10px; } /* (with nothing between them, the rows of buttons kept apart) */
 .plain { font-weight: 600; background: rgba(251, 238, 210, .07); border: 1px solid var(--line); }
 .plain:active { background: rgba(251, 238, 210, .14); }
 .tally { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 0 0 12px; }
